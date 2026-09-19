@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Configuration & Secrets
+config.json
+demo/config.json
+.env
+.env.*
+
+# Competition Documents & Internal Team Notes (Private)
+*.docx
+~$*.docx
+*.zip
+parsed_*.txt
+全网数据搜集_主题二与分工方案汇总/
+G数据_已汇总/
+
+# Temporary Local Screenshots (Excluding docs/images)
+demo/*.png
+*.log
+
+# IDE & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

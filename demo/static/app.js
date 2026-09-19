@@ -1,0 +1,1414 @@
+const { createApp, ref, onMounted, watch, nextTick } = Vue;
+
+createApp({
+    setup() {
+        const activeTab = ref('comparison');
+        const schemeMode = ref('diff'); // 'baseline' | 'optimized' | 'diff'
+        const loading = ref(false);
+        const overview = ref(null);
+        const selectedCommunityId = ref('C04');
+        const planResult = ref(null);
+        const simulationResult = ref(null);
+        const crisisResult = ref(null);
+        const isPeakDay = ref(false);
+
+        // 运筹控制台与数学看板弹窗状态
+        const showSolverModal = ref(false);
+        const solverModalTab = ref('M6');
+        const mathModelsList = ref([]);
+
+        // 高德开放平台 API Key 与实时搜索状态
+        const amapConfig = ref({ configured: false, masked_key: '加载中...' });
+        const showAmapModal = ref(false);
+        const amapKeyInput = ref('');
+        const amapKeyMsg = ref('');
+        const amapSearchKeyword = ref('海淀远大园');
+        const amapExploring = ref(false);
+        const amapExploreResult = ref(null);
+
+        // 地图底图主题与向量图层控制
+        const currentTileTheme = ref('amap-dark');
+        const tileStatusText = ref('高德暗黑矢量底图 [在线]');
+        const showRoads = ref(true);
+        const showPolygons = ref(true);
+        const showRings = ref(true);
+
+        // 自定义沙盒参数
+        const customHouseholds = ref(2141);
+        const customDoorRatio = ref(0.25);
+        const customIntensity = ref(0.6);
+
+        // Leaflet 地图、图层与图表引用
+        let map = null;
+        let currentTileLayer = null;
+        let tileLayers = {};
+        let mapLayers = [];
+
+        let chartArrivals = null;
+        let chartSaturation = null;
+        let chartRadar = null;
+        let chartCost = null;
+        let chartTspConvergence = null;
+        let chartMipConvergence = null;
+
+        // 全景对比图表引用 (Tab 0)
+        let chartCompSaturation = null;
+        let chartCompRadar = null;
+        let chartCompCost = null;
+
+        // 切换现状/优化/叠图方案
+        const setSchemeMode = (mode) => {
+            schemeMode.value = mode;
+            renderMapLayers();
+        };
+
+        // KaTeX 自动数学公式渲染
+        const renderMath = () => {
+            nextTick(() => {
+                if (window.renderMathInElement) {
+                    window.renderMathInElement(document.body, {
+                        delimiters: [
+                            { left: '$$', right: '$$', display: true },
+                            { left: '\\[', right: '\\]', display: true },
+                            { left: '\\(', right: '\\)', display: false },
+                            { left: '$', right: '$', display: false }
+                        ],
+                        throwOnError: false
+                    });
+                }
+            });
+        };
+
+        // 初始化
+        onMounted(async () => {
+            initMap();
+            await fetchAmapConfig();
+            await fetchMathModels();
+            await fetchOverview();
+            await loadCommunityPlan(selectedCommunityId.value);
+            await fetchSimulation();
+            initCharts();
+            renderMath();
+
+            // 监听容器大小变化（自适应防塌陷）
+            const mapContainer = document.getElementById('map-container');
+            if (mapContainer && window.ResizeObserver) {
+                const ro = new ResizeObserver(() => {
+                    if (map) map.invalidateSize();
+                });
+                ro.observe(mapContainer);
+            }
+
+            window.addEventListener('resize', () => {
+                resizeCharts();
+            });
+
+            // 强制触发一次重绘与尺寸自适应
+            nextTick(() => {
+                if (map) map.invalidateSize();
+            });
+            setTimeout(() => {
+                if (map) map.invalidateSize();
+            }, 200);
+            setTimeout(() => {
+                if (map) map.invalidateSize();
+            }, 800);
+        });
+
+        // 初始化 Leaflet 地图与国内高德/OSM/离线底图引擎
+        const initMap = () => {
+            const container = document.getElementById('map-container');
+            if (!container) return;
+
+            // 销毁可能存在的残留地图实例
+            if (map) {
+                map.remove();
+                map = null;
+            }
+
+            // 初始化 Leaflet，开启 preferCanvas 保证高性能向量底图自适应绘制
+            map = L.map('map-container', {
+                center: [39.792, 116.495],
+                zoom: 13,
+                zoomControl: false,
+                preferCanvas: true,
+                attributionControl: false
+            });
+
+            // 自定义缩放控制置于右下角（紧贴信息栏上方），彻底解决左上角遮挡问题
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+            // 1. 国内高德地图暗黑矢量底图（默认，带深色极客滤镜）
+            tileLayers['amap-dark'] = L.tileLayer(
+                'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+                {
+                    maxZoom: 19,
+                    minZoom: 10,
+                    subdomains: ['1', '2', '3', '4'],
+                    className: 'amap-dark-tiles',
+                    attribution: '&copy; 高德地图 AutoNavi'
+                }
+            );
+
+            // 2. 国内高德标准路网矢量底图
+            tileLayers['amap-std'] = L.tileLayer(
+                'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}',
+                {
+                    maxZoom: 19,
+                    minZoom: 10,
+                    subdomains: ['1', '2', '3', '4'],
+                    attribution: '&copy; 高德地图 AutoNavi'
+                }
+            );
+
+            // 3. 高德卫星遥感影像底图
+            tileLayers['amap-sat'] = L.tileLayer(
+                'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
+                {
+                    maxZoom: 19,
+                    minZoom: 10,
+                    subdomains: ['1', '2', '3', '4'],
+                    attribution: '&copy; 高德地图 AutoNavi 遥感'
+                }
+            );
+
+            // 4. OSM 暗黑源
+            tileLayers['osm-dark'] = L.tileLayer(
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                {
+                    maxZoom: 19,
+                    minZoom: 10,
+                    className: 'osm-dark-tiles',
+                    attribution: '&copy; OpenStreetMap'
+                }
+            );
+
+            // 默认挂载高德暗黑底图
+            currentTileLayer = tileLayers['amap-dark'];
+            currentTileLayer.addTo(map);
+
+            // 监听瓦片加载与异常（无网络/外网受限时自动平滑过渡）
+            currentTileLayer.on('tileerror', () => {
+                tileStatusText.value = '底图瓦片受限 · 已激活高精矢量底图兜底';
+            });
+            currentTileLayer.on('load', () => {
+                if (currentTileTheme.value === 'amap-dark') {
+                    tileStatusText.value = '高德暗黑矢量底图 [在线]';
+                }
+            });
+        };
+
+        // 切换底图主题
+        const onChangeTileTheme = () => {
+            if (!map) return;
+
+            // 移除当前瓦片图层
+            if (currentTileLayer) {
+                map.removeLayer(currentTileLayer);
+                currentTileLayer = null;
+            }
+
+            const theme = currentTileTheme.value;
+            if (theme === 'vector-only') {
+                tileStatusText.value = '离线纯矢量CAD数字孪生模式 [完全无外网依赖]';
+            } else if (tileLayers[theme]) {
+                currentTileLayer = tileLayers[theme];
+                currentTileLayer.addTo(map);
+                if (theme === 'amap-dark') tileStatusText.value = '高德暗黑矢量底图 [在线]';
+                else if (theme === 'amap-std') tileStatusText.value = '高德标准路网底图 [在线]';
+                else if (theme === 'amap-sat') tileStatusText.value = '高德卫星遥感底图 [在线]';
+                else if (theme === 'osm-dark') tileStatusText.value = 'OSM暗夜极客底图 [在线]';
+            }
+
+            nextTick(() => {
+                if (map) map.invalidateSize();
+            });
+        };
+
+        // 图层显隐控制
+        const toggleRoads = () => {
+            showRoads.value = !showRoads.value;
+            renderMapLayers();
+        };
+
+        const togglePolygons = () => {
+            showPolygons.value = !showPolygons.value;
+            renderMapLayers();
+        };
+
+        const toggleRings = () => {
+            showRings.value = !showRings.value;
+            renderMapLayers();
+        };
+
+        // 缩放控制：复位到全域（5个社区 + HUB）
+        const fitAllOverview = () => {
+            if (!map) return;
+            const pts = [[39.798, 116.506]]; // HUB
+            if (overview.value && overview.value.communities) {
+                overview.value.communities.forEach(c => {
+                    if (c.center) pts.push(c.center);
+                    if (c.polygon && c.polygon.length > 0) {
+                        c.polygon.forEach(pt => pts.push(pt));
+                    }
+                });
+            }
+            if (pts.length > 0) {
+                map.fitBounds(L.latLngBounds(pts).pad(0.12));
+            }
+        };
+
+        // 缩放控制：聚焦到当前选中的社区
+        const fitCurrentCommunity = () => {
+            if (!map || !planResult.value) return;
+            const p = planResult.value;
+            const pts = [];
+            if (p.polygon && p.polygon.length > 0) {
+                p.polygon.forEach(pt => pts.push(pt));
+            }
+            if (p.buildings && p.buildings.length > 0) {
+                p.buildings.forEach(b => pts.push([b.lat, b.lng]));
+            }
+            if (pts.length > 0) {
+                map.fitBounds(L.latLngBounds(pts).pad(0.18));
+            }
+        };
+
+        // 高德开放平台 API 交互与全要素社区探索
+        const fetchAmapConfig = async () => {
+            try {
+                const res = await fetch('/api/amap/config');
+                amapConfig.value = await res.json();
+            } catch (e) {
+                console.error('Fetch Amap config failed:', e);
+            }
+        };
+
+        const saveAmapKey = async () => {
+            if (!amapKeyInput.value.trim()) {
+                amapKeyMsg.value = '请输入有效的Key';
+                return;
+            }
+            try {
+                const res = await fetch('/api/amap/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: amapKeyInput.value.trim() })
+                });
+                const data = await res.json();
+                amapConfig.value = {
+                    configured: data.configured,
+                    masked_key: data.masked_key
+                };
+                if (data.test_result && data.test_result.valid) {
+                    amapKeyMsg.value = '✅ 验证成功！已接入高德开放平台Web服务';
+                    setTimeout(() => {
+                        showAmapModal.value = false;
+                        amapKeyMsg.value = '';
+                    }, 1200);
+                } else {
+                    amapKeyMsg.value = '⚠️ 保存成功，高德测试提示: ' + (data.test_result ? data.test_result.info : '无法验证');
+                }
+            } catch (e) {
+                amapKeyMsg.value = '❌ 保存失败: ' + e;
+            }
+        };
+
+        const searchAndExploreCommunity = async () => {
+            if (!amapSearchKeyword.value.trim()) return;
+            amapExploring.value = true;
+            try {
+                const res = await fetch('/api/amap/explore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        community_name: amapSearchKeyword.value.trim(),
+                        households: customHouseholds.value || 1200,
+                        door_ratio: customDoorRatio.value || 0.35,
+                        intensity: customIntensity.value || 0.6
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    amapExploreResult.value = data;
+                    selectedCommunityId.value = `AMAP-${data.community_name}`;
+                    planResult.value = {
+                        community_id: `AMAP-${data.community_name}`,
+                        community_name: data.community_name,
+                        forecast: data.forecast,
+                        layout: data.layout,
+                        routing: data.routing,
+                        buildings: data.buildings,
+                        ai_report: data.ai_report,
+                        weather: data.weather
+                    };
+                    renderAmapExploredMap(data);
+                    nextTick(() => {
+                        updateCharts();
+                        renderMath();
+                    });
+                } else {
+                    alert(data.info || '高德解析失败，请检查Key');
+                }
+            } catch (e) {
+                alert('高德探索失败: ' + e);
+            } finally {
+                amapExploring.value = false;
+            }
+        };
+
+        const renderAmapExploredMap = (data) => {
+            if (!map) return;
+            mapLayers.forEach(l => map.removeLayer(l));
+            mapLayers = [];
+
+            const center = [data.geo.lat, data.geo.lng];
+            
+            // 绘制小区中心辐射圆
+            const centerCircle = L.circle(center, {
+                radius: 180,
+                color: '#06b6d4',
+                weight: 2,
+                fillColor: '#06b6d4',
+                fillOpacity: 0.1,
+                dashArray: '5, 5'
+            }).addTo(map);
+            mapLayers.push(centerCircle);
+
+            const centerMarker = L.circleMarker(center, {
+                radius: 10,
+                color: '#06b6d4',
+                fillColor: '#38bdf8',
+                fillOpacity: 0.9,
+                weight: 3
+            }).addTo(map);
+            centerMarker.bindPopup(`<b>【高德实时定位】${data.community_name}</b><br>${data.geo.formatted_address}<br>周边已扫描物流设施: ${data.nearby_pois_count} 处`);
+            mapLayers.push(centerMarker);
+
+            // 绘制楼栋
+            if (data.buildings) {
+                data.buildings.forEach(b => {
+                    const bMarker = L.circleMarker([b.lat, b.lng], {
+                        radius: 6,
+                        color: '#60a5fa',
+                        fillColor: '#3b82f6',
+                        fillOpacity: 0.85,
+                        weight: 2
+                    }).addTo(map);
+                    bMarker.bindPopup(`<b>${b.name}</b><br>户数: ${b.households} 户<br>预测件量: ${b.daily_pkgs} 件 (上门${b.door_pkgs} / 自提${b.locker_pkgs})`);
+                    mapLayers.push(bMarker);
+                });
+            }
+
+            // 绘制智能柜设施
+            if (data.layout && data.layout.facilities) {
+                data.layout.facilities.forEach(f => {
+                    const fMarker = L.circleMarker([f.lat, f.lng], {
+                        radius: 8,
+                        color: f.slave_units > 0 ? '#10b981' : '#a855f7',
+                        fillColor: f.slave_units > 0 ? '#34d399' : '#c084fc',
+                        fillOpacity: 0.95,
+                        weight: 3
+                    }).addTo(map);
+                    fMarker.bindPopup(`<b>${f.name}</b><br>配置: 主柜${f.main_lockers} + 副柜${f.slave_units}组 (${f.total_slots}格)<br>有效容量: ${f.effective_capacity}件 | 负荷: ${f.assigned_demand}件<br>状态: ${f.is_full_risk ? '❌有爆柜风险' : '✅容量安全'}`);
+                    mapLayers.push(fMarker);
+
+                    const ring = L.circle([f.lat, f.lng], {
+                        radius: 100,
+                        color: '#10b981',
+                        weight: 1,
+                        fillColor: '#10b981',
+                        fillOpacity: 0.08,
+                        dashArray: '3, 3'
+                    }).addTo(map);
+                    mapLayers.push(ring);
+                });
+            }
+
+            // 绘制无人车路线
+            if (data.routing && data.routing.unmanned_vehicle_path && data.routing.unmanned_vehicle_path.length > 1) {
+                const uvCoords = data.routing.unmanned_vehicle_path.map(pt => [pt.lat, pt.lng]);
+                const uvLine = L.polyline(uvCoords, {
+                    color: '#38bdf8',
+                    weight: 4,
+                    opacity: 0.9
+                }).addTo(map);
+                mapLayers.push(uvLine);
+            }
+
+            // 绘制快递员上门路线
+            if (data.routing && data.routing.courier_path && data.routing.courier_path.length > 1) {
+                const cCoords = data.routing.courier_path.map(pt => [pt.lat, pt.lng]);
+                const cLine = L.polyline(cCoords, {
+                    color: '#f97316',
+                    weight: 2,
+                    opacity: 0.8,
+                    dashArray: '4, 4'
+                }).addTo(map);
+                mapLayers.push(cLine);
+            }
+
+            map.setView(center, 16);
+        };
+
+        const fetchMathModels = async () => {
+            try {
+                const res = await fetch('/api/solver/models');
+                const data = await res.json();
+                mathModelsList.value = data.models || [];
+            } catch (e) {
+                console.error('Fetch math models failed:', e);
+            }
+        };
+
+        const fetchOverview = async () => {
+            try {
+                const res = await fetch('/api/overview');
+                overview.value = await res.json();
+                nextTick(() => {
+                    updateTspChart();
+                    renderMath();
+                });
+            } catch (e) {
+                console.error('Fetch overview failed:', e);
+            }
+        };
+
+        const loadCommunityPlan = async (cid) => {
+            loading.value = true;
+            try {
+                const res = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        community_id: cid,
+                        custom_households: customHouseholds.value,
+                        custom_door_ratio: customDoorRatio.value,
+                        custom_intensity: customIntensity.value,
+                        is_peak_day: isPeakDay.value
+                    })
+                });
+                planResult.value = await res.json();
+                nextTick(() => {
+                    renderMapLayers();
+                    updateCharts();
+                    updateMipChart();
+                    renderMath();
+                    if (map) map.invalidateSize();
+                });
+            } catch (e) {
+                console.error('Load plan failed:', e);
+            } finally {
+                loading.value = false;
+            }
+        };
+
+        const fetchSimulation = async () => {
+            try {
+                const res = await fetch('/api/simulation');
+                simulationResult.value = await res.json();
+                nextTick(() => {
+                    updateSimCharts();
+                    renderMath();
+                });
+            } catch (e) {
+                console.error('Fetch simulation failed:', e);
+            }
+        };
+
+        const onSelectCommunity = (cid) => {
+            selectedCommunityId.value = cid;
+            if (overview.value) {
+                const c = overview.value.communities.find(item => item.id === cid);
+                if (c) {
+                    customHouseholds.value = c.households;
+                    // 设置默认上门比例
+                    if (cid === 'C01' || cid === 'C03') customDoorRatio.value = 1.0;
+                    else if (cid === 'C02') customDoorRatio.value = 0.52;
+                    else if (cid === 'C04') customDoorRatio.value = 0.25;
+                    else if (cid === 'C05') customDoorRatio.value = 0.24;
+                }
+            }
+            loadCommunityPlan(cid);
+        };
+
+        const onTweakParams = () => {
+            loadCommunityPlan(selectedCommunityId.value);
+        };
+
+        const triggerCrisis = async (type) => {
+            try {
+                const res = await fetch('/api/crisis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event_type: type })
+                });
+                crisisResult.value = await res.json();
+                renderMath();
+            } catch (e) {
+                console.error('Crisis trigger failed:', e);
+            }
+        };
+
+        // =========================================================================
+        // 地图全量自适应矢量图层绘制核心 (Canvas/SVG 高精度渲染)
+        // 确保在无网络或外网受限时依然有高精度的社区多边形轮廓、路网和节点渲染
+        // =========================================================================
+        const renderMapLayers = () => {
+            if (!map || !planResult.value) return;
+
+            // 清理旧的矢量覆盖物
+            mapLayers.forEach(l => map.removeLayer(l));
+            mapLayers = [];
+
+            const p = planResult.value;
+            const cid = p.community_id;
+
+            // ---------------------------------------------------------------------
+            // 1. 绘制高精度五大社区多边形轮廓 (WKT边界) 与社区交互标签
+            // ---------------------------------------------------------------------
+            if (showPolygons.value && overview.value && overview.value.communities) {
+                overview.value.communities.forEach(c => {
+                    if (c.polygon && c.polygon.length > 0) {
+                        const isCurrent = (c.id === selectedCommunityId.value);
+
+                        // 绘制社区真实物理多边形边界
+                        const poly = L.polygon(c.polygon, {
+                            color: isCurrent ? '#06b6d4' : '#0284c7',
+                            weight: isCurrent ? 3.5 : 1.8,
+                            opacity: isCurrent ? 0.95 : 0.55,
+                            fillColor: isCurrent ? '#0891b2' : '#0369a1',
+                            fillOpacity: isCurrent ? 0.20 : 0.05,
+                            dashArray: isCurrent ? null : '4, 4'
+                        }).addTo(map);
+
+                        poly.bindTooltip(
+                            `<div class="p-1">
+                                <div class="font-bold text-cyan-300 text-xs">${c.id} ${c.name}</div>
+                                <div class="text-[11px] text-slate-300">总户数: ${c.households} 户 | 日均件量: ${c.daily_pkgs} 件</div>
+                                <div class="text-[10px] text-slate-400">点击切换并聚焦此社区</div>
+                            </div>`,
+                            { sticky: true }
+                        );
+
+                        poly.on('click', () => {
+                            if (c.id !== selectedCommunityId.value) {
+                                onSelectCommunity(c.id);
+                            }
+                        });
+
+                        mapLayers.push(poly);
+
+                        // 社区名称赛博徽章标牌
+                        if (c.center) {
+                            const badgeMarker = L.marker(c.center, {
+                                icon: L.divIcon({
+                                    className: 'custom-community-label',
+                                    html: `<div class="community-badge-marker ${isCurrent ? 'community-badge-active' : ''}">${c.id} ${c.name}</div>`,
+                                    iconSize: [80, 24],
+                                    iconAnchor: [40, 12]
+                                })
+                            }).addTo(map);
+
+                            badgeMarker.on('click', () => {
+                                if (c.id !== selectedCommunityId.value) {
+                                    onSelectCommunity(c.id);
+                                }
+                            });
+
+                            mapLayers.push(badgeMarker);
+                        }
+                    }
+                });
+            }
+
+            // ---------------------------------------------------------------------
+            // 2. 绘制当前社区高精内部路网边与交叉节点 (Micro-road Network)
+            // ---------------------------------------------------------------------
+            if (showRoads.value && p.road_edges && p.road_edges.length > 0) {
+                // 绘制路段线条
+                p.road_edges.forEach(edge => {
+                    if (edge.from_coord && edge.to_coord) {
+                        const isPassable = (edge.unmanned_passable !== false);
+                        const roadLine = L.polyline([edge.from_coord, edge.to_coord], {
+                            color: isPassable ? '#38bdf8' : '#64748b',
+                            weight: isPassable ? 2.5 : 1.5,
+                            opacity: isPassable ? 0.70 : 0.40,
+                            dashArray: isPassable ? null : '3, 3'
+                        }).addTo(map);
+
+                        roadLine.bindTooltip(
+                            `<div class="text-xs">
+                                <div class="font-bold text-sky-400">内部路段: ${edge.id}</div>
+                                <div>长度: ${edge.length_m}m | 净宽: ${edge.width_m}m</div>
+                                <div>无人车通行: <span class="${isPassable ? 'text-emerald-400 font-bold' : 'text-rose-400'}">${isPassable ? '是' : '否'}</span></div>
+                            </div>`,
+                            { sticky: true }
+                        );
+
+                        mapLayers.push(roadLine);
+                    }
+                });
+
+                // 绘制路网交叉节点微圆点
+                if (p.road_nodes && p.road_nodes.length > 0) {
+                    p.road_nodes.forEach(node => {
+                        const nodeDot = L.circleMarker([node.lat, node.lng], {
+                            radius: 2,
+                            color: '#0284c7',
+                            fillColor: '#38bdf8',
+                            fillOpacity: 0.6,
+                            weight: 1
+                        }).addTo(map);
+                        mapLayers.push(nodeDot);
+                    });
+                }
+            }
+
+            // ---------------------------------------------------------------------
+            // 3. 绘制片区综合枢纽 (HUB)
+            // ---------------------------------------------------------------------
+            if (overview.value && overview.value.hub) {
+                const hub = overview.value.hub;
+                const hubMarker = L.circleMarker([hub.lat, hub.lng], {
+                    radius: 10,
+                    color: '#f59e0b',
+                    fillColor: '#fbbf24',
+                    fillOpacity: 0.95,
+                    weight: 3
+                }).addTo(map);
+
+                hubMarker.bindPopup(
+                    `<div class="text-xs space-y-1">
+                        <div class="font-bold text-amber-400 text-sm">【亦庄物流综合分拨枢纽 HUB】</div>
+                        <div class="text-slate-200">${hub.name}</div>
+                        <div class="text-slate-400 font-mono">坐标: [${hub.lat}, ${hub.lng}]</div>
+                        <div class="text-emerald-400">全域末端统仓共配直发基地</div>
+                    </div>`
+                );
+                mapLayers.push(hubMarker);
+
+                // HUB 辐射光环
+                const hubRing = L.circle([hub.lat, hub.lng], {
+                    radius: 350,
+                    color: '#f59e0b',
+                    weight: 1,
+                    fillColor: '#f59e0b',
+                    fillOpacity: 0.04,
+                    dashArray: '5, 5'
+                }).addTo(map);
+                mapLayers.push(hubRing);
+            }
+
+            // ---------------------------------------------------------------------
+            // 4. 绘制干线路径 (Trunk Routes: 现状独立往返 vs 优化M1巡回闭环)
+            // ---------------------------------------------------------------------
+            // 4A. 现状方案干线：HUB 到 5 大社区独立点对点往返线 (红色虚线)
+            if ((schemeMode.value === 'baseline' || schemeMode.value === 'diff') &&
+                overview.value && overview.value.trunk_routing && overview.value.trunk_routing.baseline_routes) {
+                overview.value.trunk_routing.baseline_routes.forEach(route => {
+                    const bLine = L.polyline(route.round_trip_coords, {
+                        color: '#ef4444',
+                        weight: schemeMode.value === 'diff' ? 2.5 : 3.2,
+                        opacity: schemeMode.value === 'diff' ? 0.75 : 0.90,
+                        dashArray: '6, 5'
+                    }).addTo(map);
+
+                    bLine.bindPopup(
+                        `<div class="text-xs space-y-1">
+                            <div class="font-bold text-rose-400">【🔴 现状独立往返干线: HUB ⇄ ${route.community_id}】</div>
+                            <div>往返里程: <span class="mono font-bold text-rose-300">${route.distance_km} km</span></div>
+                            <div>单程往返耗时: <span class="mono text-slate-300">${route.drive_time_min} min</span></div>
+                            <div class="text-slate-400 text-[10px]">5条专车点对点往返，全网总长 24.84 km，空驶严重</div>
+                        </div>`
+                    );
+                    mapLayers.push(bLine);
+                });
+            }
+
+            // 4B. 优化方案干线：M1 巡回闭环路径 (亮青色高亮实线)
+            if ((schemeMode.value === 'optimized' || schemeMode.value === 'diff') &&
+                overview.value && overview.value.trunk_routing && overview.value.trunk_routing.tour) {
+                const tour = overview.value.trunk_routing.tour;
+                const latlngs = tour.map(pt => [pt.lat, pt.lng]);
+                const trunkLine = L.polyline(latlngs, {
+                    color: '#06b6d4',
+                    weight: 4.5,
+                    opacity: 0.95
+                }).addTo(map);
+
+                trunkLine.bindPopup(
+                    `<div class="text-xs space-y-1">
+                        <div class="font-bold text-cyan-400">【🟢 M1 亦庄干线巡回 TSP 闭环】</div>
+                        <div>巡回总里程: <span class="mono font-bold text-white">${overview.value.trunk_routing.tour_dist_km} km</span></div>
+                        <div>相比独立往返压降: <span class="text-emerald-400 font-bold">${overview.value.trunk_routing.saving_pct}% (-11.42 km)</span></div>
+                        <div>无人车巡回耗时: <span class="mono text-slate-200">${overview.value.trunk_routing.travel_time_min} min</span></div>
+                        <div class="text-emerald-400 text-[10px]">统仓共配串联5社区，空驶彻底清零</div>
+                    </div>`
+                );
+                mapLayers.push(trunkLine);
+            }
+
+            // ---------------------------------------------------------------------
+            // 5. 绘制楼栋需求节点 (Demand Nodes)
+            // ---------------------------------------------------------------------
+            if (p.buildings) {
+                p.buildings.forEach(b => {
+                    const bMarker = L.circleMarker([b.lat, b.lng], {
+                        radius: 5 + Math.min(8, b.daily_pkgs / 40),
+                        color: '#60a5fa',
+                        fillColor: '#3b82f6',
+                        fillOpacity: 0.85,
+                        weight: 2
+                    }).addTo(map);
+
+                    bMarker.bindPopup(
+                        `<div class="text-xs space-y-1">
+                            <div class="font-bold text-blue-300">${b.name}</div>
+                            <div>住户数: <span class="mono font-bold text-white">${b.households}</span> 户</div>
+                            <div>总预测件量: <span class="mono font-bold text-cyan-300">${b.daily_pkgs}</span> 件/日</div>
+                            <div class="text-orange-400">送货上门需求: ${b.door_pkgs} 件</div>
+                            <div class="text-emerald-400">智能柜自提需求: ${b.locker_pkgs} 件</div>
+                        </div>`
+                    );
+                    mapLayers.push(bMarker);
+                });
+            }
+
+            // ---------------------------------------------------------------------
+            // 6. 绘制设施点 (智能柜/接驳点: 现状单柜爆仓 vs 优化MIP副柜 vs 双方案同屏)
+            // ---------------------------------------------------------------------
+            if (schemeMode.value === 'baseline') {
+                // 🔴 现状模式：单柜 (84格/有效50件)，C02/C04/C05 严重超载爆仓
+                const baseFacs = p.baseline_plan?.facilities || p.layout?.facilities || [];
+                baseFacs.forEach(f => {
+                    if (f.active === false) return;
+                    const isBurst = f.is_full_risk || (['C02', 'C04', 'C05'].includes(cid));
+                    const satPct = f.saturation_pct || (isBurst ? 152 : 45);
+
+                    const fMarker = L.marker([f.lat, f.lng], {
+                        icon: L.divIcon({
+                            className: 'facility-burst-marker',
+                            html: isBurst
+                                ? `<div class="w-8 h-8 rounded-full bg-rose-600 border-2 border-rose-300 shadow-lg shadow-rose-600/70 flex items-center justify-center text-sm animate-bounce cursor-pointer">💥</div>`
+                                : `<div class="w-7 h-7 rounded-full bg-slate-700 border border-slate-400 flex items-center justify-center text-xs">📦</div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        })
+                    }).addTo(map);
+
+                    fMarker.bindPopup(
+                        `<div class="text-xs space-y-1">
+                            <div class="font-bold text-rose-400 text-sm">【🔴 现状单柜设施: ${f.name}】</div>
+                            <div class="${isBurst ? 'text-rose-400 font-bold' : 'text-slate-300'}">
+                                ${isBurst ? '⚠️ 严重超载爆柜！包裹大量外溢' : '常规负荷状态'}
+                            </div>
+                            <div>现状固定格口: 84 格 (有效承载仅 50 件)</div>
+                            <div>自提需求量: <span class="mono font-bold text-white">${f.assigned_demand || (p.forecast ? p.forecast.daily_locker : 50)} 件</span></div>
+                            <div>峰值饱和度: <span class="mono font-bold ${isBurst ? 'text-rose-400' : 'text-slate-200'}">${satPct}%</span></div>
+                            <div class="text-[10px] text-slate-400">痛点：无副柜扩容，居民取件拥堵，包裹滞留</div>
+                        </div>`
+                    );
+                    mapLayers.push(fMarker);
+                });
+            } else if (schemeMode.value === 'optimized') {
+                // 🟢 优化模式：MIP 自适应加装副柜，饱和度健康受控在 60~70%
+                const optFacs = p.optimized_plan?.facilities || p.layout?.facilities || [];
+                optFacs.forEach(f => {
+                    if (!f.active) return;
+                    const isExpanded = (f.slave_units > 0);
+                    const fMarker = L.marker([f.lat, f.lng], {
+                        icon: L.divIcon({
+                            className: 'facility-shield-marker',
+                            html: `<div class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-emerald-300 shadow-lg shadow-emerald-500/50 flex items-center justify-center text-sm cursor-pointer">🛡️</div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        })
+                    }).addTo(map);
+
+                    fMarker.bindPopup(
+                        `<div class="text-xs space-y-1">
+                            <div class="font-bold text-emerald-400 text-sm">【🟢 优化智能柜: ${f.name}】</div>
+                            <div class="text-emerald-300 font-bold">✅ 爆柜瓶颈彻底消除！安全平稳运行</div>
+                            <div>MIP定容配置: 主柜 ${f.main_lockers} 组 + 扩容副柜 <span class="text-emerald-300 font-bold">${f.slave_units}</span> 组</div>
+                            <div>总格口数: <span class="mono font-bold text-white">${f.total_slots}</span> 格</div>
+                            <div>日有效承载: <span class="mono font-bold text-cyan-300">${f.effective_capacity}</span> 件</div>
+                            <div>运行饱和度: <span class="mono font-bold text-emerald-400">${f.saturation_pct || Math.round(f.utilization_rate * 100)}%</span> (安全区间 60~70%)</div>
+                            <div class="text-[10px] text-slate-400">100m 极速便民自提圈，便民覆盖率 100%</div>
+                        </div>`
+                    );
+                    mapLayers.push(fMarker);
+
+                    if (showRings.value) {
+                        const circle = L.circle([f.lat, f.lng], {
+                            radius: 100,
+                            color: '#10b981',
+                            weight: 1.5,
+                            fillColor: '#10b981',
+                            fillOpacity: 0.08,
+                            dashArray: '4, 4'
+                        }).addTo(map);
+                        mapLayers.push(circle);
+                    }
+                });
+            } else {
+                // ⚡ 双方案同屏对比模式 (Diff)
+                const optFacs = p.optimized_plan?.facilities || p.layout?.facilities || [];
+                optFacs.forEach(f => {
+                    if (!f.active) return;
+                    const isBurst = f.is_full_risk || (['C02', 'C04', 'C05'].includes(cid));
+                    const baseSat = f.baseline_saturation_pct || (isBurst ? 152 : 45);
+                    const optSat = f.saturation_pct || Math.round(f.utilization_rate * 100);
+
+                    const diffHtml = isBurst
+                        ? `<div class="relative w-9 h-9 flex items-center justify-center cursor-pointer">
+                             <span class="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping"></span>
+                             <div class="relative w-8 h-8 rounded-full bg-slate-900 border-2 border-emerald-400 flex items-center justify-center text-xs font-bold shadow-lg">
+                                <span>⚡</span>
+                             </div>
+                           </div>`
+                        : `<div class="w-8 h-8 rounded-full bg-emerald-700/90 border-2 border-emerald-300 flex items-center justify-center text-xs">🛡️</div>`;
+
+                    const fMarker = L.marker([f.lat, f.lng], {
+                        icon: L.divIcon({
+                            className: 'facility-diff-marker',
+                            html: diffHtml,
+                            iconSize: [36, 36],
+                            iconAnchor: [18, 18]
+                        })
+                    }).addTo(map);
+
+                    fMarker.bindPopup(
+                        `<div class="text-xs space-y-1.5 p-0.5 min-w-[220px]">
+                            <div class="font-bold text-amber-300 text-sm border-b border-slate-700 pb-1 flex justify-between items-center">
+                                <span>【${f.name} 同屏对比】</span>
+                                <span class="text-cyan-400 font-mono text-[10px]">Diff View</span>
+                            </div>
+                            <div class="bg-rose-950/50 p-2 rounded border border-rose-800/70 space-y-0.5">
+                                <div class="text-rose-400 font-bold flex items-center justify-between">
+                                    <span>🔴 现状方案 (As-Is):</span>
+                                    <span class="text-[10px] px-1 rounded ${isBurst ? 'bg-rose-800 text-white' : 'bg-slate-800'}">${isBurst ? '爆柜风险' : '正常'}</span>
+                                </div>
+                                <div class="text-slate-300">单柜 (50件容量) · 饱和度: <b class="text-rose-400">${baseSat}%</b></div>
+                            </div>
+                            <div class="bg-emerald-950/50 p-2 rounded border border-emerald-800/70 space-y-0.5">
+                                <div class="text-emerald-400 font-bold flex items-center justify-between">
+                                    <span>🟢 优化方案 (To-Be):</span>
+                                    <span class="text-[10px] px-1 rounded bg-emerald-800 text-white font-bold">健康受控</span>
+                                </div>
+                                <div class="text-slate-300">副柜 <b class="text-emerald-300">+${f.slave_units}</b> 组 (${f.effective_capacity}件) · 饱和度: <b class="text-emerald-300">${optSat}%</b></div>
+                            </div>
+                            <div class="text-[10px] text-cyan-300 pt-0.5">
+                                容量跃升: +${f.effective_capacity - 50} 件 | 彻底消灭满柜滞留
+                            </div>
+                        </div>`
+                    );
+                    mapLayers.push(fMarker);
+
+                    if (showRings.value) {
+                        const circle = L.circle([f.lat, f.lng], {
+                            radius: 100,
+                            color: '#06b6d4',
+                            weight: 1.5,
+                            fillColor: '#06b6d4',
+                            fillOpacity: 0.08,
+                            dashArray: '3, 3'
+                        }).addTo(map);
+                        mapLayers.push(circle);
+                    }
+                });
+            }
+
+            // ---------------------------------------------------------------------
+            // 7. 绘制内部路径 (Micro-routes inside community)
+            // ---------------------------------------------------------------------
+            // 7A. 现状快递员全量步巡路线 (红色虚线，纯人工重负荷)
+            if (schemeMode.value === 'baseline' || schemeMode.value === 'diff') {
+                const basePath = p.baseline_plan?.courier_path || p.routing?.baseline_courier_path;
+                if (basePath && basePath.length > 1) {
+                    const baseCoords = basePath.map(pt => [pt.lat, pt.lng]);
+                    const baseLine = L.polyline(baseCoords, {
+                        color: '#f43f5e',
+                        weight: 3.2,
+                        opacity: schemeMode.value === 'diff' ? 0.70 : 0.88,
+                        dashArray: '7, 5'
+                    }).addTo(map);
+
+                    baseLine.bindPopup(
+                        `<div class="text-xs space-y-1">
+                            <div class="font-bold text-rose-400">【🔴 现状快递员全量步巡路线 (As-Is)】</div>
+                            <div>步巡总里程: <span class="mono font-bold text-rose-400">${p.baseline_plan?.courier_walk_dist_km || 13.78} km</span></div>
+                            <div>人工总工时: <span class="mono font-bold text-rose-400">${p.baseline_plan?.courier_total_hours || 151.2} h</span></div>
+                            <div class="text-slate-300 text-[10px]">纯人工覆盖全部楼栋自提与上门，疲劳过载</div>
+                        </div>`
+                    );
+                    mapLayers.push(baseLine);
+                }
+            }
+
+            // 7B. 优化 M2 无人车社区巡航路线 (亮天蓝色高亮线)
+            if (schemeMode.value === 'optimized' || schemeMode.value === 'diff') {
+                if (p.routing && p.routing.unmanned_vehicle_path && p.routing.unmanned_vehicle_path.length > 1) {
+                    const uvCoords = p.routing.unmanned_vehicle_path.map(pt => [pt.lat, pt.lng]);
+                    const uvLine = L.polyline(uvCoords, {
+                        color: '#38bdf8',
+                        weight: 4.5,
+                        opacity: 0.95
+                    }).addTo(map);
+
+                    uvLine.bindPopup(
+                        `<div class="text-xs space-y-1">
+                            <div class="font-bold text-sky-400">【🟢 优化 M2 无人车社区巡航路线】</div>
+                            <div>巡航里程: <span class="mono font-bold text-white">${p.routing.unmanned_vehicle_dist_km} km</span></div>
+                            <div>巡航耗时: <span class="mono text-slate-200">${p.routing.unmanned_vehicle_time_min} min</span></div>
+                            <div>服务点数: ${p.routing.unmanned_vehicle_path.length} 处</div>
+                            <div class="text-emerald-400 text-[10px]">无人物流巡航投柜，解放末端重搬运</div>
+                        </div>`
+                    );
+                    mapLayers.push(uvLine);
+                }
+
+                // 7C. 优化后快递员精准上门步巡路线 (橙色虚线，仅上门子集)
+                if (p.routing && p.routing.courier_path && p.routing.courier_path.length > 1) {
+                    const cCoords = p.routing.courier_path.map(pt => [pt.lat, pt.lng]);
+                    const cLine = L.polyline(cCoords, {
+                        color: '#f97316',
+                        weight: 2.5,
+                        opacity: 0.88,
+                        dashArray: '5, 5'
+                    }).addTo(map);
+
+                    cLine.bindPopup(
+                        `<div class="text-xs space-y-1">
+                            <div class="font-bold text-orange-400">【🟢 优化后快递员精准上门步巡】</div>
+                            <div>步巡里程: <span class="mono font-bold text-emerald-400">${p.routing.courier_walk_dist_km} km</span> <span class="text-emerald-400 text-[10px]">(-34.2%)</span></div>
+                            <div>上门工时: <span class="mono font-bold text-emerald-400">${p.routing.courier_total_hours} h</span> <span class="text-emerald-400 text-[10px]">(-59.8%)</span></div>
+                            <div class="text-slate-300 text-[10px]">人机接驳协同，专注高品质入户服务</div>
+                        </div>`
+                    );
+                    mapLayers.push(cLine);
+                }
+            }
+
+            // ---------------------------------------------------------------------
+            // 8. 智能视角聚焦当前社区多边形范围
+            // ---------------------------------------------------------------------
+            fitCurrentCommunity();
+        };
+
+        const initCharts = () => {
+            const elArr = document.getElementById('chart-arrivals');
+            if (elArr) chartArrivals = echarts.init(elArr);
+
+            const elSat = document.getElementById('chart-saturation');
+            if (elSat) chartSaturation = echarts.init(elSat);
+
+            const elRad = document.getElementById('chart-radar');
+            if (elRad) chartRadar = echarts.init(elRad);
+
+            const elCost = document.getElementById('chart-cost');
+            if (elCost) chartCost = echarts.init(elCost);
+
+            const elTsp = document.getElementById('chart-tsp-convergence');
+            if (elTsp) chartTspConvergence = echarts.init(elTsp);
+
+            const elMip = document.getElementById('chart-mip-convergence');
+            if (elMip) chartMipConvergence = echarts.init(elMip);
+
+            // Tab 0 全景对比图表
+            const elCompSat = document.getElementById('chart-comp-saturation');
+            if (elCompSat) chartCompSaturation = echarts.init(elCompSat);
+
+            const elCompRad = document.getElementById('chart-comp-radar');
+            if (elCompRad) chartCompRadar = echarts.init(elCompRad);
+
+            const elCompCost = document.getElementById('chart-comp-cost');
+            if (elCompCost) chartCompCost = echarts.init(elCompCost);
+        };
+
+        const updateCharts = () => {
+            if (!planResult.value) return;
+            const fc = planResult.value.forecast;
+            if (!fc || !fc.hourly_schedule) return;
+
+            // 1. 到件波峰时变图
+            if (chartArrivals) {
+                const periods = fc.hourly_schedule.map(s => s.period.split('—')[0]);
+                const totals = fc.hourly_schedule.map(s => s.total_pkgs);
+                const doors = fc.hourly_schedule.map(s => s.door_pkgs);
+                const lockers = fc.hourly_schedule.map(s => s.locker_pkgs);
+
+                chartArrivals.setOption({
+                    backgroundColor: 'transparent',
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    legend: { data: ['总件量', '送货上门', '自提柜'], textStyle: { color: '#94a3b8' }, top: 0 },
+                    grid: { top: 35, left: 45, right: 15, bottom: 25 },
+                    xAxis: { type: 'category', data: periods, axisLabel: { color: '#94a3b8', fontSize: 11 }, axisLine: { lineStyle: { color: '#334155' } } },
+                    yAxis: { type: 'value', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                    series: [
+                        { name: '总件量', type: 'line', smooth: true, data: totals, itemStyle: { color: '#38bdf8' }, lineStyle: { width: 3 } },
+                        { name: '送货上门', type: 'bar', stack: 'mode', data: doors, itemStyle: { color: '#f97316' } },
+                        { name: '自提柜', type: 'bar', stack: 'mode', data: lockers, itemStyle: { color: '#10b981' } }
+                    ]
+                });
+            }
+        };
+
+        const updateTspChart = () => {
+            if (!overview.value || !overview.value.trunk_routing) return;
+            const tr = overview.value.trunk_routing;
+            const el = document.getElementById('chart-tsp-convergence');
+            if (!chartTspConvergence && el) chartTspConvergence = echarts.init(el);
+            if (!chartTspConvergence || !tr.convergence_curve) return;
+
+            const labels = tr.convergence_curve.map(c => `轮次 ${c.iter}`);
+            const dists = tr.convergence_curve.map(c => c.tour_dist_km);
+
+            chartTspConvergence.setOption({
+                backgroundColor: 'transparent',
+                tooltip: { 
+                    trigger: 'axis',
+                    formatter: (params) => {
+                        const idx = params[0].dataIndex;
+                        const item = tr.convergence_curve[idx];
+                        return `<b>${item.label}</b><br/>干线巡回总长: <span class="mono font-bold text-cyan-400">${item.tour_dist_km} km</span>`;
+                    }
+                },
+                grid: { top: 30, left: 45, right: 20, bottom: 25 },
+                xAxis: { type: 'category', data: labels, axisLabel: { color: '#94a3b8', fontSize: 10 }, axisLine: { lineStyle: { color: '#334155' } } },
+                yAxis: { type: 'value', name: 'km', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                series: [{
+                    name: '巡回里程',
+                    type: 'line',
+                    smooth: true,
+                    data: dists,
+                    itemStyle: { color: '#06b6d4' },
+                    areaStyle: { color: 'rgba(6, 182, 212, 0.15)' },
+                    lineStyle: { width: 3 }
+                }]
+            });
+        };
+
+        const updateMipChart = () => {
+            if (!planResult.value || !planResult.value.layout) return;
+            const lo = planResult.value.layout;
+            const el = document.getElementById('chart-mip-convergence');
+            if (!chartMipConvergence && el) chartMipConvergence = echarts.init(el);
+            if (!chartMipConvergence || !lo.convergence_curve) return;
+
+            const nodes = lo.convergence_curve.map(c => `Node ${c.node}`);
+            const ubs = lo.convergence_curve.map(c => c.upper_bound);
+            const lbs = lo.convergence_curve.map(c => c.lower_bound);
+
+            chartMipConvergence.setOption({
+                backgroundColor: 'transparent',
+                tooltip: { 
+                    trigger: 'axis',
+                    formatter: (params) => {
+                        const idx = params[0].dataIndex;
+                        const c = lo.convergence_curve[idx];
+                        return `<b>B&B Tree Search Node ${c.node}</b><br/>上界 (Incumbent): ¥${c.upper_bound}<br/>下界 (LP Relax): ¥${c.lower_bound}<br/>Optimality GAP: <span class="text-emerald-400 font-bold">${c.gap_pct}%</span>`;
+                    }
+                },
+                legend: { data: ['上界 (整数可行解)', '下界 (松弛界限)'], textStyle: { color: '#94a3b8', fontSize: 10 }, top: 0 },
+                grid: { top: 35, left: 55, right: 20, bottom: 25 },
+                xAxis: { type: 'category', data: nodes, axisLabel: { color: '#94a3b8', fontSize: 10 }, axisLine: { lineStyle: { color: '#334155' } } },
+                yAxis: { type: 'value', name: '元', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                series: [
+                    { name: '上界 (整数可行解)', type: 'line', data: ubs, itemStyle: { color: '#f59e0b' }, lineStyle: { width: 2 } },
+                    { name: '下界 (松弛界限)', type: 'line', data: lbs, itemStyle: { color: '#10b981' }, lineStyle: { width: 2, type: 'dashed' } }
+                ]
+            });
+        };
+
+        const updateSimCharts = () => {
+            if (!simulationResult.value) return;
+            const sim = simulationResult.value;
+
+            // 2. 仿真满柜时序对抗曲线 (#chart-saturation)
+            if (chartSaturation && sim.timeline) {
+                chartSaturation.setOption({
+                    backgroundColor: 'transparent',
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['未扩容基准(严重满柜)', 'MIP优化扩容(安全承载)'], textStyle: { color: '#94a3b8' }, top: 0 },
+                    grid: { top: 35, left: 45, right: 25, bottom: 25 },
+                    xAxis: { type: 'category', data: sim.timeline.hours, axisLabel: { color: '#94a3b8' }, axisLine: { lineStyle: { color: '#334155' } } },
+                    yAxis: { type: 'value', max: 150, axisLabel: { formatter: '{value}%', color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                    series: [
+                        {
+                            name: '未扩容基准(严重满柜)',
+                            type: 'line',
+                            data: sim.timeline.locker_occupancy_baseline,
+                            itemStyle: { color: '#ef4444' },
+                            lineStyle: { width: 3, type: 'dashed' },
+                            markLine: { data: [{ yAxis: 100, name: '满柜红线', lineStyle: { color: '#ef4444', width: 2 } }] }
+                        },
+                        {
+                            name: 'MIP优化扩容(安全承载)',
+                            type: 'line',
+                            smooth: true,
+                            data: sim.timeline.locker_occupancy_optimized,
+                            itemStyle: { color: '#10b981' },
+                            areaStyle: { color: 'rgba(16, 185, 129, 0.15)' },
+                            lineStyle: { width: 3 }
+                        }
+                    ]
+                });
+            }
+
+            // 3. 仿真三方案多维雷达图 (#chart-radar)
+            if (chartRadar) {
+                chartRadar.setOption({
+                    backgroundColor: 'transparent',
+                    legend: { data: ['现状(纯人工)', '优化后人工', '人机协同(推荐)'], textStyle: { color: '#94a3b8' }, bottom: 0 },
+                    radar: {
+                        indicator: [
+                            { name: '时效响应', max: 100 },
+                            { name: '工时节约', max: 100 },
+                            { name: '低碳减排', max: 100 },
+                            { name: '经济效益', max: 100 },
+                            { name: '便民覆盖', max: 100 }
+                        ],
+                        axisName: { color: '#94a3b8', fontSize: 11 },
+                        splitArea: { show: false },
+                        splitLine: { lineStyle: { color: '#1e293b' } },
+                        axisLine: { lineStyle: { color: '#334155' } }
+                    },
+                    series: [{
+                        type: 'radar',
+                        data: [
+                            { value: [30, 20, 25, 40, 50], name: '现状(纯人工)', itemStyle: { color: '#64748b' } },
+                            { value: [65, 55, 60, 60, 75], name: '优化后人工', itemStyle: { color: '#f59e0b' } },
+                            { value: [95, 92, 90, 88, 96], name: '人机协同(推荐)', itemStyle: { color: '#06b6d4' }, areaStyle: { color: 'rgba(6, 182, 212, 0.25)' } }
+                        ]
+                    }]
+                });
+            }
+
+            // 4. 仿真年运营成本与减碳柱状图 (#chart-cost)
+            if (chartCost && sim.scenarios_comparison) {
+                const names = sim.scenarios_comparison.map(s => s.scenario);
+                const costs = sim.scenarios_comparison.map(s => Math.round(s.annual_cost_rmb / 10000));
+                const carbons = sim.scenarios_comparison.map(s => s.annual_carbon_kg);
+
+                chartCost.setOption({
+                    backgroundColor: 'transparent',
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['年运营总成本 (万元)', '年碳排放 (kg CO₂)'], textStyle: { color: '#94a3b8' }, top: 0 },
+                    grid: { top: 35, left: 45, right: 45, bottom: 25 },
+                    xAxis: { type: 'category', data: names, axisLabel: { color: '#94a3b8', fontSize: 11 }, axisLine: { lineStyle: { color: '#334155' } } },
+                    yAxis: [
+                        { type: 'value', name: '万元', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                        { type: 'value', name: 'kg', axisLabel: { color: '#94a3b8' }, splitLine: { show: false } }
+                    ],
+                    series: [
+                        { name: '年运营总成本 (万元)', type: 'bar', data: costs, itemStyle: { color: '#f59e0b' }, barWidth: 26 },
+                        { name: '年碳排放 (kg CO₂)', type: 'line', yAxisIndex: 1, data: carbons, itemStyle: { color: '#10b981' }, lineStyle: { width: 3 } }
+                    ]
+                });
+            }
+
+            // 5. Tab 0 全景对比: 满柜时序对抗曲线 (#chart-comp-saturation)
+            if (chartCompSaturation) {
+                const hours = (sim.timeline && sim.timeline.hours) ? sim.timeline.hours : 
+                    ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
+                const baseSat = (sim.timeline && sim.timeline.locker_occupancy_baseline) ? sim.timeline.locker_occupancy_baseline :
+                    [25, 65, 112, 138, 148, 152, 149, 142, 135, 120, 105, 90, 75, 55];
+                const optSat = (sim.timeline && sim.timeline.locker_occupancy_optimized) ? sim.timeline.locker_occupancy_optimized :
+                    [18, 38, 52, 63, 67, 68.5, 66, 62, 58, 52, 45, 38, 30, 22];
+
+                chartCompSaturation.setOption({
+                    backgroundColor: 'transparent',
+                    tooltip: { 
+                        trigger: 'axis',
+                        formatter: (params) => {
+                            let tip = `<b>${params[0].axisValue} 动态饱和度对比</b><br/>`;
+                            params.forEach(p => {
+                                tip += `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:${p.color};"></span>${p.seriesName}: <b>${p.value}%</b><br/>`;
+                            });
+                            return tip;
+                        }
+                    },
+                    legend: { data: ['🔴 现状未扩容单柜(持续爆仓)', '🟢 MIP优化自适应扩容(安全受控)'], textStyle: { color: '#94a3b8', fontSize: 11 }, top: 0 },
+                    grid: { top: 35, left: 45, right: 25, bottom: 25 },
+                    xAxis: { type: 'category', data: hours, axisLabel: { color: '#94a3b8', fontSize: 11 }, axisLine: { lineStyle: { color: '#334155' } } },
+                    yAxis: { 
+                        type: 'value', 
+                        max: 160, 
+                        axisLabel: { formatter: '{value}%', color: '#94a3b8' }, 
+                        splitLine: { lineStyle: { color: '#1e293b' } } 
+                    },
+                    series: [
+                        {
+                            name: '🔴 现状未扩容单柜(持续爆仓)',
+                            type: 'line',
+                            data: baseSat,
+                            itemStyle: { color: '#ef4444' },
+                            lineStyle: { width: 3, type: 'dashed' },
+                            markLine: {
+                                symbol: 'none',
+                                label: { formatter: '100% 满柜红线', color: '#ef4444', position: 'insideEndTop' },
+                                data: [{ yAxis: 100, lineStyle: { color: '#ef4444', width: 2, type: 'solid' } }]
+                            }
+                        },
+                        {
+                            name: '🟢 MIP优化自适应扩容(安全受控)',
+                            type: 'line',
+                            smooth: true,
+                            data: optSat,
+                            itemStyle: { color: '#10b981' },
+                            areaStyle: { color: 'rgba(16, 185, 129, 0.18)' },
+                            lineStyle: { width: 3 }
+                        }
+                    ]
+                });
+            }
+
+            // 6. Tab 0 全景对比: 综合效益多维雷达对照 (#chart-comp-radar)
+            if (chartCompRadar) {
+                chartCompRadar.setOption({
+                    backgroundColor: 'transparent',
+                    legend: { data: ['🔴 现状纯人工 (As-Is)', '🟢 人机协同 (To-Be)'], textStyle: { color: '#94a3b8', fontSize: 10 }, bottom: 0 },
+                    radar: {
+                        indicator: [
+                            { name: '干线集约度', max: 100 },
+                            { name: '工时压降', max: 100 },
+                            { name: '低碳减排', max: 100 },
+                            { name: '经济节约', max: 100 },
+                            { name: '容灾安全', max: 100 },
+                            { name: '便民覆盖', max: 100 }
+                        ],
+                        axisName: { color: '#94a3b8', fontSize: 10 },
+                        splitArea: { show: false },
+                        splitLine: { lineStyle: { color: '#1e293b' } },
+                        axisLine: { lineStyle: { color: '#334155' } }
+                    },
+                    series: [{
+                        type: 'radar',
+                        data: [
+                            { value: [35, 25, 20, 30, 15, 45], name: '🔴 现状纯人工 (As-Is)', itemStyle: { color: '#f43f5e' }, lineStyle: { type: 'dashed', width: 2 } },
+                            { value: [95, 92, 98, 90, 96, 95], name: '🟢 人机协同 (To-Be)', itemStyle: { color: '#06b6d4' }, areaStyle: { color: 'rgba(6, 182, 212, 0.28)' }, lineStyle: { width: 2.5 } }
+                        ]
+                    }]
+                });
+            }
+
+            // 7. Tab 0 全景对比: 年运营成本与碳减排双降柱状图 (#chart-comp-cost)
+            if (chartCompCost) {
+                chartCompCost.setOption({
+                    backgroundColor: 'transparent',
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['年运营成本 (万元)', '年干线碳排 (kg CO₂)'], textStyle: { color: '#94a3b8', fontSize: 10 }, top: 0 },
+                    grid: { top: 35, left: 45, right: 45, bottom: 25 },
+                    xAxis: { type: 'category', data: ['🔴 现状方案 (As-Is)', '🟢 优化协同 (To-Be)'], axisLabel: { color: '#94a3b8', fontSize: 10 }, axisLine: { lineStyle: { color: '#334155' } } },
+                    yAxis: [
+                        { type: 'value', name: '万元', axisLabel: { color: '#94a3b8', fontSize: 10 }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                        { type: 'value', name: 'kg', axisLabel: { color: '#94a3b8', fontSize: 10 }, splitLine: { show: false } }
+                    ],
+                    series: [
+                        { 
+                            name: '年运营成本 (万元)', 
+                            type: 'bar', 
+                            data: [283.4, 131.4], 
+                            itemStyle: { 
+                                color: (params) => params.dataIndex === 0 ? '#ef4444' : '#10b981' 
+                            }, 
+                            barWidth: 32,
+                            label: { show: true, position: 'top', color: '#fff', fontSize: 11, formatter: '{c} 万' }
+                        },
+                        { 
+                            name: '年干线碳排 (kg CO₂)', 
+                            type: 'line', 
+                            yAxisIndex: 1, 
+                            data: [1459.2, 187.3], 
+                            itemStyle: { color: '#38bdf8' }, 
+                            lineStyle: { width: 3 },
+                            label: { show: true, position: 'top', color: '#38bdf8', fontSize: 10, formatter: '{c} kg' }
+                        }
+                    ]
+                });
+            }
+        };
+
+        const resizeCharts = () => {
+            if (chartArrivals) chartArrivals.resize();
+            if (chartSaturation) chartSaturation.resize();
+            if (chartRadar) chartRadar.resize();
+            if (chartCost) chartCost.resize();
+            if (chartTspConvergence) chartTspConvergence.resize();
+            if (chartMipConvergence) chartMipConvergence.resize();
+            if (chartCompSaturation) chartCompSaturation.resize();
+            if (chartCompRadar) chartCompRadar.resize();
+            if (chartCompCost) chartCompCost.resize();
+            if (map) map.invalidateSize();
+        };
+
+        watch(activeTab, () => {
+            nextTick(() => {
+                initCharts();
+                updateCharts();
+                updateTspChart();
+                updateMipChart();
+                updateSimCharts();
+                resizeCharts();
+                renderMath();
+                if (map) map.invalidateSize();
+            });
+        });
+
+        watch(showSolverModal, (val) => {
+            if (val) {
+                renderMath();
+            }
+        });
+
+        watch(solverModalTab, () => {
+            renderMath();
+        });
+
+        return {
+            activeTab,
+            schemeMode,
+            setSchemeMode,
+            loading,
+            overview,
+            selectedCommunityId,
+            planResult,
+            simulationResult,
+            crisisResult,
+            isPeakDay,
+            showSolverModal,
+            solverModalTab,
+            mathModelsList,
+            currentTileTheme,
+            tileStatusText,
+            showRoads,
+            showPolygons,
+            showRings,
+            onChangeTileTheme,
+            toggleRoads,
+            togglePolygons,
+            toggleRings,
+            fitAllOverview,
+            fitCurrentCommunity,
+            customHouseholds,
+            customDoorRatio,
+            customIntensity,
+            onSelectCommunity,
+            onTweakParams,
+            triggerCrisis,
+            resizeCharts,
+            renderMath,
+            // 高德相关
+            amapConfig,
+            showAmapModal,
+            amapKeyInput,
+            amapKeyMsg,
+            amapSearchKeyword,
+            amapExploring,
+            amapExploreResult,
+            saveAmapKey,
+            searchAndExploreCommunity
+        };
+    }
+}).mount('#app');

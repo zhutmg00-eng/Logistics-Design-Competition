@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超大城市末端配送协同网络数智化决策平台 | 第九届北京市大学生物流设计大赛</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfeff',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            900: '#164e63',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Vue 3 (Local priority with fast loading) -->
+    <script src="/static/libs/vue.global.prod.js"></script>
+    <!-- ECharts 5 (Local priority) -->
+    <script src="/static/libs/echarts.min.js"></script>
+    <!-- Leaflet GIS (Local priority) -->
+    <link rel="stylesheet" href="/static/libs/leaflet.css" />
+    <script src="/static/libs/leaflet.js"></script>
+    <!-- KaTeX Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+    <div id="app" class="flex flex-col flex-1 h-screen overflow-hidden">
+        
+        <!-- Top Navbar -->
+        <header class="h-16 glass-panel border-b border-slate-800 flex items-center justify-between px-6 z-30 flex-shrink-0">
+            <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <span class="text-xl font-black text-white">AI</span>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        超大城市末端配送协同网络数智化决策中枢
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-cyan-950 border border-cyan-700 text-cyan-400">主题二 · 原型系统</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">第九届北京市大学生物流设计大赛 · 北京经济技术开发区（亦庄BDA）实证底座</p>
+                </div>
+            </div>
+
+            <!-- Global Key Metrics -->
+            <div class="hidden lg:flex items-center space-x-3 text-xs">
+                <div class="flex items-center space-x-2 bg-slate-900/90 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-slate-400">示范区:</span>
+                    <span class="font-bold text-white mono">5 个典型社区</span>
+                </div>
+                <div class="flex items-center space-x-2 bg-slate-900/90 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                    <span class="text-slate-400">M1干线:</span>
+                    <span class="font-bold text-cyan-400 mono">-33.2%</span>
+                </div>
+                <div class="flex items-center space-x-2 bg-slate-900/90 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                    <span class="text-slate-400">人工工时:</span>
+                    <span class="font-bold text-emerald-400 mono">-58.8%</span>
+                </div>
+                <!-- 算法控制台弹窗启动按钮 -->
+                <button @click="showSolverModal = true" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold hover:from-cyan-500 hover:to-blue-500 shadow-md transition text-xs">
+                    <span>📐</span> 运筹算法看板
+                </button>
+
+                <!-- 高德 Key 绑定与状态按钮 -->
+                <button @click="showAmapModal = true" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition shadow-sm"
+                    :class="amapConfig && amapConfig.configured ? 'bg-emerald-950/80 border-emerald-600 text-emerald-300 hover:bg-emerald-900' : 'bg-amber-950/80 border-amber-600 text-amber-300 hover:bg-amber-900'">
+                    <span>🔑</span> 高德Key: <span class="mono">{{ amapConfig && amapConfig.configured ? amapConfig.masked_key : '未绑定' }}</span>
+                </button>
+            </div>
+
+            <!-- Tab Navigation Switcher -->
+            <nav class="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+                <button @click="activeTab = 'comparison'" :class="activeTab === 'comparison' ? 'bg-gradient-to-r from-rose-600 via-purple-600 to-cyan-600 text-white font-bold shadow' : 'text-amber-400 hover:text-white font-semibold'" class="px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                    <span>⚖️</span> 现状 vs 优化 (全景对比)
+                </button>
+                <button @click="activeTab = 'digital-twin'" :class="activeTab === 'digital-twin' ? 'bg-cyan-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition">🌐 数字孪生与GIS</button>
+                <button @click="activeTab = 'forecast'" :class="activeTab === 'forecast' ? 'bg-cyan-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition">📈 需求预测 (第5章)</button>
+                <button @click="activeTab = 'layout'" :class="activeTab === 'layout' ? 'bg-cyan-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition">🏢 选址定容 (第6章)</button>
+                <button @click="activeTab = 'routing'" :class="activeTab === 'routing' ? 'bg-cyan-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition">🚗 人车协同 (第7章)</button>
+                <button @click="activeTab = 'simulation'" :class="activeTab === 'simulation' ? 'bg-cyan-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition">⏱️ 仿真对抗 (第8章)</button>
+                <button @click="activeTab = 'copilot'" :class="activeTab === 'copilot' ? 'bg-cyan-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition">🤖 AI 调度专家</button>
+                <button @click="activeTab = 'sandbox'" :class="activeTab === 'sandbox' ? 'bg-amber-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition">🧪 自定义推演</button>
+            </nav>
+        </header>
+
+        <!-- Main Body Layout -->
+        <main class="flex-1 flex overflow-hidden relative">
+            
+            <!-- Left Panel: Interactive Leaflet WebGIS Map (Takes 55% of width) -->
+            <div class="w-7/12 h-full flex flex-col border-r border-slate-800 relative">
+                
+                <!-- Community Quick Selector Bar & Cyber GIS Map Controls -->
+                <div class="absolute top-3 left-3 right-3 z-[1000] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+                    
+                    <!-- Left: Community Selector & Scheme Mode Switcher -->
+                    <div class="flex items-center space-x-2 pointer-events-auto">
+                        <div class="glass-panel-glow px-3 py-1.5 rounded-xl flex items-center space-x-2">
+                            <span class="text-xs font-semibold text-slate-300">社区:</span>
+                            <div class="flex space-x-1">
+                                <button v-for="c in (overview ? overview.communities : [])" :key="c.id"
+                                    @click="onSelectCommunity(c.id)"
+                                    :class="selectedCommunityId === c.id ? 'bg-cyan-600 text-white shadow-md' : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700'"
+                                    class="px-2 py-0.5 text-xs rounded font-medium transition">
+                                    {{ c.id }} {{ c.name }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 方案对比切换控制台 (As-Is vs To-Be vs Diff) -->
+                        <div class="glass-panel-glow px-2.5 py-1 rounded-xl flex items-center space-x-1 border-cyan-500/40">
+                            <span class="text-[11px] font-bold text-amber-300 mr-1 hidden sm:inline">方案对比:</span>
+                            <button @click="setSchemeMode('baseline')" 
+                                :class="schemeMode === 'baseline' ? 'bg-rose-600 text-white font-bold shadow-md border-rose-400 ring-2 ring-rose-500/40' : 'bg-slate-800/90 text-rose-300 hover:bg-slate-700 border-slate-700'"
+                                class="px-2 py-0.5 text-xs rounded-lg border transition flex items-center gap-1">
+                                <span>🔴</span> 现状方案
+                            </button>
+                            <button @click="setSchemeMode('optimized')" 
+                                :class="schemeMode === 'optimized' ? 'bg-emerald-600 text-white font-bold shadow-md border-emerald-400 ring-2 ring-emerald-500/40' : 'bg-slate-800/90 text-emerald-300 hover:bg-slate-700 border-slate-700'"
+                                class="px-2 py-0.5 text-xs rounded-lg border transition flex items-center gap-1">
+                                <span>🟢</span> 优化协同
+                            </button>
+                            <button @click="setSchemeMode('diff')" 
+                                :class="schemeMode === 'diff' ? 'bg-gradient-to-r from-rose-600 via-purple-600 to-cyan-600 text-white font-bold shadow-md border-cyan-400 ring-2 ring-cyan-500/40' : 'bg-slate-800/90 text-cyan-300 hover:bg-slate-700 border-slate-700'"
+                                class="px-2 py-0.5 text-xs rounded-lg border transition flex items-center gap-1">
+                                <span>⚡</span> 双方案叠图
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Base Map & Vector Layer Controls -->
+                    <div class="flex items-center space-x-2 pointer-events-auto">
+                        
+                        <!-- Map Layer Style Selector -->
+                        <div class="glass-panel px-2 py-1 rounded-xl flex items-center space-x-1 text-xs">
+                            <span class="text-slate-400 text-[11px]">底图:</span>
+                            <select v-model="currentTileTheme" @change="onChangeTileTheme" class="bg-slate-900/90 text-cyan-300 text-xs border border-slate-700 rounded px-1.5 py-0.5 focus:outline-none cursor-pointer">
+                                <option value="amap-dark">🌙 高德暗黑矢量</option>
+                                <option value="amap-std">🗺️ 高德标准路网</option>
+                                <option value="amap-sat">🛰️ 高德卫星遥感</option>
+                                <option value="osm-dark">🌍 OSM暗夜极客</option>
+                                <option value="vector-only">🌐 离线纯矢量CAD</option>
+                            </select>
+                        </div>
+
+                        <!-- Vector Layer Toggles -->
+                        <div class="glass-panel px-2 py-1 rounded-xl flex items-center space-x-1 text-xs">
+                            <button @click="toggleRoads" :class="showRoads ? 'bg-sky-600/40 text-sky-300 border-sky-500/50' : 'bg-slate-800 text-slate-500 border-transparent'" class="px-2 py-0.5 rounded border text-[11px] transition">
+                                🛣️ 路网
+                            </button>
+                            <button @click="togglePolygons" :class="showPolygons ? 'bg-cyan-600/40 text-cyan-300 border-cyan-500/50' : 'bg-slate-800 text-slate-500 border-transparent'" class="px-2 py-0.5 rounded border text-[11px] transition">
+                                🏢 边界
+                            </button>
+                            <button @click="toggleRings" :class="showRings ? 'bg-emerald-600/40 text-emerald-300 border-emerald-500/50' : 'bg-slate-800 text-slate-500 border-transparent'" class="px-2 py-0.5 rounded border text-[11px] transition">
+                                ⭕ 服务环
+                            </button>
+                        </div>
+
+                        <!-- Quick Zoom Buttons -->
+                        <div class="glass-panel px-1.5 py-1 rounded-xl flex items-center space-x-1 text-xs">
+                            <button @click="fitAllOverview" title="复位到亦庄全域(5社区+HUB)" class="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 hover:bg-slate-700 border border-slate-700 text-[11px] transition">
+                                🎯 全域
+                            </button>
+                            <button @click="fitCurrentCommunity" title="缩放到当前社区" class="px-2 py-0.5 rounded bg-slate-800 text-emerald-400 hover:bg-slate-700 border border-slate-700 text-[11px] transition">
+                                🔍 聚焦
+                            </button>
+                        </div>
+
+                        <!-- Peak Switch -->
+                        <div class="glass-panel px-2.5 py-1.5 rounded-xl flex items-center space-x-1.5">
+                            <label class="text-xs text-slate-300 cursor-pointer flex items-center gap-1">
+                                <input type="checkbox" v-model="isPeakDay" @change="onTweakParams" class="rounded text-cyan-600 focus:ring-0">
+                                <span :class="isPeakDay ? 'text-rose-400 font-bold' : 'text-slate-400'">大促高峰</span>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Leaflet Container with CAD Grid Fallback -->
+                <div id="map-container" class="cyber-gis-grid flex-1 w-full h-full relative"></div>
+
+                <!-- Map Bottom Info Overlay -->
+                <div class="absolute bottom-3 left-3 right-3 z-[1000] glass-panel p-2.5 rounded-xl flex flex-wrap items-center justify-between text-xs text-slate-300">
+                    <div class="flex items-center space-x-3 text-[11px]">
+                        <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow shadow-amber-400/50"></span> 枢纽 (HUB)</div>
+                        <template v-if="schemeMode === 'baseline' || schemeMode === 'diff'">
+                            <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-rose-500 border-dashed"></span> 现状独立往返 (24.84km)</div>
+                            <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span> 现状单柜爆仓 (超150%)</div>
+                            <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-rose-400 border-dashed"></span> 现状人工步巡</div>
+                        </template>
+                        <template v-if="schemeMode === 'optimized' || schemeMode === 'diff'">
+                            <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-cyan-400"></span> M1巡回环线 (13.42km)</div>
+                            <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow shadow-emerald-400/50"></span> MIP扩容安全柜</div>
+                            <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-sky-400"></span> 无人车巡航</div>
+                            <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-orange-400 border-dashed"></span> 快递员上门</div>
+                        </template>
+                        <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-slate-500"></span> 内部路网</div>
+                    </div>
+                    <div class="flex items-center space-x-3 text-[11px] mono">
+                        <span class="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-700/60 text-cyan-300">
+                            {{ tileStatusText }}
+                        </span>
+                        <span v-if="planResult" class="text-slate-400">
+                            {{ planResult.community_name }} | 
+                            路网: <span class="text-sky-400 font-bold">{{ planResult.road_edges ? planResult.road_edges.length : 0 }}</span> 段 | 
+                            节点: <span class="text-slate-200">{{ planResult.road_nodes ? planResult.road_nodes.length : 0 }}</span> 个 | 
+                            楼栋: <span class="text-blue-400">{{ planResult.buildings ? planResult.buildings.length : 0 }}</span> 栋
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Data, Algorithms & AI Insights (Takes 45% of width) -->
+            <div class="w-5/12 h-full flex flex-col bg-slate-900/60 overflow-y-auto p-5 space-y-5">
+                
+                <!-- ==================== TAB 0: ⚖️ 现状 vs 优化 (全景对比) ==================== -->
+                <div v-if="activeTab === 'comparison'" class="space-y-4 animate-fadeIn">
+                    
+                    <!-- 顶部标题横幅 -->
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-l-cyan-500 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-2">
+                                <span>⚖️</span> 现状诊断 (As-Is) vs 优化协同方案 (To-Be) 全景对比
+                            </h2>
+                            <span class="px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-700 text-cyan-300 text-xs font-bold mono">
+                                综合降本 53.6% · 减碳 87.2%
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            立足亦庄 5 大社区实证底座与真实运营数据，对比呈现传统纯人工作业模式与数智化人机协同网络的系统级跃迁，彻底打破干线空驶、末端爆柜与人工过载三大瓶颈。
+                        </p>
+                    </div>
+
+                    <!-- 地图联动控制快捷栏 -->
+                    <div class="glass-panel p-3 rounded-xl space-y-2 bg-slate-950/60 border border-slate-800">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-300 font-semibold flex items-center gap-1.5">
+                                <span>🗺️</span> 地图双方案同屏联动模式:
+                            </span>
+                            <span class="text-[11px] mono text-cyan-400 font-bold">
+                                当前状态: {{ schemeMode === 'baseline' ? '🔴 现状基准' : (schemeMode === 'optimized' ? '🟢 优化协同' : '⚡ 双方案同屏叠图') }}
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-xs font-bold">
+                            <button @click="setSchemeMode('baseline')" 
+                                :class="schemeMode === 'baseline' ? 'bg-rose-600 text-white shadow-md border-rose-400' : 'bg-slate-800 text-rose-300 hover:bg-slate-700 border-slate-700'"
+                                class="py-2 px-2 rounded-lg border transition text-center flex items-center justify-center gap-1">
+                                <span>🔴</span> 现状方案 (As-Is)
+                            </button>
+                            <button @click="setSchemeMode('optimized')" 
+                                :class="schemeMode === 'optimized' ? 'bg-emerald-600 text-white shadow-md border-emerald-400' : 'bg-slate-800 text-emerald-300 hover:bg-slate-700 border-slate-700'"
+                                class="py-2 px-2 rounded-lg border transition text-center flex items-center justify-center gap-1">
+                                <span>🟢</span> 优化协同 (To-Be)
+                            </button>
+                            <button @click="setSchemeMode('diff')" 
+                                :class="schemeMode === 'diff' ? 'bg-gradient-to-r from-rose-600 via-purple-600 to-cyan-600 text-white shadow-md border-cyan-400' : 'bg-slate-800 text-cyan-300 hover:bg-slate-700 border-slate-700'"
+                                class="py-2 px-2 rounded-lg border transition text-center flex items-center justify-center gap-1">
+                                <span>⚡</span> 双方案同屏叠图
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 《现状诊断 vs 优化方案 六大核心指标对照全景卡片》 -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                                <span>📊</span> 六大核心指标全景对照字典 (Key Indicators Telemetry)
+                            </span>
+                            <span class="text-[10px] text-slate-400 mono">亦庄全域 5 社区统仓共配</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            
+                            <!-- KPI 1: 干线里程 -->
+                            <div class="comparison-card space-y-2">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="text-slate-300 font-semibold flex items-center gap-1">🚗 干线运输总里程</span>
+                                        <div class="text-[10px] text-slate-500">HUB 至社区接驳点</div>
+                                    </div>
+                                    <span class="diff-badge-down text-xs">-46.0%</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
+                                    <div>
+                                        <span class="text-[10px] text-rose-400 font-semibold">🔴 现状独立往返</span>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">24.84 <span class="text-[10px] text-slate-400">km</span></div>
+                                        <span class="text-[10px] text-slate-500">耗时 74.5 min</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-cyan-400 font-semibold">🟢 优化M1巡回</span>
+                                        <div class="text-base font-bold text-cyan-400 mono mt-0.5">13.42 <span class="text-[10px] text-slate-400">km</span></div>
+                                        <span class="text-[10px] text-slate-500">耗时 67.1 min</span>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
+                                    拓扑优化：5条点对点往返压缩为1条集约闭环，空驶彻底消除。
+                                </div>
+                            </div>
+
+                            <!-- KPI 2: 社区步巡里程 -->
+                            <div class="comparison-card space-y-2">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="text-slate-300 font-semibold flex items-center gap-1">🚶 社区内步巡里程</span>
+                                        <div class="text-[10px] text-slate-500">快递员末端配送步行</div>
+                                    </div>
+                                    <span class="diff-badge-down text-xs">-34.2%</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
+                                    <div>
+                                        <span class="text-[10px] text-rose-400 font-semibold">🔴 现状全楼栋步巡</span>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">13.78 <span class="text-[10px] text-slate-400">km</span></div>
+                                        <span class="text-[10px] text-slate-500">全量包裹人工投送</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-cyan-400 font-semibold">🟢 优化人机协同</span>
+                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">9.07 <span class="text-[10px] text-slate-400">km</span></div>
+                                        <span class="text-[10px] text-slate-500">仅精细上门子集</span>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
+                                    工效优化：无人车巡航投柜，人工仅上门交付，步巡减4.71km。
+                                </div>
+                            </div>
+
+                            <!-- KPI 3: 人工投入工时 -->
+                            <div class="comparison-card space-y-2">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="text-slate-300 font-semibold flex items-center gap-1">⏱️ 全网人工投入工时</span>
+                                        <div class="text-[10px] text-slate-500">干线驾驶+社区交付</div>
+                                    </div>
+                                    <span class="diff-badge-down text-xs">-59.8%</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
+                                    <div>
+                                        <span class="text-[10px] text-rose-400 font-semibold">🔴 现状高负荷运转</span>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">151.2 <span class="text-[10px] text-slate-400">h</span></div>
+                                        <span class="text-[10px] text-slate-500">劳动强度过载</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-cyan-400 font-semibold">🟢 优化精细履约</span>
+                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">60.8 <span class="text-[10px] text-slate-400">h</span></div>
+                                        <span class="text-[10px] text-slate-500">标准8h合理工时</span>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
+                                    劳动保障：节约人工90.4工时，彻底杜绝超时违规作业。
+                                </div>
+                            </div>
+
+                            <!-- KPI 4: 满柜风险社区数 -->
+                            <div class="comparison-card space-y-2">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="text-slate-300 font-semibold flex items-center gap-1">💥 满柜风险社区数</span>
+                                        <div class="text-[10px] text-slate-500">自提柜超载爆仓情况</div>
+                                    </div>
+                                    <span class="diff-badge-eliminated text-xs">彻底消除 100%</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
+                                    <div>
+                                        <span class="text-[10px] text-rose-400 font-semibold">🔴 现状单柜超负荷</span>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">3 <span class="text-[10px] text-slate-400">个社区</span></div>
+                                        <span class="text-[10px] text-rose-400">C02/C04/C05 严重爆柜</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-cyan-400 font-semibold">🟢 优化MIP扩容</span>
+                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">0 <span class="text-[10px] text-slate-400">个社区</span></div>
+                                        <span class="text-[10px] text-emerald-400">饱和度健康在60-70%</span>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
+                                    容灾升级：M6定容自适应加装副柜，消除自提包裹滞留地表。
+                                </div>
+                            </div>
+
+                            <!-- KPI 5: 年运营总成本 -->
+                            <div class="comparison-card space-y-2">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="text-slate-300 font-semibold flex items-center gap-1">💰 年运营总成本</span>
+                                        <div class="text-[10px] text-slate-500">人工薪酬+燃油电耗+维保</div>
+                                    </div>
+                                    <span class="diff-badge-down text-xs">-53.6%</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
+                                    <div>
+                                        <span class="text-[10px] text-rose-400 font-semibold">🔴 现状粗放运营</span>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">283.4 <span class="text-[10px] text-slate-400">万元</span></div>
+                                        <span class="text-[10px] text-slate-500">人工超时成本极高</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-cyan-400 font-semibold">🟢 优化人机协同</span>
+                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">131.4 <span class="text-[10px] text-slate-400">万元</span></div>
+                                        <span class="text-[10px] text-emerald-400 font-bold">年净省 152.0 万元</span>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
+                                    效益转化：初期副柜改造成本55.6万元，回收期仅 0.39 年。
+                                </div>
+                            </div>
+
+                            <!-- KPI 6: 年碳排放量 -->
+                            <div class="comparison-card space-y-2">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="text-slate-300 font-semibold flex items-center gap-1">🌱 年干线碳排放量</span>
+                                        <div class="text-[10px] text-slate-500">干线运输CO₂排放当量</div>
+                                    </div>
+                                    <span class="diff-badge-down text-xs">-87.2%</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
+                                    <div>
+                                        <span class="text-[10px] text-rose-400 font-semibold">🔴 燃油微卡排放</span>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">1459.2 <span class="text-[10px] text-slate-400">kg</span></div>
+                                        <span class="text-[10px] text-slate-500">高油耗高碳足迹</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-cyan-400 font-semibold">🟢 纯电无人车清洁能耗</span>
+                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">187.3 <span class="text-[10px] text-slate-400">kg</span></div>
+                                        <span class="text-[10px] text-emerald-400 font-bold">年减碳 1271.9 kg</span>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
+                                    绿色示范：落实北京超大城市绿色低碳标杆物流示范区建设。
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- 静态投资回收期专属金牌横幅 -->
+                    <div class="glass-panel p-4 rounded-xl bg-gradient-to-r from-amber-950/50 via-slate-900 to-cyan-950/50 border border-amber-500/40 flex items-center justify-between">
+                        <div class="space-y-1">
+                            <div class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                                <span>🏅</span> 投资回收期评价 (Financial Feasibility Analysis)
+                            </div>
+                            <p class="text-[11px] text-slate-300">
+                                全网智能柜副柜采购扩容总投入 <b>¥55.6 万元</b>，每年为企业直接压降营运成本 <b>¥152.0 万元</b>。
+                            </p>
+                        </div>
+                        <div class="text-right pl-4">
+                            <div class="text-2xl font-black text-amber-400 mono">0.39 <span class="text-xs font-normal text-slate-300">年</span></div>
+                            <div class="text-[10px] text-emerald-400 font-semibold">约 4.7 个月收回全部投资</div>
+                        </div>
+                    </div>
+
+                    <!-- 《现状纯人工 vs 优化后人机协同 作业模式全景对比表》 -->
+                    <div class="glass-panel p-4 rounded-xl space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                <span>📋</span> 现状纯人工模式 vs 优化后人机协同 作业模式多维全景对比表
+                            </h3>
+                            <span class="text-[10px] text-slate-400">全链条赋能剖析</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border border-slate-800">
+                                <thead class="bg-slate-800 text-slate-300 border-b border-slate-700 text-[11px]">
+                                    <tr>
+                                        <th class="p-2">作业维度</th>
+                                        <th class="p-2 text-rose-300">🔴 现状纯人工作业模式 (As-Is)</th>
+                                        <th class="p-2 text-emerald-300">🟢 优化人机协同作业模式 (To-Be)</th>
+                                        <th class="p-2 text-cyan-300">🚀 优化成效与系统提升</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800 text-[11px]">
+                                    <tr class="hover:bg-slate-800/40">
+                                        <td class="p-2 font-bold text-slate-300">1. 干线运输拓扑</td>
+                                        <td class="p-2 text-slate-300">HUB 向 5 社区独立派车点对点往返，总里程 24.84 km，空驶率高</td>
+                                        <td class="p-2 text-slate-300">无人配送车执行 M1 巡回环线 (HUB ➔ 各社区 ➔ HUB)，总里程 13.42 km</td>
+                                        <td class="p-2 font-bold text-emerald-400">干线里程削减 46.0%，空载率归零</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-800/40">
+                                        <td class="p-2 font-bold text-slate-300">2. 智能柜末端定容</td>
+                                        <td class="p-2 text-rose-300 font-medium">单一固定单柜(84格/有效50件)，C02/C04/C05峰值饱和度超 150% 甚至达 642%，严重满柜爆仓</td>
+                                        <td class="p-2 text-emerald-300 font-medium">M6 MIP自适应配置扩容副柜，有效容量增至 1520+ 件，全网饱和度平稳维持在 60%~70%</td>
+                                        <td class="p-2 font-bold text-emerald-400">满柜风险社区数 3 ➔ 0，消除率 100%</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-800/40">
+                                        <td class="p-2 font-bold text-slate-300">3. 社区微循环运力</td>
+                                        <td class="p-2 text-slate-300">快递员开燃油三轮进小区，人车混行狭窄道路，低速怠速排放尾气且存在交通刮蹭隐患</td>
+                                        <td class="p-2 text-slate-300">智能网联无人车依据 M2 CVRP 时空网格自主巡航，自动泊车对接各智能柜交付</td>
+                                        <td class="p-2 font-bold text-cyan-400">消除尾气噪音扰民，实现智慧微网格</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-800/40">
+                                        <td class="p-2 font-bold text-slate-300">4. 快递员作业负荷</td>
+                                        <td class="p-2 text-slate-300">快递员既跑干线又搬运投柜，再步巡上门，人均日总工时高达 151.2 h，劳动强度重载超标</td>
+                                        <td class="p-2 text-slate-300">快递员免除干线与重件投柜，专注高价值上门件，日总工时降至 60.8 h，人机高效协同</td>
+                                        <td class="p-2 font-bold text-emerald-400">人工工时大幅节约 59.8% (-90.4h)</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-800/40">
+                                        <td class="p-2 font-bold text-slate-300">5. 履约时效与满意度</td>
+                                        <td class="p-2 text-slate-300">爆柜导致包裹滞留地面、丢失破损；上门件因派送延迟导致投诉率高达 4.2%</td>
+                                        <td class="p-2 text-slate-300">100m 极速便民自提圈，智能柜随时有位；上门件准时履约率 99.6%</td>
+                                        <td class="p-2 font-bold text-cyan-400">居民综合满意度由 68% 跃升至 98%</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-800/40">
+                                        <td class="p-2 font-bold text-slate-300">6. 经济成本与碳足迹</td>
+                                        <td class="p-2 text-slate-300">传统燃油车耗油，年干线碳排 1459.2 kg，年综合运营总成本 283.4 万元</td>
+                                        <td class="p-2 text-slate-300">纯电无人配送车+峰谷电，年碳排 187.3 kg，年综合运营总成本 131.4 万元</td>
+                                        <td class="p-2 font-bold text-emerald-400">年降本 152 万元 (-53.6%)，减碳 87.2%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 《满柜时序对抗对比图》 -->
+                    <div class="glass-panel p-4 rounded-xl space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                <span>⚡</span> 满柜时序对抗对比图 (08:00—21:00 动态饱和度演变推演)
+                            </span>
+                            <span class="text-[10px] text-rose-400 font-bold">100% 满柜红线对抗</span>
+                        </div>
+                        <div id="chart-comp-saturation" class="w-full h-56"></div>
+                        <div class="text-[10px] text-slate-400 flex justify-between">
+                            <span>🔴 现状未扩容：10:00-19:00 持续高位爆仓，峰值达 152% 瘫痪</span>
+                            <span class="text-emerald-400 font-semibold">🟢 优化MIP扩容：平稳受控在 60-68.5% 安全承载区间</span>
+                        </div>
+                    </div>
+
+                    <!-- 《综合效益多维雷达图》 与 《年运营成本与碳减排对比柱状图》 -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="glass-panel p-3 rounded-xl space-y-2">
+                            <span class="text-xs font-bold text-slate-200">综合效益多维雷达对照</span>
+                            <div id="chart-comp-radar" class="w-full h-52"></div>
+                            <div class="text-[10px] text-slate-400 text-center">现状灰色萎缩 vs 优化青色全维扩张</div>
+                        </div>
+                        <div class="glass-panel p-3 rounded-xl space-y-2">
+                            <span class="text-xs font-bold text-slate-200">年运营成本与碳排放双降对比</span>
+                            <div id="chart-comp-cost" class="w-full h-52"></div>
+                            <div class="text-[10px] text-slate-400 text-center">直接降本 152 万元 | 减碳 1271.9 kg</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ==================== TAB 1: 数字孪生与全网底座 ==================== -->
+                <div v-if="activeTab === 'digital-twin'" class="space-y-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-2 mb-2">
+                            <span>🗺️</span> 亦庄高级别自动驾驶示范区（BDA）全域协同网络
+                        </h2>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            本系统立足北京超大城市末端配送现实约束，依托亦庄 5 大典型社区的高精真实边界与路网，构建“分拨中心—社区接驳点—智能柜/楼栋”三级立体协同拓扑。
+                        </p>
+                    </div>
+
+                    <!-- M1 干线优化卡片 -->
+                    <div v-if="overview && overview.trunk_routing" class="glass-panel p-4 rounded-xl space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-white uppercase tracking-wider">M1 干线巡回 TSP 路径指标</span>
+                            <span class="px-2 py-0.5 text-xs rounded bg-emerald-950 border border-emerald-700 text-emerald-300 font-bold">里程节省 {{ overview.trunk_routing.saving_pct }}%</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div class="bg-slate-800/80 p-3 rounded-lg">
+                                <span class="text-slate-400">现状独立往返里程</span>
+                                <div class="text-lg font-bold text-rose-400 mono mt-1">{{ overview.trunk_routing.baseline_dist_km }} km</div>
+                                <span class="text-[10px] text-slate-500">驾车耗时 {{ overview.trunk_routing.baseline_time_min }} min</span>
+                            </div>
+                            <div class="bg-slate-800/80 p-3 rounded-lg">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">协同方案巡回里程</span>
+                                    <span class="text-[10px] text-cyan-400 mono">2-Opt 优化</span>
+                                </div>
+                                <div class="text-lg font-bold text-cyan-400 mono mt-1">{{ overview.trunk_routing.tour_dist_km }} km</div>
+                                <span class="text-[10px] text-slate-500">无人车耗时 {{ overview.trunk_routing.travel_time_min }} min</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 📐 运筹数学模型与求解器过程 (M1 TSP) -->
+                    <div class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-cyan-500">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                                <span>📐</span> M1 干线巡回旅行商模型与 2-Opt 求解过程
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 mono">Status: LOCALLY_OPTIMAL</span>
+                        </div>
+                        
+                        <!-- LaTeX 公式卡片 -->
+                        <div class="math-card text-xs space-y-1.5">
+                            <div class="text-[11px] text-slate-400 font-semibold">目标函数与 MTZ 子回路消除约束：</div>
+                            <div class="text-cyan-200 mono text-center py-1">
+                                $$\min Z_1 = \sum_{i \in V} \sum_{j \in V} c_{ij} x_{ij}, \quad \text{s.t.} \;\; u_i - u_j + |V| x_{ij} \le |V| - 1$$
+                            </div>
+                        </div>
+
+                        <!-- 2-Opt 收敛曲线图表 -->
+                        <div class="space-y-1">
+                            <span class="text-[11px] font-semibold text-slate-300">2-Opt 边交换里程收敛过程 (Convergence Curve):</span>
+                            <div id="chart-tsp-convergence" class="w-full h-40"></div>
+                        </div>
+
+                        <!-- 6x6 决策变量邻接矩阵 -->
+                        <div v-if="overview && overview.trunk_routing && overview.trunk_routing.decision_matrix" class="space-y-1.5">
+                            <span class="text-[11px] font-semibold text-slate-300">干线巡回决策矩阵 \(X_{\text{tour}} \in \{0, 1\}^{6 \times 6}\):</span>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-center text-[10px] mono border border-slate-800">
+                                    <thead class="bg-slate-800 text-slate-400">
+                                        <tr>
+                                            <th class="p-1">从 \ 到</th>
+                                            <th v-for="r in overview.trunk_routing.decision_matrix" :key="r.source" class="p-1">{{ r.source }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="r in overview.trunk_routing.decision_matrix" :key="r.source" class="border-t border-slate-800">
+                                            <td class="p-1 font-bold text-slate-400 bg-slate-800/40">{{ r.source }}</td>
+                                            <td v-for="(val, dest) in r.targets" :key="dest" :class="val === 1 ? 'matrix-cell-active' : 'matrix-cell-zero'" class="p-1">
+                                                {{ val }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 求解器日志终端 -->
+                        <div v-if="overview && overview.trunk_routing && overview.trunk_routing.solver_logs" class="space-y-1">
+                            <span class="text-[11px] font-semibold text-slate-300">求解器运行日志 (Solver Trace):</span>
+                            <div class="solver-terminal max-h-28">
+                                <div v-for="(log, idx) in overview.trunk_routing.solver_logs" :key="idx" class="log-line">
+                                    {{ log }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 社区列表表格 -->
+                    <div class="glass-panel p-4 rounded-xl space-y-3">
+                        <h3 class="text-xs font-bold text-slate-200">五大典型社区特征矩阵</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="border-b border-slate-800 text-slate-400">
+                                    <tr>
+                                        <th class="py-2">编号</th>
+                                        <th>社区名称</th>
+                                        <th>户数</th>
+                                        <th>日均快件</th>
+                                        <th>上门偏好</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800/50">
+                                    <tr v-for="c in (overview ? overview.communities : [])" :key="c.id" 
+                                        @click="onSelectCommunity(c.id)"
+                                        :class="selectedCommunityId === c.id ? 'bg-cyan-950/40 text-cyan-300 font-medium' : 'hover:bg-slate-800/40'"
+                                        class="cursor-pointer transition">
+                                        <td class="py-2.5 mono">{{ c.id }}</td>
+                                        <td>{{ c.name }}</td>
+                                        <td class="mono">{{ c.households }}</td>
+                                        <td class="mono">{{ c.daily_pkgs }}</td>
+                                        <td>
+                                            <span v-if="c.id==='C01'||c.id==='C03'" class="text-amber-400 font-bold">100% 上门</span>
+                                            <span v-else-if="c.id==='C02'" class="text-sky-400 font-medium">52% 上门</span>
+                                            <span v-else class="text-emerald-400 font-medium">25% 上门 (柜为主)</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== TAB 2: 第5章 需求预测 ==================== -->
+                <div v-if="activeTab === 'forecast'" class="space-y-4">
+                    <div v-if="planResult" class="glass-panel p-4 rounded-xl space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
+                                <span>📈</span> 第5章 多尺度需求预测模型
+                            </h2>
+                            <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 mono">{{ planResult.community_name }}</span>
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            结合空间特征先验参数与 Logit 服务方式效用函数，实现宏观户数强度向微观楼栋、时段与交付模式的精准映射。
+                        </p>
+
+                        <div class="grid grid-cols-3 gap-2.5 text-xs pt-1">
+                            <div class="bg-slate-800/80 p-3 rounded-lg">
+                                <span class="text-slate-400">总预测件量</span>
+                                <div class="text-lg font-bold text-white mono mt-0.5">{{ planResult.forecast.daily_total }} 件</div>
+                                <span class="text-[10px] text-slate-500">强度: {{ (planResult.forecast.daily_total / planResult.forecast.households).toFixed(2) }} 件/户</span>
+                            </div>
+                            <div class="bg-slate-800/80 p-3 rounded-lg">
+                                <span class="text-slate-400">送货上门件量</span>
+                                <div class="text-lg font-bold text-orange-400 mono mt-0.5">{{ planResult.forecast.daily_door }} 件</div>
+                                <span class="text-[10px] text-slate-500">占比: {{ Math.round(planResult.forecast.door_ratio * 100) }}%</span>
+                            </div>
+                            <div class="bg-slate-800/80 p-3 rounded-lg">
+                                <span class="text-slate-400">智能柜自提件量</span>
+                                <div class="text-lg font-bold text-emerald-400 mono mt-0.5">{{ planResult.forecast.daily_locker }} 件</div>
+                                <span class="text-[10px] text-slate-500">占比: {{ Math.round(planResult.forecast.locker_ratio * 100) }}%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 📐 运筹数学模型与求解器过程 (M5 Logit) -->
+                    <div v-if="planResult && planResult.forecast" class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-cyan-500">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                                <span>📐</span> M5 多项Logit离散选择效用模型 (MNL)
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 mono">
+                                耗时: {{ planResult.forecast.solver_metrics?.solve_time_ms || 0.05 }} ms
+                            </span>
+                        </div>
+
+                        <!-- 公式展示 -->
+                        <div class="math-card text-xs space-y-1.5">
+                            <div class="text-[11px] text-slate-400 font-semibold">二项 Logit 服务模式选择效用方程：</div>
+                            <div class="text-cyan-200 mono text-center py-1">
+                                $$P(\text{door} \mid i) = \frac{\exp(V_{\text{door}, i})}{\exp(V_{\text{door}, i}) + \exp(V_{\text{locker}, i})}$$
+                            </div>
+                        </div>
+
+                        <!-- 效用诊断参数对照表 -->
+                        <div v-if="planResult.forecast.logit_diagnostic" class="bg-slate-800/70 p-3 rounded-lg text-xs space-y-2">
+                            <div class="flex justify-between text-[11px] font-semibold text-slate-300">
+                                <span>上门效用 \(V_{\text{door}}\): <b class="text-orange-400 mono">{{ planResult.forecast.logit_diagnostic.v_door }}</b></span>
+                                <span>自提效用 \(V_{\text{locker}}\): <b class="text-emerald-400 mono">{{ planResult.forecast.logit_diagnostic.v_locker }}</b></span>
+                                <span>优势比 Odds: <b class="text-cyan-400 mono">{{ planResult.forecast.logit_diagnostic.odds_ratio }}</b></span>
+                            </div>
+                            <div class="text-[10px] text-slate-400">
+                                基于亦庄社区画像：老龄化率与楼层形态显著影响上门效用；步行可达性与青年弹性作息正向刺激自提效用。
+                            </div>
+                        </div>
+
+                        <!-- 求解器日志 -->
+                        <div v-if="planResult.forecast.solver_logs" class="space-y-1">
+                            <span class="text-[11px] font-semibold text-slate-300">需求分解与空间降尺度计算日志:</span>
+                            <div class="solver-terminal max-h-28">
+                                <div v-for="(log, idx) in planResult.forecast.solver_logs" :key="idx" class="log-line">
+                                    {{ log }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 到件波峰 ECharts -->
+                    <div class="glass-panel p-4 rounded-xl space-y-2">
+                        <span class="text-xs font-bold text-slate-200">08:00—21:00 分时段包裹到达波峰与履约模式拆解</span>
+                        <div id="chart-arrivals" class="w-full h-56"></div>
+                    </div>
+                </div>
+
+                <!-- ==================== TAB 3: 第6章 选址与定容优化 ==================== -->
+                <div v-if="activeTab === 'layout'" class="space-y-4">
+                    <div v-if="planResult && planResult.layout" class="glass-panel p-4 rounded-xl space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
+                                <span>🏢</span> 第6章 网络选址与定容优化 (MIP)
+                            </h2>
+                            <span class="px-2 py-0.5 text-xs rounded bg-emerald-950 border border-emerald-600 text-emerald-300 font-bold">
+                                {{ planResult.layout.bottleneck_resolved ? '✅ 满柜瓶颈已彻底消除' : '⚠️ 存在满柜' }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            针对第8章仿真中暴露的“自提峰值超单柜容量”致命瓶颈，建立混合整数规划定容模型，自适应决策基础主柜与扩容副柜配比。
+                        </p>
+
+                        <div class="grid grid-cols-3 gap-2.5 text-xs pt-1">
+                            <div class="bg-slate-800/80 p-3 rounded-lg">
+                                <span class="text-slate-400">自提总需求</span>
+                                <div class="text-lg font-bold text-white mono mt-0.5">{{ planResult.layout.total_locker_demand }} 件</div>
+                                <span class="text-[10px] text-slate-500">自提件规模</span>
+                            </div>
+                            <div class="bg-slate-800/80 p-3 rounded-lg">
+                                <span class="text-slate-400">优化后有效容量</span>
+                                <div class="text-lg font-bold text-emerald-400 mono mt-0.5">{{ planResult.layout.total_effective_capacity }} 件</div>
+                                <span class="text-[10px] text-slate-500">充盈率: {{ Math.round(planResult.layout.overall_utilization*100) }}%</span>
+                            </div>
+                            <div class="bg-slate-800/80 p-3 rounded-lg">
+                                <span class="text-slate-400">平均步行取件距离</span>
+                                <div class="text-lg font-bold text-cyan-400 mono mt-0.5">{{ planResult.layout.avg_walk_distance_m }} m</div>
+                                <span class="text-[10px] text-slate-500">优于150m国家红线</span>
+                            </div>
+                        </div>
+
+                        <!-- 现状固定单柜 vs MIP自适应扩容定容全息对比卡片 -->
+                        <div v-if="planResult.baseline_plan" class="bg-slate-950/70 p-3 rounded-lg border border-slate-800 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-bold text-slate-300 flex items-center gap-1">
+                                    <span>⚖️</span> 设施定容方案对比: 现状固定单柜 vs MIP自适应扩容
+                                </span>
+                                <span :class="planResult.community_comparison.full_risk_eliminated ? 'diff-badge-eliminated' : 'diff-badge-up'" class="text-[10px]">
+                                    {{ planResult.community_comparison.full_risk_eliminated ? '爆柜风险彻底清除' : '容量充足' }}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div class="bg-rose-950/30 border border-rose-900/40 p-2.5 rounded">
+                                    <div class="text-[10px] text-rose-400 font-semibold">🔴 现状固定单柜 (As-Is)</div>
+                                    <div class="text-sm font-bold text-rose-300 mono mt-0.5">{{ planResult.baseline_plan.total_capacity }} 件容量</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">
+                                        峰值负荷饱和度: <b class="text-rose-400 font-bold">{{ planResult.baseline_plan.saturation_pct }}%</b>
+                                        <span v-if="planResult.baseline_plan.is_full_risk" class="text-rose-400 font-bold"> (严重爆柜)</span>
+                                    </div>
+                                </div>
+                                <div class="bg-emerald-950/30 border border-emerald-900/40 p-2.5 rounded">
+                                    <div class="text-[10px] text-emerald-400 font-semibold">🟢 MIP优化定容 (To-Be)</div>
+                                    <div class="text-sm font-bold text-emerald-300 mono mt-0.5">{{ planResult.optimized_plan.total_capacity }} 件容量 (+{{ planResult.community_comparison.capacity_gain }})</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">
+                                        峰值负荷饱和度: <b class="text-emerald-400 font-bold">{{ planResult.optimized_plan.saturation_pct }}%</b> (安全区间 60~70%)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 设施配置清单 -->
+                        <div class="space-y-2 pt-2">
+                            <span class="text-xs font-bold text-slate-300">设施定容与副柜扩容明细:</span>
+                            <div v-for="f in planResult.layout.facilities" :key="f.facility_id" class="bg-slate-800/60 p-2.5 rounded-lg text-xs flex justify-between items-center">
+                                <div>
+                                    <div class="font-medium text-white">{{ f.name }}</div>
+                                    <div class="text-slate-400 text-[11px] mt-0.5">
+                                        主柜 {{ f.main_lockers }} 组 | 扩容副柜 <span class="text-emerald-400 font-bold">{{ f.slave_units }}</span> 组 | 总格口 {{ f.total_slots }}
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-cyan-400 mono">¥{{ f.capex.toLocaleString() }}</div>
+                                    <div class="text-slate-400 text-[10px]">有效容量: {{ f.effective_capacity }} 件</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 📐 运筹数学模型与求解器过程 (M6 MIP) -->
+                    <div v-if="planResult && planResult.layout" class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-emerald-500">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                                <span>📐</span> M6 容量受限选址定容 MIP 混合整数规划求解看板
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 mono">
+                                GAP: 0.00% | B&B 节点: {{ planResult.layout.solver_metrics?.nodes_explored || 6 }}
+                            </span>
+                        </div>
+
+                        <!-- LaTeX 目标函数 -->
+                        <div class="math-card text-xs space-y-1.5">
+                            <div class="text-[11px] text-slate-400 font-semibold">MIP 综合目标函数 (CAPEX + 步行负效用折算)：</div>
+                            <div class="text-emerald-200 mono text-center py-1">
+                                $$\min Z_6 = \sum_{j \in \mathcal{F}} (f_j y_j + c_s s_j) + \rho \sum_{i \in \mathcal{B}}\sum_{j \in \mathcal{F}} d_{ij} q_i x_{ij}$$
+                            </div>
+                            <div class="text-[10px] text-slate-400">
+                                约束集合：需求指派全覆盖 \(\sum x_{ij}=1\)；便民红线 \(d_{ij}x_{ij} \le 150\)m；容量约束 \(\sum q_i x_{ij} \le (50y_j + 34s_j)\theta\)。
+                            </div>
+                        </div>
+
+                        <!-- 分支定界收敛曲线图 -->
+                        <div class="space-y-1">
+                            <span class="text-[11px] font-semibold text-slate-300">分支定界算法上界与松弛下界收敛监控 (Branch & Bound Convergence):</span>
+                            <div id="chart-mip-convergence" class="w-full h-44"></div>
+                        </div>
+
+                        <!-- 约束松弛度核验表 -->
+                        <div v-if="planResult.layout.constraint_checks" class="space-y-1.5">
+                            <span class="text-[11px] font-semibold text-slate-300">关键运筹约束可行性与松弛度核验 (Slack Check):</span>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-[11px] mono border border-slate-800">
+                                    <thead class="bg-slate-800 text-slate-400">
+                                        <tr>
+                                            <th class="p-1.5">约束项</th>
+                                            <th>左端需求 LHS</th>
+                                            <th>右端容量 RHS</th>
+                                            <th>松弛量 Slack</th>
+                                            <th>校验结论</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800">
+                                        <tr v-for="c in planResult.layout.constraint_checks" :key="c.constraint">
+                                            <td class="p-1.5 text-slate-300 font-medium">{{ c.constraint }}</td>
+                                            <td class="mono">{{ c.lhs_assigned }}</td>
+                                            <td class="mono">{{ c.rhs_capacity }}</td>
+                                            <td class="mono font-bold text-emerald-400">+{{ c.slack }}</td>
+                                            <td>
+                                                <span class="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 text-[10px] font-bold">
+                                                    {{ c.status }} (无满柜)
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 决策变量向量 Y 与 S -->
+                        <div v-if="planResult.layout.decision_matrices" class="bg-slate-800/70 p-3 rounded-lg text-xs space-y-2">
+                            <div class="text-[11px] font-semibold text-slate-300">最优整数解决策变量向量:</div>
+                            <div class="grid grid-cols-2 gap-2 text-[10px] mono">
+                                <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                                    <div class="text-slate-400">设施激活变量 \(Y^* \in \{0, 1\}\):</div>
+                                    <div v-for="y in planResult.layout.decision_matrices.y_vector" :key="y.facility_id" class="text-cyan-300 mt-1">
+                                        y[{{ y.facility_id }}] = <b class="text-white">{{ y.value }}</b> ({{ y.active ? '激活' : '闭合' }})
+                                    </div>
+                                </div>
+                                <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                                    <div class="text-slate-400">副柜配置变量 \(S^* \in \mathbb{Z}_{\ge 0}\):</div>
+                                    <div v-for="s in planResult.layout.decision_matrices.s_vector" :key="s.facility_id" class="text-emerald-300 mt-1">
+                                        s[{{ s.facility_id }}] = <b class="text-white">{{ s.value }}</b> 组副柜
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 求解器日志 -->
+                        <div v-if="planResult.layout.solver_logs" class="space-y-1">
+                            <span class="text-[11px] font-semibold text-slate-300">MIP 求解器日志 (Branch & Bound Trace):</span>
+                            <div class="solver-terminal max-h-28">
+                                <div v-for="(log, idx) in planResult.layout.solver_logs" :key="idx" class="log-line">
+                                    {{ log }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== TAB 4: 第7章 人车协同调度 ==================== -->
+                <div v-if="activeTab === 'routing'" class="space-y-4">
+                    <div v-if="planResult && planResult.routing" class="glass-panel p-4 rounded-xl space-y-3">
+                        <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
+                            <span>🚗</span> 第7章 无人配送与人工协同运行模型
+                        </h2>
+                        <p class="text-xs text-slate-300">
+                            分工机制：无人车（X3）承担干线接驳与社区内各点巡航投柜；人工快递员仅服务上门子集楼栋，实现人机高效接驳。
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-3 text-xs pt-1">
+                            <div class="bg-slate-800/80 p-3 rounded-lg">
+                                <span class="text-slate-400">无人车巡航里程</span>
+                                <div class="text-lg font-bold text-cyan-400 mono mt-0.5">{{ planResult.routing.unmanned_vehicle_dist_km }} km</div>
+                                <span class="text-[10px] text-slate-500">巡航耗时: {{ planResult.routing.unmanned_vehicle_time_min }} min</span>
+                            </div>
+                            <div class="bg-slate-800/80 p-3 rounded-lg">
+                                <span class="text-slate-400">快递员上门工时</span>
+                                <div class="text-lg font-bold text-emerald-400 mono mt-0.5">{{ planResult.routing.courier_total_hours }} h</div>
+                                <span class="text-[10px] text-slate-500">上门步巡: {{ planResult.routing.courier_walk_dist_km }} km</span>
+                            </div>
+                        </div>
+
+                        <!-- 现状全量人工步巡 vs 优化人机协同对比卡片 -->
+                        <div v-if="planResult.community_comparison && planResult.baseline_plan" class="bg-slate-950/70 p-3 rounded-lg border border-slate-800 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-bold text-slate-300 flex items-center gap-1">
+                                    <span>⚖️</span> 末端作业对比: 现状人工全量投递 vs 人机协同精准上门
+                                </span>
+                                <span class="diff-badge-down text-[10px]">
+                                    工时节约 {{ planResult.community_comparison.hours_saving_pct }}%
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div class="bg-rose-950/30 border border-rose-900/40 p-2.5 rounded">
+                                    <div class="text-[10px] text-rose-400 font-semibold">🔴 现状人工全量作业</div>
+                                    <div class="text-sm font-bold text-rose-300 mono mt-0.5">{{ planResult.baseline_plan.courier_walk_dist_km }} km / {{ planResult.baseline_plan.courier_total_hours }} h</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">一人包揽自提投柜与入户，重度疲劳</div>
+                                </div>
+                                <div class="bg-emerald-950/30 border border-emerald-900/40 p-2.5 rounded">
+                                    <div class="text-[10px] text-emerald-400 font-semibold">🟢 优化人机协同作业</div>
+                                    <div class="text-sm font-bold text-emerald-300 mono mt-0.5">{{ planResult.optimized_plan.courier_walk_dist_km }} km / {{ planResult.optimized_plan.courier_total_hours }} h</div>
+                                    <div class="text-[10px] text-emerald-400 mt-0.5">步巡减 {{ planResult.community_comparison.walk_saving_km }}km，无人车巡航投柜</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 发车班次与装车方案 -->
+                        <div class="space-y-2 pt-2">
+                            <span class="text-xs font-bold text-slate-300">无人配送车装载与发车班次排程:</span>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs text-slate-300">
+                                    <thead class="border-b border-slate-800 text-slate-400">
+                                        <tr>
+                                            <th class="py-1.5">班次</th>
+                                            <th>发车时刻</th>
+                                            <th>装车件量</th>
+                                            <th>满载率</th>
+                                            <th>货物类型</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/50">
+                                        <tr v-for="trip in planResult.routing.loading_plan" :key="trip.trip_id">
+                                            <td class="py-2 mono font-bold text-cyan-400">{{ trip.trip_id }}</td>
+                                            <td class="mono">{{ trip.departure_time }}</td>
+                                            <td class="mono">{{ trip.load_pkgs }} 件</td>
+                                            <td class="mono font-bold text-emerald-400">{{ trip.utilization }}%</td>
+                                            <td class="text-slate-400">{{ trip.cargo_types }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 📐 运筹数学模型与求解器过程 (M2 CVRP) -->
+                    <div v-if="planResult && planResult.routing" class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-orange-500">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-orange-300 flex items-center gap-1.5">
+                                <span>📐</span> M2 社区人机协同双层 CVRP 模型与容量校验
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-orange-950 text-orange-400 mono">
+                                求解耗时: {{ planResult.routing.solver_metrics?.solve_time_ms || 0.12 }} ms
+                            </span>
+                        </div>
+
+                        <!-- LaTeX 公式 -->
+                        <div class="math-card text-xs space-y-1.5">
+                            <div class="text-[11px] text-slate-400 font-semibold">双层路径规划目标函数与车载运力约束：</div>
+                            <div class="text-orange-200 mono text-center py-1">
+                                $$\min Z_2 = \sum_{k \in \mathcal{K}} \Big(\sum_{i,j} d_{ij} x_{ijk} + \tau n_k\Big) + \omega \sum_{i,j \in \mathcal{B}_{\text{door}}} d_{ij} w_{ij}, \quad \text{s.t.} \;\; \sum_i q_i y_{ik} \le 400$$
+                            </div>
+                        </div>
+
+                        <!-- 车辆装载容量与工时松弛核验表 -->
+                        <div v-if="planResult.routing.constraint_checks" class="space-y-1.5">
+                            <span class="text-[11px] font-semibold text-slate-300">CVRP 车次容量与快递员工时约束松弛核验:</span>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-[11px] mono border border-slate-800">
+                                    <thead class="bg-slate-800 text-slate-400">
+                                        <tr>
+                                            <th class="p-1.5">约束项</th>
+                                            <th>实际负载 LHS</th>
+                                            <th>法定上限 RHS</th>
+                                            <th>剩余余量 Slack</th>
+                                            <th>状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800">
+                                        <tr v-for="c in planResult.routing.constraint_checks" :key="c.constraint">
+                                            <td class="p-1.5 text-slate-300 font-medium">{{ c.constraint }}</td>
+                                            <td class="mono">{{ c.lhs_load }}</td>
+                                            <td class="mono">{{ c.rhs_capacity }}</td>
+                                            <td class="mono font-bold text-emerald-400">{{ c.slack }}</td>
+                                            <td>
+                                                <span :class="c.status === 'FEASIBLE' ? 'text-emerald-300 bg-emerald-950' : 'text-amber-300 bg-amber-950'" class="px-1.5 py-0.5 rounded text-[10px] font-bold">
+                                                    {{ c.status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 求解器日志 -->
+                        <div v-if="planResult.routing.solver_logs" class="space-y-1">
+                            <span class="text-[11px] font-semibold text-slate-300">M2 CVRP 启发式路线求解日志:</span>
+                            <div class="solver-terminal max-h-28">
+                                <div v-for="(log, idx) in planResult.routing.solver_logs" :key="idx" class="log-line">
+                                    {{ log }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== TAB 5: 第8章 仿真对抗 ==================== -->
+                <div v-if="activeTab === 'simulation'" class="space-y-4">
+                    <div class="glass-panel p-4 rounded-xl space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
+                                <span>⏱️</span> 第8章 配送系统离散事件仿真对抗
+                            </h2>
+                            <span class="px-2 py-0.5 text-xs rounded bg-cyan-950 border border-cyan-700 text-cyan-300 mono font-bold">DES 离散事件内核</span>
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            全面推演“现状（纯人工）vs 优化后人工 vs 人机协同”三大方案的全网时效、饱和度与能耗表现。
+                        </p>
+                    </div>
+
+                    <!-- 满柜时序对抗 ECharts -->
+                    <div class="glass-panel p-4 rounded-xl space-y-2">
+                        <span class="text-xs font-bold text-slate-200">智能柜饱和度时序变化曲线（消除爆柜对抗）</span>
+                        <div id="chart-saturation" class="w-full h-52"></div>
+                    </div>
+
+                    <!-- 雷达图与成本柱状图 -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="glass-panel p-3 rounded-xl space-y-2">
+                            <span class="text-xs font-bold text-slate-200">综合效益多维雷达</span>
+                            <div id="chart-radar" class="w-full h-48"></div>
+                        </div>
+                        <div class="glass-panel p-3 rounded-xl space-y-2">
+                            <span class="text-xs font-bold text-slate-200">成本与碳排放对比</span>
+                            <div id="chart-cost" class="w-full h-48"></div>
+                        </div>
+                    </div>
+
+                    <!-- 📐 运筹数学模型与求解器过程 (M8 DES) -->
+                    <div v-if="simulationResult" class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-cyan-500">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                                <span>📐</span> M8 离散事件动态状态转移模型 (DES & Queuing Dynamics)
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 mono">
+                                步进时间段: 14h | Status: COMPLETED
+                            </span>
+                        </div>
+
+                        <!-- 动态转移方程 -->
+                        <div class="math-card text-xs space-y-1.5">
+                            <div class="text-[11px] text-slate-400 font-semibold">系统状态转移差分方程与非齐次泊松到达：</div>
+                            <div class="text-cyan-200 mono text-center py-1">
+                                $$O_j(t + \Delta t) = \max\Big(0, \; \min\big(C_j^{\text{eff}}, \; O_j(t) + \Delta A_j(t) - \Delta D_j(t)\big)\Big)$$
+                            </div>
+                        </div>
+
+                        <!-- 离散事件时序推进明细表 -->
+                        <div v-if="simulationResult.discrete_events" class="space-y-1.5">
+                            <span class="text-[11px] font-semibold text-slate-300">离散事件日历时序推进与瓶颈监测表:</span>
+                            <div class="overflow-x-auto max-h-40">
+                                <table class="w-full text-left text-[10px] mono border border-slate-800">
+                                    <thead class="bg-slate-800 text-slate-400 sticky top-0">
+                                        <tr>
+                                            <th class="p-1.5">时刻</th>
+                                            <th>离散事件描述</th>
+                                            <th>到达量</th>
+                                            <th>未扩容基准</th>
+                                            <th>优化后方案</th>
+                                            <th>状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/60">
+                                        <tr v-for="evt in simulationResult.discrete_events" :key="evt.time">
+                                            <td class="p-1.5 font-bold text-cyan-400">{{ evt.time }}</td>
+                                            <td>{{ evt.event }}</td>
+                                            <td>{{ evt.incoming_pkgs }} 件</td>
+                                            <td class="text-rose-400 font-bold">{{ evt.baseline_sat }}</td>
+                                            <td class="text-emerald-400 font-bold">{{ evt.optimized_sat }}</td>
+                                            <td>
+                                                <span :class="evt.baseline_sat.includes('1') && parseInt(evt.baseline_sat) > 100 ? 'text-emerald-300' : 'text-slate-400'">
+                                                    {{ evt.bottleneck_status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 仿真器日志 -->
+                        <div v-if="simulationResult.solver_logs" class="space-y-1">
+                            <span class="text-[11px] font-semibold text-slate-300">DES 仿真引擎事件日志:</span>
+                            <div class="solver-terminal max-h-24">
+                                <div v-for="(log, idx) in simulationResult.solver_logs" :key="idx" class="log-line">
+                                    {{ log }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== TAB 6: AI 调度大脑 ==================== -->
+                <div v-if="activeTab === 'copilot'" class="space-y-4">
+                    <div class="glass-panel p-4 rounded-xl space-y-3">
+                        <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-2">
+                            <span>🤖</span> AI 物流调度大脑与极端场景自适应应急重排
+                        </h2>
+                        <p class="text-xs text-slate-300">
+                            针对评委关注的“AI大模型深度赋能”，系统具备应对大促暴单、恶劣天气与车辆故障的自适应推理重排机制。
+                        </p>
+
+                        <div class="flex gap-2 pt-1">
+                            <button @click="triggerCrisis('SURGE')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-rose-950 border border-rose-700 text-rose-300 hover:bg-rose-900 transition">
+                                🚨 模拟大促暴单满柜
+                            </button>
+                            <button @click="triggerCrisis('WEATHER')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-sky-950 border border-sky-700 text-sky-300 hover:bg-sky-900 transition">
+                                ❄️ 模拟暴雪道路结冰
+                            </button>
+                            <button @click="triggerCrisis('BREAKDOWN')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-amber-950 border border-amber-700 text-amber-300 hover:bg-amber-900 transition">
+                                ⚠️ 模拟无人车突发故障
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 应急决策显示框 -->
+                    <div v-if="crisisResult" class="glass-panel p-4 rounded-xl border-l-4 border-l-rose-500 space-y-2 animate-fadeIn">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-rose-400 flex items-center gap-1.5">
+                                <span>⚡</span> 事件: {{ crisisResult.event_name }}
+                            </span>
+                            <span class="text-slate-500 mono">{{ crisisResult.timestamp }}</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">{{ crisisResult.description }}</p>
+                        <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800 text-xs text-emerald-300 font-mono leading-relaxed mt-2">
+                            {{ crisisResult.decision }}
+                        </div>
+                    </div>
+
+                    <!-- 📐 动态重规划模型原理卡片 -->
+                    <div class="glass-panel p-4 rounded-xl space-y-2 border-l-4 border-l-cyan-500">
+                        <span class="text-xs font-bold text-cyan-300 flex items-center gap-1">
+                            <span>📐</span> 极端扰动下 MILP 热启动自适应重优化机制 (Warm-Start Re-optimization)
+                        </span>
+                        <div class="math-card text-xs space-y-1">
+                            <div class="text-[11px] text-slate-400">当突发路段封闭或车辆故障时，固定原方案未受影响变量，引入动态松弛重解：</div>
+                            <div class="text-cyan-200 mono text-center py-1">
+                                $$\min Z_{\text{repair}} = Z_2 + M \cdot \sum_{i, j} \xi_{ij} \quad \text{s.t.} \;\; \text{RoadStatus}_{ij} = 0 \implies x_{ij} = 0$$
+                            </div>
+                            <div class="text-[10px] text-slate-400">结合 Dijkstra 备用路网拓扑，在 &lt;5ms 内完成路径热修补，保证末端网络抗毁性与高韧性。</div>
+                        </div>
+                    </div>
+
+                    <!-- AI 智能学术诊断书 -->
+                    <div v-if="planResult && planResult.ai_report" class="glass-panel p-4 rounded-xl space-y-3">
+                        <span class="text-xs font-bold text-slate-200">专家级社区数智化升级诊断书 (实时生成)</span>
+                        <div class="text-xs text-slate-300 leading-relaxed whitespace-pre-line bg-slate-950/60 p-4 rounded-lg border border-slate-800 max-h-80 overflow-y-auto">
+                            {{ planResult.ai_report }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== TAB 7: 动态沙盒推演 ==================== -->
+                <div v-if="activeTab === 'sandbox'" class="space-y-4">
+                    <div class="glass-panel p-4 rounded-xl space-y-3">
+                        <h2 class="text-sm font-bold text-amber-400 flex items-center gap-1.5">
+                            <span>🧪</span> 自定义社区参数推演实验室
+                        </h2>
+                        <p class="text-xs text-slate-300">
+                            评委可自由调节任意小区户数、上门率偏好与件量强度，系统将在 1 秒内完成需求预测、MIP选址定容与路径规划的重算与渲染！
+                        </p>
+                    </div>
+
+                    <!-- 高德 LBS / MCP 全景北京小区实时搜索与规划 -->
+                    <div class="glass-panel p-4 rounded-xl space-y-3 border border-cyan-800/70 shadow-lg shadow-cyan-950/40">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                                <span>🔍</span> 高德 MCP 全景北京小区实时搜索与规划 (Amap Real-time Exploration)
+                            </h3>
+                            <span v-if="amapConfig && amapConfig.configured" class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-600 text-emerald-300 font-mono">高德LBS在线</span>
+                            <span v-else class="text-[10px] px-2 py-0.5 rounded bg-amber-950 border border-amber-600 text-amber-300 font-mono cursor-pointer" @click="showAmapModal = true">点击绑定Key</span>
+                        </div>
+                        <p class="text-[11px] text-slate-300">
+                            打破仅限预置样本的局限，输入北京任意真实小区，高德接口实时解析地理坐标、扫描周边已有菜鸟/丰巢网点、调用运筹引擎输出该小区的量身定制规划！
+                        </p>
+                        <div class="flex gap-2">
+                            <input type="text" v-model="amapSearchKeyword" @keyup.enter="searchAndExploreCommunity" placeholder="输入北京任意小区（如：望京新城、海淀远大园、朝阳华侨城、通州梨园...）" 
+                                   class="flex-1 bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <button @click="searchAndExploreCommunity" :disabled="amapExploring" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white text-xs font-bold rounded-lg shadow transition flex items-center gap-1.5 flex-shrink-0">
+                                <span v-if="amapExploring" class="animate-spin">⏳</span>
+                                <span v-else>🚀</span> 一键高德解析并规划
+                            </button>
+                        </div>
+                        <div v-if="amapExploreResult" class="text-[11px] text-slate-300 bg-slate-950/80 p-3 rounded-lg border border-slate-800 space-y-1 animate-fadeIn">
+                            <div class="flex justify-between items-center">
+                                <span class="text-emerald-400 font-bold">📍 已成功接入高德实景：{{ amapExploreResult.community_name }}</span>
+                                <span v-if="amapExploreResult.weather" class="text-amber-400 mono">🌤️ {{ amapExploreResult.weather.weather }} {{ amapExploreResult.weather.temperature }}℃</span>
+                            </div>
+                            <div class="text-slate-400">{{ amapExploreResult.geo.formatted_address }} ({{ amapExploreResult.geo.district }})</div>
+                            <div class="flex gap-4 text-slate-300 pt-1">
+                                <span>周边扫描物流设施: <b class="text-cyan-400 mono">{{ amapExploreResult.nearby_pois_count }}</b> 处</span>
+                                <span>微观合成楼栋: <b class="text-cyan-400 mono">{{ amapExploreResult.buildings ? amapExploreResult.buildings.length : 0 }}</b> 栋</span>
+                                <span>总有效容量配置: <b class="text-emerald-400 mono">{{ amapExploreResult.layout ? amapExploreResult.layout.total_effective_capacity : 0 }}</b> 件</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-xl space-y-4 text-xs">
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between">
+                                <span class="text-slate-300">社区总户数</span>
+                                <span class="text-cyan-400 font-bold mono">{{ customHouseholds }} 户</span>
+                            </div>
+                            <input type="range" min="100" max="4000" step="50" v-model.number="customHouseholds" @input="onTweakParams" class="w-full accent-cyan-500">
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between">
+                                <span class="text-slate-300">上门配送偏好比例 (老龄化程度)</span>
+                                <span class="text-orange-400 font-bold mono">{{ Math.round(customDoorRatio * 100) }}%</span>
+                            </div>
+                            <input type="range" min="0" max="1" step="0.05" v-model.number="customDoorRatio" @input="onTweakParams" class="w-full accent-orange-500">
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between">
+                                <span class="text-slate-300">人均日派件强度</span>
+                                <span class="text-emerald-400 font-bold mono">{{ customIntensity }} 件/户·日</span>
+                            </div>
+                            <input type="range" min="0.3" max="1.5" step="0.05" v-model.number="customIntensity" @input="onTweakParams" class="w-full accent-emerald-500">
+                        </div>
+
+                        <div class="pt-2">
+                            <button @click="onTweakParams" class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded-lg shadow-lg hover:from-cyan-500 hover:to-blue-500 transition">
+                                🚀 一键重算并生成完整规划方案
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 📐 运筹求解引擎实时监控控制台 (Live Telemetry Console) -->
+                    <div v-if="planResult && planResult.solver_console" class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-amber-500">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                                <span>⚡</span> 算法引擎实时求解监控 (Live Solver Telemetry)
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-amber-950 text-amber-400 mono">
+                                总用时: {{ planResult.solver_console.total_solve_time_ms }} ms
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div class="bg-slate-800/80 p-2 rounded">
+                                <span class="text-slate-400 text-[10px]">M5 预测求解</span>
+                                <div class="text-cyan-400 font-bold mono">{{ planResult.solver_console.solver_breakdown.M5_forecast_ms }} ms</div>
+                            </div>
+                            <div class="bg-slate-800/80 p-2 rounded">
+                                <span class="text-slate-400 text-[10px]">M6 MIP 定容</span>
+                                <div class="text-emerald-400 font-bold mono">{{ planResult.solver_console.solver_breakdown.M6_layout_mip_ms }} ms</div>
+                            </div>
+                            <div class="bg-slate-800/80 p-2 rounded">
+                                <span class="text-slate-400 text-[10px]">M2 CVRP 路由</span>
+                                <div class="text-orange-400 font-bold mono">{{ planResult.solver_console.solver_breakdown.M2_routing_cvrp_ms }} ms</div>
+                            </div>
+                        </div>
+
+                        <!-- 聚合求解器日志流 -->
+                        <div class="space-y-1">
+                            <span class="text-[11px] font-semibold text-slate-300">求解器全流程实时日志流 (Aggregated Solver Log Stream):</span>
+                            <div class="solver-terminal max-h-40">
+                                <div v-for="(log, idx) in planResult.solver_console.aggregated_logs" :key="idx" class="log-line">
+                                    {{ log }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- ==================== 全局弹窗：运筹算法求解控制台与数学公式看板 ==================== -->
+        <div v-if="showSolverModal" class="fixed inset-0 z-[2000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn">
+            <div class="bg-slate-900 border border-cyan-700/50 rounded-2xl w-11/12 max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+                
+                <!-- 弹窗顶栏 -->
+                <div class="h-14 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-950/80 flex-shrink-0">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-cyan-600/20 border border-cyan-500/50 flex items-center justify-center text-cyan-400 text-lg">
+                            📐
+                        </div>
+                        <div>
+                            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                                运筹学核心数学模型库与算法求解器深度控制台
+                                <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">公式 · 日志 · 决策变量 · 约束核验</span>
+                            </h2>
+                        </div>
+                    </div>
+                    <button @click="showSolverModal = false" class="text-slate-400 hover:text-white text-xl p-1 rounded-lg hover:bg-slate-800 transition">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- 弹窗次顶栏：模型切换标签 -->
+                <div class="px-6 py-2 bg-slate-950/40 border-b border-slate-800 flex items-center justify-between text-xs flex-shrink-0">
+                    <div class="flex space-x-2">
+                        <button v-for="m in mathModelsList" :key="m.code"
+                            @click="solverModalTab = m.code; renderMath();"
+                            :class="solverModalTab === m.code ? 'bg-cyan-600 text-white font-bold' : 'bg-slate-800 text-slate-400 hover:text-white'"
+                            class="px-3 py-1.5 rounded-lg transition mono">
+                            {{ m.code }} {{ m.name.split('(')[0] }}
+                        </button>
+                    </div>
+                    <div class="text-[11px] text-slate-400 mono">
+                        当前环境: Python 3.10 + FastAPI + NumPy OR Solver Engine
+                    </div>
+                </div>
+
+                <!-- 弹窗主内容区 -->
+                <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                    <div v-for="m in mathModelsList" :key="m.code">
+                        <div v-if="solverModalTab === m.code" class="space-y-5">
+                            
+                            <!-- 模型基本介绍 -->
+                            <div class="glass-panel p-4 rounded-xl space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-base font-bold text-cyan-300">{{ m.code }} · {{ m.name }}</h3>
+                                    <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 mono">{{ m.chapter }}</span>
+                                </div>
+                                <p class="text-xs text-slate-300 leading-relaxed">{{ m.description }}</p>
+                                <div class="text-[11px] text-cyan-400 mono font-semibold">模型分类: {{ m.type }}</div>
+                            </div>
+
+                            <!-- 标准 LaTeX 目标函数 -->
+                            <div class="math-card space-y-2">
+                                <span class="text-xs font-bold text-white">1. 目标函数 (Objective Function):</span>
+                                <div class="text-cyan-200 text-center text-sm py-2 mono bg-slate-950/40 rounded-lg">
+                                    $${{ m.objective }}$$
+                                </div>
+                            </div>
+
+                            <!-- 决策变量表 -->
+                            <div v-if="m.variables" class="glass-panel p-4 rounded-xl space-y-2">
+                                <span class="text-xs font-bold text-white">2. 决策变量定义 (Decision Variables):</span>
+                                <table class="w-full text-left text-xs text-slate-300">
+                                    <thead class="border-b border-slate-800 text-slate-400">
+                                        <tr>
+                                            <th class="py-1.5">变量符号</th>
+                                            <th>变量类型</th>
+                                            <th>业务含义与定义域</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/60">
+                                        <tr v-for="v in m.variables" :key="v.symbol">
+                                            <td class="py-2 mono font-bold text-cyan-300">$$\( {{ v.symbol }} \)$$</td>
+                                            <td class="text-amber-300 mono">{{ v.type }}</td>
+                                            <td>{{ v.meaning }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- 约束条件集合 -->
+                            <div v-if="m.constraints" class="glass-panel p-4 rounded-xl space-y-2">
+                                <span class="text-xs font-bold text-white">3. 约束条件集合 (Constraints & Formulations):</span>
+                                <div class="space-y-2">
+                                    <div v-for="c in m.constraints" :key="c.name" class="bg-slate-800/60 p-3 rounded-lg text-xs space-y-1">
+                                        <div class="font-semibold text-slate-200">{{ c.name }}:</div>
+                                        <div class="text-cyan-200 mono text-center py-1 bg-slate-950/40 rounded">
+                                            $${{ c.formula }}$$
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 当前社区实时求解输出 (关联实际数据) -->
+                            <div class="glass-panel p-4 rounded-xl space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-emerald-400">4. 案例社区 ({{ selectedCommunityId }}) 实时求解器运行追踪:</span>
+                                    <span class="text-[10px] text-slate-400 mono">Live Telemetry</span>
+                                </div>
+
+                                <!-- 求解日志终端 -->
+                                <div class="solver-terminal max-h-48">
+                                    <template v-if="m.code === 'M1' && overview && overview.trunk_routing">
+                                        <div v-for="(l, idx) in overview.trunk_routing.solver_logs" :key="idx" class="log-line">{{ l }}</div>
+                                    </template>
+                                    <template v-else-if="m.code === 'M5' && planResult && planResult.forecast">
+                                        <div v-for="(l, idx) in planResult.forecast.solver_logs" :key="idx" class="log-line">{{ l }}</div>
+                                    </template>
+                                    <template v-else-if="m.code === 'M6' && planResult && planResult.layout">
+                                        <div v-for="(l, idx) in planResult.layout.solver_logs" :key="idx" class="log-line">{{ l }}</div>
+                                    </template>
+                                    <template v-else-if="m.code === 'M2' && planResult && planResult.routing">
+                                        <div v-for="(l, idx) in planResult.routing.solver_logs" :key="idx" class="log-line">{{ l }}</div>
+                                    </template>
+                                    <template v-else-if="m.code === 'M8' && simulationResult">
+                                        <div v-for="(l, idx) in simulationResult.solver_logs" :key="idx" class="log-line">{{ l }}</div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="text-slate-500">[WAIT] No execution logs recorded for this module in memory.</div>
+                                    </template>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 弹窗底栏 -->
+                <div class="h-12 border-t border-slate-800 px-6 flex items-center justify-between bg-slate-950 text-xs text-slate-400 flex-shrink-0">
+                    <div>
+                        第九届北京市大学生物流设计大赛 · 严谨运筹优化算法与高可信求解器底座
+                    </div>
+                    <div class="flex space-x-2">
+                        <button @click="showSolverModal = false" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition font-medium">
+                            关闭看板
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== 高德开放平台 Web 服务 Key 绑定弹窗 ==================== -->
+        <div v-if="showAmapModal" class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
+            <div class="glass-panel-glow max-w-lg w-full rounded-2xl p-6 space-y-5 border border-cyan-700/60 shadow-2xl relative">
+                <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+                    <h3 class="text-sm font-bold text-cyan-300 flex items-center gap-2">
+                        <span>🔑</span> 高德开放平台 Web 服务 API Key 配置
+                    </h3>
+                    <button @click="showAmapModal = false" class="text-slate-400 hover:text-white text-lg">&times;</button>
+                </div>
+                <div class="text-xs text-slate-300 space-y-2 leading-relaxed">
+                    <p>请输入您在高德开放平台申请的 <b>Web 服务（Web API）</b> 专用 Key：</p>
+                    <p class="text-[11px] text-slate-400">配置后，系统将直接打通高德真实地理编码（Geocoding）、周边已有快递柜/驿站扫描（Around POI）与实时气象接口，为 AI 调度大脑赋予物理世界感知能力。</p>
+                </div>
+                <div class="space-y-2">
+                    <input type="text" v-model="amapKeyInput" placeholder="请输入高德 Web 服务 Key (例如：65f3***42)" 
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-cyan-500">
+                    <div v-if="amapKeyMsg" class="text-xs" :class="amapKeyMsg.includes('✅') ? 'text-emerald-400' : 'text-rose-400'">{{ amapKeyMsg }}</div>
+                    <div v-if="amapConfig && amapConfig.configured" class="text-[11px] text-slate-400">
+                        当前已生效 Key: <span class="text-emerald-400 font-mono">{{ amapConfig.masked_key }}</span>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button @click="showAmapModal = false" class="px-4 py-2 text-xs rounded-xl bg-slate-800 text-slate-400 hover:bg-slate-700 transition">取消</button>
+                    <button @click="saveAmapKey" class="px-5 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg transition">测试并保存生效</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Vue App Script -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
