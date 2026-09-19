@@ -342,7 +342,7 @@ def get_all_math_models():
                 "name": "容量受限选址定容混合整数规划模型 (Capacitated Facility Location & Sizing MIP)",
                 "type": "混合整数线性规划 (MILP)",
                 "objective": r"\min Z_6 = \sum_{j \in \mathcal{F}} \left( f_j y_j + c_s s_j \right) + \rho \sum_{i \in \mathcal{B}} \sum_{j \in \mathcal{F}} d_{ij} q_i x_{ij}",
-                "description": "自适应决策保留/激活智能柜设施点及配置扩容副柜数量，彻底消除第8章暴露的满柜溢出瓶颈。",
+                "description": "自适应决策保留/激活智能柜设施点及配置扩容副柜数量，并通过容量、覆盖与动态占用校验判断方案是否可行。",
                 "variables": [
                     {"symbol": "y_j", "type": "0-1 变量", "meaning": "候选设施点 j 是否激活开启"},
                     {"symbol": "s_j", "type": "非负整数", "meaning": "设施点 j 安装扩容副柜组数"},
@@ -358,18 +358,18 @@ def get_all_math_models():
             {
                 "code": "M8",
                 "chapter": "第8章 8.2",
-                "name": "配送系统离散事件动态仿真模型 (Discrete Event Simulation DES)",
-                "type": "随机动态系统 / 排队网络仿真 (DES / Queuing)",
-                "objective": r"\text{State Equation: } O_j(t + \Delta t) = \max\Big(0, \; \min\big(C_j^{\text{eff}}, \; O_j(t) + \Delta A_j(t) - \Delta D_j(t)\big)\Big)",
-                "description": "推演08:00至21:00全日到件、投柜、取件波峰，量化排队积压与爆柜风险，检验人机协同调度时效。",
+                "name": "配送系统动态占用确定性情景推演模型",
+                "type": "确定性状态转移 / 压力测试",
+                "objective": r"\text{State Equation: } O_j(t + \Delta t) = \max\big(0, \; O_j(t) + A_j(t) - D_j(t)\big)",
+                "description": "按冻结的分时到件权重与取件释放率推演08:00至21:00柜体占用；占用不按容量截断，因而可直接识别满柜时段与溢出量。",
                 "variables": [
                     {"symbol": "O_j(t)", "type": "系统状态", "meaning": "时刻 t 设施点 j 内暂存快件占用量"},
-                    {"symbol": r"\Delta A_j(t)", "type": "泊松增量", "meaning": "时间步内无人车到达投递的包裹数"}
+                    {"symbol": r"A_j(t)", "type": "确定性到件量", "meaning": "时间步内按冻结情景权重分配的投递包裹数"}
                 ],
                 "constraints": [
-                    {"name": "非齐次泊松到达过程", "formula": r"\Delta A_j(t) \sim \text{Poisson}\big(\lambda_j(t) \cdot \Delta t\big)"},
-                    {"name": "居民二项取件释放过程", "formula": r"\Delta D_j(t) \sim \text{Binomial}\big(O_j(t), \; P_{\text{pickup}}(t)\big)"},
-                    {"name": "满柜溢出概率界定", "formula": r"P_{\text{overflow}}(t) = \Pr\big(O_j(t) \ge C_j^{\text{eff}}\big)"}
+                    {"name": "分时到件守恒", "formula": r"A_j(t)=Q_j\,w_t,\quad \sum_t w_t=1"},
+                    {"name": "确定性取件释放", "formula": r"D_j(t)=O_j(t)\,p_t\,\gamma_s"},
+                    {"name": "满柜与溢出判定", "formula": r"I_j(t)=\mathbb{1}[O_j(t)>C_j^{\text{eff}}],\quad U_j=\max_t\max(0,O_j(t)-C_j^{\text{eff}})"}
                 ]
             }
         ]

@@ -35,13 +35,13 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=20260919-2">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
     <div id="app" class="flex flex-col flex-1 h-screen overflow-hidden">
         
         <!-- Top Navbar -->
-        <header class="h-16 glass-panel border-b border-slate-800 flex items-center justify-between px-6 z-30 flex-shrink-0">
+        <header class="app-header h-16 glass-panel border-b border-slate-800 flex items-center justify-between px-6 z-30 flex-shrink-0">
             <div class="flex items-center space-x-3 flex-shrink-0">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
                     <span class="text-base font-black text-white">AI</span>
@@ -51,9 +51,9 @@
                         <h1 class="text-sm font-bold tracking-tight text-white whitespace-nowrap">
                             超大城市末端配送协同决策中枢
                         </h1>
-                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-cyan-950 border border-cyan-700 text-cyan-300 whitespace-nowrap">主题二 · 原型系统</span>
+                        <span class="brand-badge text-[10px] font-semibold px-2 py-0.5 rounded bg-cyan-950 border border-cyan-700 text-cyan-300 whitespace-nowrap">主题二 · 原型系统</span>
                     </div>
-                    <p class="text-[11px] text-slate-400">第九届北京市大学生物流设计大赛 · 亦庄示范区 (BDA) 实证底座</p>
+                    <p class="brand-subtitle text-[11px] text-slate-400">第九届北京市大学生物流设计大赛 · 亦庄示范区 (BDA) 样本底座</p>
                 </div>
             </div>
 
@@ -72,7 +72,7 @@
             </nav>
 
             <!-- Global Controls -->
-            <div class="flex items-center space-x-2 text-xs flex-shrink-0">
+            <div class="global-controls flex items-center space-x-2 text-xs flex-shrink-0">
                 <!-- 宽屏/分屏视图模式切换开关 -->
                 <button @click="toggleViewMode" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition shadow-sm"
                     :class="viewMode === 'wide' ? 'bg-cyan-950 border-cyan-500 text-cyan-300 ring-1 ring-cyan-500/40' : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'">
@@ -93,7 +93,7 @@
         </header>
 
         <!-- Secondary Command Strip (Unified Command Bar) -->
-        <div class="h-11 bg-slate-900/95 border-b border-slate-800/80 px-6 flex items-center justify-between z-20 flex-shrink-0 text-xs">
+        <div class="secondary-command-bar h-11 bg-slate-900/95 border-b border-slate-800/80 px-6 flex items-center justify-between z-20 flex-shrink-0 text-xs">
             <!-- Left: Community Selector -->
             <div class="flex items-center space-x-2">
                 <span class="text-slate-400 font-semibold flex items-center gap-1"><span>🏘️</span> 社区:</span>
@@ -139,11 +139,11 @@
                     <span :class="isPeakDay ? 'text-rose-400 font-bold' : 'text-slate-400'">大促高峰 (2.0x)</span>
                 </label>
                 <div class="hidden xl:flex items-center space-x-2 text-[11px] mono text-slate-400">
-                    <span>干线: <b class="text-cyan-400">-46.0%</b></span>
+                    <span>干线: <b class="text-cyan-400">{{ improvementText('trunk_distance') }}</b></span>
                     <span class="text-slate-600">|</span>
-                    <span>工时: <b class="text-emerald-400">-59.8%</b></span>
+                    <span>工时: <b class="text-emerald-400">{{ improvementText('labor_hours') }}</b></span>
                     <span class="text-slate-600">|</span>
-                    <span>降本: <b class="text-amber-400">¥152万</b></span>
+                    <span>年节约: <b class="text-amber-400">¥{{ savingValue('annual_cost', 10000, 1) }}万</b></span>
                 </div>
             </div>
         </div>
@@ -152,7 +152,7 @@
         <main class="flex-1 flex overflow-hidden relative">
             
             <!-- Left Panel: Interactive Leaflet WebGIS Map -->
-            <div v-show="viewMode === 'split'" class="w-1/2 h-full flex flex-col border-r border-slate-800 relative transition-all duration-300">
+            <div v-show="viewMode === 'split'" class="map-panel w-1/2 h-full flex flex-col border-r border-slate-800 relative transition-all duration-300">
                 
                 <!-- Compact Map Tool Palette (Top-Right) -->
                 <div class="absolute top-3 right-3 z-[1000] flex items-center space-x-1.5">
@@ -213,7 +213,7 @@
             </div>
 
             <!-- Right Panel: Data, Algorithms & AI Insights -->
-            <div :class="viewMode === 'wide' ? 'w-full max-w-[1760px] mx-auto px-6 py-5' : 'w-1/2 p-5'" class="h-full flex flex-col bg-slate-900/60 overflow-y-auto space-y-5 transition-all duration-300">
+            <div :class="viewMode === 'wide' ? 'w-full max-w-[1760px] mx-auto px-6 py-5' : 'w-1/2 p-5'" class="content-panel h-full flex flex-col bg-slate-900/60 overflow-y-auto space-y-5 transition-all duration-300">
                 
                 <!-- ==================== TAB 0: ⚖️ 现状 vs 优化 (全景对比) ==================== -->
                 <div v-if="activeTab === 'comparison'" class="space-y-4 animate-fadeIn">
@@ -225,11 +225,11 @@
                                 <span>⚖️</span> 现状诊断 (As-Is) vs 优化协同方案 (To-Be) 全景对比
                             </h2>
                             <span class="px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-700 text-cyan-300 text-xs font-bold mono">
-                                综合降本 53.6% · 减碳 87.2%
+                                {{ improvementText('annual_cost') }} · {{ improvementText('annual_carbon') }}
                             </span>
                         </div>
                         <p class="text-xs text-slate-300 leading-relaxed">
-                            立足亦庄 5 大社区实证底座与真实运营数据，对比呈现传统纯人工作业模式与数智化人机协同网络的系统级跃迁，彻底打破干线空驶、末端爆柜与人工过载三大瓶颈。
+                            基于同一版五社区模型数据与显式标注的情景假设，对比 S0、S1、S2。当前距离仍采用直线距离乘绕行系数，结论须在真实 OD 与现场运营数据补齐后复算。
                         </p>
                     </div>
 
@@ -252,22 +252,22 @@
                                         <span class="text-slate-300 font-semibold flex items-center gap-1">🚗 干线运输总里程</span>
                                         <div class="text-[10px] text-slate-500">HUB 至社区接驳点</div>
                                     </div>
-                                    <span class="diff-badge-down text-xs">-46.0%</span>
+                                    <span class="diff-badge-down text-xs">{{ improvementText('trunk_distance') }}</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
                                     <div>
                                         <span class="text-[10px] text-rose-400 font-semibold">🔴 现状独立往返</span>
-                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">24.84 <span class="text-[10px] text-slate-400">km</span></div>
-                                        <span class="text-[10px] text-slate-500">耗时 74.5 min</span>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('trunk_distance', 'baseline', 1, 2) }} <span class="text-[10px] text-slate-400">km</span></div>
+                                        <span class="text-[10px] text-slate-500">同一 HUB 与社区节点</span>
                                     </div>
                                     <div>
                                         <span class="text-[10px] text-cyan-400 font-semibold">🟢 优化M1巡回</span>
-                                        <div class="text-base font-bold text-cyan-400 mono mt-0.5">13.42 <span class="text-[10px] text-slate-400">km</span></div>
-                                        <span class="text-[10px] text-slate-500">耗时 67.1 min</span>
+                                        <div class="text-base font-bold text-cyan-400 mono mt-0.5">{{ metricValue('trunk_distance', 'optimized', 1, 2) }} <span class="text-[10px] text-slate-400">km</span></div>
+                                        <span class="text-[10px] text-slate-500">统一距离矩阵口径</span>
                                     </div>
                                 </div>
                                 <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
-                                    拓扑优化：5条点对点往返压缩为1条集约闭环，空驶彻底消除。
+                                    拓扑优化：5条点对点往返合并为1条集约闭环；距离采用D类估算口径。
                                 </div>
                             </div>
 
@@ -278,22 +278,22 @@
                                         <span class="text-slate-300 font-semibold flex items-center gap-1">🚶 社区内步巡里程</span>
                                         <div class="text-[10px] text-slate-500">快递员末端配送步行</div>
                                     </div>
-                                    <span class="diff-badge-down text-xs">-34.2%</span>
+                                    <span class="diff-badge-down text-xs">{{ improvementText('courier_walk_distance') }}</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
                                     <div>
                                         <span class="text-[10px] text-rose-400 font-semibold">🔴 现状全楼栋步巡</span>
-                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">13.78 <span class="text-[10px] text-slate-400">km</span></div>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('courier_walk_distance', 'baseline', 1, 2) }} <span class="text-[10px] text-slate-400">km</span></div>
                                         <span class="text-[10px] text-slate-500">全量包裹人工投送</span>
                                     </div>
                                     <div>
                                         <span class="text-[10px] text-cyan-400 font-semibold">🟢 优化人机协同</span>
-                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">9.07 <span class="text-[10px] text-slate-400">km</span></div>
+                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">{{ metricValue('courier_walk_distance', 'optimized', 1, 2) }} <span class="text-[10px] text-slate-400">km</span></div>
                                         <span class="text-[10px] text-slate-500">仅精细上门子集</span>
                                     </div>
                                 </div>
                                 <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
-                                    工效优化：无人车巡航投柜，人工仅上门交付，步巡减4.71km。
+                                    步巡路径由统一节点数据计算，人工仅覆盖上门件及异常任务。
                                 </div>
                             </div>
 
@@ -304,48 +304,48 @@
                                         <span class="text-slate-300 font-semibold flex items-center gap-1">⏱️ 全网人工投入工时</span>
                                         <div class="text-[10px] text-slate-500">干线驾驶+社区交付</div>
                                     </div>
-                                    <span class="diff-badge-down text-xs">-59.8%</span>
+                                    <span class="diff-badge-down text-xs">{{ improvementText('labor_hours') }}</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
                                     <div>
                                         <span class="text-[10px] text-rose-400 font-semibold">🔴 现状高负荷运转</span>
-                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">151.2 <span class="text-[10px] text-slate-400">h</span></div>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('labor_hours', 'baseline', 1, 2) }} <span class="text-[10px] text-slate-400">h</span></div>
                                         <span class="text-[10px] text-slate-500">劳动强度过载</span>
                                     </div>
                                     <div>
                                         <span class="text-[10px] text-cyan-400 font-semibold">🟢 优化精细履约</span>
-                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">60.8 <span class="text-[10px] text-slate-400">h</span></div>
+                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">{{ metricValue('labor_hours', 'optimized', 1, 2) }} <span class="text-[10px] text-slate-400">h</span></div>
                                         <span class="text-[10px] text-slate-500">标准8h合理工时</span>
                                     </div>
                                 </div>
                                 <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
-                                    劳动保障：节约人工90.4工时，彻底杜绝超时违规作业。
+                                    人工总工时为所有人员实际工时之和；完成时间另按并行作业计算。
                                 </div>
                             </div>
 
-                            <!-- KPI 4: 满柜风险社区数 -->
+                            <!-- KPI 4: 日终未完成件量 -->
                             <div class="comparison-card space-y-2">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <span class="text-slate-300 font-semibold flex items-center gap-1">💥 满柜风险社区数</span>
-                                        <div class="text-[10px] text-slate-500">自提柜超载爆仓情况</div>
+                                        <span class="text-slate-300 font-semibold flex items-center gap-1">💥 日终未完成件量</span>
+                                        <div class="text-[10px] text-slate-500">覆盖不足与满柜溢出合计</div>
                                     </div>
-                                    <span class="diff-badge-eliminated text-xs">彻底消除 100%</span>
+                                    <span class="diff-badge-eliminated text-xs">{{ improvementText('unfinished_packages') }}</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
                                     <div>
-                                        <span class="text-[10px] text-rose-400 font-semibold">🔴 现状单柜超负荷</span>
-                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">3 <span class="text-[10px] text-slate-400">个社区</span></div>
-                                        <span class="text-[10px] text-rose-400">C02/C04/C05 严重爆柜</span>
+                                        <span class="text-[10px] text-rose-400 font-semibold">🔴 S0 现状基准</span>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('unfinished_packages', 'baseline', 1, 1) }} <span class="text-[10px] text-slate-400">件</span></div>
+                                        <span class="text-[10px] text-rose-400">硬约束违反时标记不可行</span>
                                     </div>
                                     <div>
-                                        <span class="text-[10px] text-cyan-400 font-semibold">🟢 优化MIP扩容</span>
-                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">0 <span class="text-[10px] text-slate-400">个社区</span></div>
-                                        <span class="text-[10px] text-emerald-400">饱和度健康在60-70%</span>
+                                        <span class="text-[10px] text-cyan-400 font-semibold">🟢 S2 人机协同</span>
+                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">{{ metricValue('unfinished_packages', 'optimized', 1, 1) }} <span class="text-[10px] text-slate-400">件</span></div>
+                                        <span class="text-[10px] text-emerald-400">普通日约束状态来自统一引擎</span>
                                     </div>
                                 </div>
                                 <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
-                                    容灾升级：M6定容自适应加装副柜，消除自提包裹滞留地表。
+                                    满柜仍按动态占用单独统计；未覆盖需求不冒充满柜。
                                 </div>
                             </div>
 
@@ -356,22 +356,22 @@
                                         <span class="text-slate-300 font-semibold flex items-center gap-1">💰 年运营总成本</span>
                                         <div class="text-[10px] text-slate-500">人工薪酬+燃油电耗+维保</div>
                                     </div>
-                                    <span class="diff-badge-down text-xs">-53.6%</span>
+                                    <span class="diff-badge-down text-xs">{{ improvementText('annual_cost') }}</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
                                     <div>
                                         <span class="text-[10px] text-rose-400 font-semibold">🔴 现状粗放运营</span>
-                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">283.4 <span class="text-[10px] text-slate-400">万元</span></div>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('annual_cost', 'baseline', 10000, 1) }} <span class="text-[10px] text-slate-400">万元</span></div>
                                         <span class="text-[10px] text-slate-500">人工超时成本极高</span>
                                     </div>
                                     <div>
                                         <span class="text-[10px] text-cyan-400 font-semibold">🟢 优化人机协同</span>
-                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">131.4 <span class="text-[10px] text-slate-400">万元</span></div>
-                                        <span class="text-[10px] text-emerald-400 font-bold">年净省 152.0 万元</span>
+                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">{{ metricValue('annual_cost', 'optimized', 10000, 1) }} <span class="text-[10px] text-slate-400">万元</span></div>
+                                        <span class="text-[10px] text-emerald-400 font-bold">现金 OPEX 统一口径</span>
                                     </div>
                                 </div>
                                 <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
-                                    效益转化：初期副柜改造成本55.6万元，回收期仅 0.39 年。
+                                    CAPEX 与 OPEX 分开，回收期仅在年度现金节约为正时显示。
                                 </div>
                             </div>
 
@@ -379,25 +379,25 @@
                             <div class="comparison-card space-y-2">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <span class="text-slate-300 font-semibold flex items-center gap-1">🌱 年干线碳排放量</span>
-                                        <div class="text-[10px] text-slate-500">干线运输CO₂排放当量</div>
+                                        <span class="text-slate-300 font-semibold flex items-center gap-1">🌱 年运营碳排放量</span>
+                                        <div class="text-[10px] text-slate-500">车辆与柜体运营CO₂e</div>
                                     </div>
-                                    <span class="diff-badge-down text-xs">-87.2%</span>
+                                    <span class="diff-badge-up text-xs">{{ improvementText('annual_carbon') }}</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
                                     <div>
                                         <span class="text-[10px] text-rose-400 font-semibold">🔴 燃油微卡排放</span>
-                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">1459.2 <span class="text-[10px] text-slate-400">kg</span></div>
+                                        <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('annual_carbon', 'baseline', 1, 1) }} <span class="text-[10px] text-slate-400">kg</span></div>
                                         <span class="text-[10px] text-slate-500">高油耗高碳足迹</span>
                                     </div>
                                     <div>
-                                        <span class="text-[10px] text-cyan-400 font-semibold">🟢 纯电无人车清洁能耗</span>
-                                        <div class="text-base font-bold text-emerald-400 mono mt-0.5">187.3 <span class="text-[10px] text-slate-400">kg</span></div>
-                                        <span class="text-[10px] text-emerald-400 font-bold">年减碳 1271.9 kg</span>
+                                        <span class="text-[10px] text-cyan-400 font-semibold">🟢 人机协同运营边界</span>
+                                        <div class="text-base font-bold text-amber-400 mono mt-0.5">{{ metricValue('annual_carbon', 'optimized', 1, 1) }} <span class="text-[10px] text-slate-400">kg</span></div>
+                                        <span class="text-[10px] text-amber-400 font-bold">包含车辆与柜体运营用电</span>
                                     </div>
                                 </div>
                                 <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/50">
-                                    绿色示范：落实北京超大城市绿色低碳标杆物流示范区建设。
+                                    当前边界下运营总碳排上升，需通过低碳电力、柜体节能或设备减配继续优化。
                                 </div>
                             </div>
 
@@ -411,12 +411,12 @@
                                 <span>🏅</span> 投资回收期评价 (Financial Feasibility Analysis)
                             </div>
                             <p class="text-[11px] text-slate-300">
-                                全网智能柜副柜采购扩容总投入 <b>¥55.6 万元</b>，每年为企业直接压降营运成本 <b>¥152.0 万元</b>。
+                                S2 新增投入与年度现金节约均由统一评价程序计算；若现金节约不为正，则不显示回收期。
                             </p>
                         </div>
                         <div class="text-right pl-4">
-                            <div class="text-2xl font-black text-amber-400 mono">0.39 <span class="text-xs font-normal text-slate-300">年</span></div>
-                            <div class="text-[10px] text-emerald-400 font-semibold">约 4.7 个月收回全部投资</div>
+                            <div class="text-2xl font-black text-amber-400 mono">{{ comparisonMetric('payback_years')?.value ?? '—' }} <span class="text-xs font-normal text-slate-300">年</span></div>
+                            <div class="text-[10px] text-emerald-400 font-semibold">以年现金 OPEX 节约为分母</div>
                         </div>
                     </div>
 
@@ -441,15 +441,15 @@
                                 <tbody class="divide-y divide-slate-800 text-[11px]">
                                     <tr class="hover:bg-slate-800/40">
                                         <td class="p-2 font-bold text-slate-300">1. 干线运输拓扑</td>
-                                        <td class="p-2 text-slate-300">HUB 向 5 社区独立派车点对点往返，总里程 24.84 km，空驶率高</td>
-                                        <td class="p-2 text-slate-300">无人配送车执行 M1 巡回环线 (HUB ➔ 各社区 ➔ HUB)，总里程 13.42 km</td>
-                                        <td class="p-2 font-bold text-emerald-400">干线里程削减 46.0%，空载率归零</td>
+                                        <td class="p-2 text-slate-300">HUB 向 5 社区独立往返，{{ metricValue('trunk_distance', 'baseline', 1, 2) }} km/日</td>
+                                        <td class="p-2 text-slate-300">S1/S2 采用同一巡回干线，{{ metricValue('trunk_distance', 'optimized', 1, 2) }} km/日</td>
+                                        <td class="p-2 font-bold text-emerald-400">{{ improvementText('trunk_distance') }}</td>
                                     </tr>
                                     <tr class="hover:bg-slate-800/40">
                                         <td class="p-2 font-bold text-slate-300">2. 智能柜末端定容</td>
-                                        <td class="p-2 text-rose-300 font-medium">单一固定单柜(84格/有效50件)，C02/C04/C05峰值饱和度超 150% 甚至达 642%，严重满柜爆仓</td>
-                                        <td class="p-2 text-emerald-300 font-medium">M6 MIP自适应配置扩容副柜，有效容量增至 1520+ 件，全网饱和度平稳维持在 60%~70%</td>
-                                        <td class="p-2 font-bold text-emerald-400">满柜风险社区数 3 ➔ 0，消除率 100%</td>
+                                        <td class="p-2 text-rose-300 font-medium">现有设施按启用状态与有效容量计算；未覆盖需求与动态满柜分别报告</td>
+                                        <td class="p-2 text-emerald-300 font-medium">S1/S2 按150m覆盖和P20动态峰值定容，不截断占用率</td>
+                                        <td class="p-2 font-bold text-emerald-400">风险社区 {{ comparisonMetric('full_risk_count')?.baseline ?? '—' }} ➔ {{ comparisonMetric('full_risk_count')?.optimized ?? '—' }}</td>
                                     </tr>
                                     <tr class="hover:bg-slate-800/40">
                                         <td class="p-2 font-bold text-slate-300">3. 社区微循环运力</td>
@@ -459,21 +459,21 @@
                                     </tr>
                                     <tr class="hover:bg-slate-800/40">
                                         <td class="p-2 font-bold text-slate-300">4. 快递员作业负荷</td>
-                                        <td class="p-2 text-slate-300">快递员既跑干线又搬运投柜，再步巡上门，人均日总工时高达 151.2 h，劳动强度重载超标</td>
-                                        <td class="p-2 text-slate-300">快递员免除干线与重件投柜，专注高价值上门件，日总工时降至 60.8 h，人机高效协同</td>
-                                        <td class="p-2 font-bold text-emerald-400">人工工时大幅节约 59.8% (-90.4h)</td>
+                                        <td class="p-2 text-slate-300">S0 人工总工时 {{ metricValue('labor_hours', 'baseline', 1, 2) }} 人时/日</td>
+                                        <td class="p-2 text-slate-300">S2 人工总工时 {{ metricValue('labor_hours', 'optimized', 1, 2) }} 人时/日</td>
+                                        <td class="p-2 font-bold text-emerald-400">{{ improvementText('labor_hours') }}</td>
                                     </tr>
                                     <tr class="hover:bg-slate-800/40">
                                         <td class="p-2 font-bold text-slate-300">5. 履约时效与满意度</td>
-                                        <td class="p-2 text-slate-300">爆柜导致包裹滞留地面、丢失破损；上门件因派送延迟导致投诉率高达 4.2%</td>
-                                        <td class="p-2 text-slate-300">100m 极速便民自提圈，智能柜随时有位；上门件准时履约率 99.6%</td>
-                                        <td class="p-2 font-bold text-cyan-400">居民综合满意度由 68% 跃升至 98%</td>
+                                        <td class="p-2 text-slate-300">S0 的未覆盖、日终未完成与满柜时长均由程序分别统计</td>
+                                        <td class="p-2 text-slate-300">S2 以150m覆盖率、P95距离和上门件履约率评价</td>
+                                        <td class="p-2 font-bold text-cyan-400">不再使用无数据支撑的投诉率或满意度</td>
                                     </tr>
                                     <tr class="hover:bg-slate-800/40">
                                         <td class="p-2 font-bold text-slate-300">6. 经济成本与碳足迹</td>
-                                        <td class="p-2 text-slate-300">传统燃油车耗油，年干线碳排 1459.2 kg，年综合运营总成本 283.4 万元</td>
-                                        <td class="p-2 text-slate-300">纯电无人配送车+峰谷电，年碳排 187.3 kg，年综合运营总成本 131.4 万元</td>
-                                        <td class="p-2 font-bold text-emerald-400">年降本 152 万元 (-53.6%)，减碳 87.2%</td>
+                                        <td class="p-2 text-slate-300">S0 年现金OPEX {{ metricValue('annual_cost', 'baseline', 10000, 1) }} 万元，运营碳 {{ metricValue('annual_carbon', 'baseline', 1, 1) }} kgCO₂e</td>
+                                        <td class="p-2 text-slate-300">S2 年现金OPEX {{ metricValue('annual_cost', 'optimized', 10000, 1) }} 万元，运营碳 {{ metricValue('annual_carbon', 'optimized', 1, 1) }} kgCO₂e</td>
+                                        <td class="p-2 font-bold text-emerald-400">{{ improvementText('annual_cost') }}；{{ improvementText('annual_carbon') }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -492,8 +492,8 @@
                             </div>
                             <div id="chart-comp-saturation" class="w-full h-64"></div>
                             <div class="text-[10px] text-slate-400 flex justify-between border-t border-slate-800/60 pt-2">
-                                <span>🔴 现状未扩容：10:00-19:00 持续高位爆仓，峰值达 152% 瘫痪</span>
-                                <span class="text-emerald-400 font-semibold">🟢 优化MIP扩容：平稳受控在 60-68.5% 安全承载区间</span>
+                                <span>🔴 S0：仅绘制已覆盖现有柜体占用；未覆盖需求单列</span>
+                                <span class="text-emerald-400 font-semibold">🟢 S2：占用率不在100%处截断</span>
                             </div>
                         </div>
 
@@ -505,9 +505,9 @@
                                 <div class="text-[10px] text-slate-400 text-center border-t border-slate-800/60 pt-1">现状灰色萎缩 vs 优化青色扩张</div>
                             </div>
                             <div class="glass-panel p-3.5 rounded-xl space-y-2 flex flex-col justify-between">
-                                <span class="text-xs font-bold text-slate-200 flex items-center gap-1"><span>💰</span> 运营成本与碳排双降</span>
+                                <span class="text-xs font-bold text-slate-200 flex items-center gap-1"><span>💰</span> 运营成本与运营碳排</span>
                                 <div id="chart-comp-cost" class="w-full h-56"></div>
-                                <div class="text-[10px] text-slate-400 text-center border-t border-slate-800/60 pt-1">年降本 152 万元 | 减碳 1272 kg</div>
+                                <div class="text-[10px] text-slate-400 text-center border-t border-slate-800/60 pt-1">{{ improvementText('annual_cost') }} | {{ improvementText('annual_carbon') }}</div>
                             </div>
                         </div>
                     </div>
@@ -521,7 +521,7 @@
                             <span>🗺️</span> 亦庄高级别自动驾驶示范区（BDA）全域协同网络
                         </h2>
                         <p class="text-xs text-slate-300 leading-relaxed">
-                            本系统立足北京超大城市末端配送现实约束，依托亦庄 5 大典型社区的高精真实边界与路网，构建“分拨中心—社区接驳点—智能柜/楼栋”三级立体协同拓扑。
+                            本系统立足北京超大城市末端配送现实约束，依托亦庄 5 大典型社区的样本边界、设施与节点数据，构建“分拨中心—社区接驳点—智能柜/楼栋”三级协同拓扑。正式比较距离仍为WGS84直线距离乘绕行系数。
                         </p>
                     </div>
 
@@ -594,7 +594,7 @@
                                 <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
                                     <span>📐</span> M1 干线巡回旅行商模型与 2-Opt 求解过程
                                 </span>
-                                <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 mono">Status: LOCALLY_OPTIMAL</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 mono">Status: HEURISTIC_FEASIBLE</span>
                             </div>
                             
                             <!-- LaTeX 公式卡片 -->
@@ -746,7 +746,7 @@
                                 <span>🏢</span> 第6章 网络选址与定容优化 (MIP)
                             </h2>
                             <span class="px-2 py-0.5 text-xs rounded bg-emerald-950 border border-emerald-600 text-emerald-300 font-bold">
-                                {{ planResult.layout.bottleneck_resolved ? '✅ 满柜瓶颈已彻底消除' : '⚠️ 存在满柜' }}
+                                {{ planResult.layout.bottleneck_resolved ? '✅ 当前约束校验通过' : '⚠️ 存在约束违反' }}
                             </span>
                         </div>
                         <p class="text-xs text-slate-300">
@@ -783,7 +783,7 @@
                                         <span>⚖️</span> 设施定容方案对比: 现状固定单柜 vs MIP自适应扩容
                                     </span>
                                     <span :class="planResult.community_comparison.full_risk_eliminated ? 'diff-badge-eliminated' : 'diff-badge-up'" class="text-[10px]">
-                                        {{ planResult.community_comparison.full_risk_eliminated ? '爆柜风险彻底清除' : '容量充足' }}
+                                        {{ planResult.community_comparison.full_risk_eliminated ? '当前容量风险已解除' : '容量状态见校验' }}
                                     </span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 text-xs">
@@ -799,7 +799,7 @@
                                         <div class="text-[10px] text-emerald-400 font-semibold">🟢 MIP优化定容 (To-Be)</div>
                                         <div class="text-sm font-bold text-emerald-300 mono mt-0.5">{{ planResult.optimized_plan.total_capacity }} 件容量 (+{{ planResult.community_comparison.capacity_gain }})</div>
                                         <div class="text-[10px] text-slate-400 mt-1">
-                                            峰值负荷饱和度: <b class="text-emerald-400 font-bold">{{ planResult.optimized_plan.saturation_pct }}%</b> (安全区间 60~70%)
+                                            规划容量负荷率: <b class="text-emerald-400 font-bold">{{ planResult.optimized_plan.saturation_pct }}%</b>
                                         </div>
                                     </div>
                                 </div>
@@ -1061,9 +1061,9 @@
                     <div class="glass-panel p-4 rounded-xl space-y-3">
                         <div class="flex justify-between items-center">
                             <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
-                                <span>⏱️</span> 第8章 配送系统离散事件动态仿真验证 (DES)
+                                <span>⏱️</span> 第8章 配送系统动态占用确定性情景推演
                             </h2>
-                            <span class="px-2 py-0.5 text-xs rounded bg-cyan-950 border border-cyan-700 text-cyan-300 mono font-bold">M8 离散动态内核</span>
+                            <span class="px-2 py-0.5 text-xs rounded bg-cyan-950 border border-cyan-700 text-cyan-300 mono font-bold">M8 确定性压力测试</span>
                         </div>
                         <p class="text-xs text-slate-300">
                             全面推演“现状（纯人工）vs 优化后人工 vs 人机协同”三大方案的全网时效、饱和度与能耗表现，支持大促峰值压力测试与扰动自愈推演。
@@ -1078,7 +1078,7 @@
                                 🟠 双十一大促高峰 (2.0x)
                             </button>
                             <button @click="switchSimScenario('disruption')" :class="simScenario === 'disruption' ? 'bg-rose-600 text-white font-bold shadow' : 'bg-slate-800 text-slate-400 hover:text-white'" class="px-2.5 py-1 rounded text-xs transition">
-                                🔴 极端扰动与满柜自愈
+                                🔴 取件滞后扰动 (D-L)
                             </button>
                         </div>
                     </div>
@@ -1092,18 +1092,18 @@
                         </div>
                         <div class="glass-panel p-2.5 rounded-lg text-center">
                             <div class="text-[10px] text-slate-400">全网人工工时节约</div>
-                            <div class="text-sm font-bold text-emerald-400 mono mt-0.5">-{{ simulationResult.summary.courier_hours_saving_pct }}%</div>
+                            <div class="text-sm font-bold text-emerald-400 mono mt-0.5">{{ changeText(simulationResult.summary.courier_hours_saving_pct) }}</div>
                             <div class="text-[9px] text-emerald-400/80">人机解耦大幅减负</div>
                         </div>
                         <div class="glass-panel p-2.5 rounded-lg text-center">
                             <div class="text-[10px] text-slate-400">全网年均运营节约</div>
                             <div class="text-sm font-bold text-amber-400 mono mt-0.5">¥{{ (simulationResult.summary.cost_saved_annual_rmb / 10000).toFixed(1) }} <span class="text-[10px] text-slate-400 font-normal">万</span></div>
-                            <div class="text-[9px] text-amber-400/80">投资回收期 &lt; 0.5 年</div>
+                            <div class="text-[9px] text-amber-400/80">回收期 {{ simulationResult.summary.payback_years ?? '—' }} 年</div>
                         </div>
                         <div class="glass-panel p-2.5 rounded-lg text-center">
-                            <div class="text-[10px] text-slate-400">干线绿碳减排幅度</div>
-                            <div class="text-sm font-bold text-cyan-300 mono mt-0.5">-{{ simulationResult.summary.carbon_saving_pct }}%</div>
-                            <div class="text-[9px] text-cyan-400/80">纯电替代燃油微卡</div>
+                            <div class="text-[10px] text-slate-400">运营碳排变化</div>
+                            <div class="text-sm font-bold text-cyan-300 mono mt-0.5">{{ changeText(simulationResult.summary.carbon_saving_pct) }}</div>
+                            <div class="text-[9px] text-cyan-400/80">包含车辆与柜体运营用电</div>
                         </div>
                     </div>
 
@@ -1181,7 +1181,7 @@
                         <!-- 满柜时序对抗 ECharts -->
                         <div :class="viewMode === 'wide' ? 'xl:col-span-6' : ''" class="glass-panel p-4 rounded-xl space-y-2 flex flex-col justify-between">
                             <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-slate-200">智能柜饱和度时序变化曲线（消除爆柜对抗）</span>
+                                <span class="text-xs font-bold text-slate-200">智能柜饱和度时序变化曲线</span>
                                 <span class="text-[10px] text-rose-400 font-bold bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800">100% 满柜预警线</span>
                             </div>
                             <div id="chart-saturation" class="w-full h-60"></div>
@@ -1200,11 +1200,11 @@
                         </div>
                     </div>
 
-                    <!-- 📐 运筹数学模型与求解器过程 (M8 DES) -->
+                    <!-- M8 确定性动态占用模型 -->
                     <div v-if="simulationResult" class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-cyan-500">
                         <div class="flex justify-between items-center">
                             <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
-                                <span>📐</span> M8 离散事件动态状态转移模型 (DES & Queuing Dynamics)
+                                <span>📐</span> M8 动态占用确定性状态转移模型
                             </span>
                             <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 mono">
                                 步进时间段: 14h | Status: COMPLETED
@@ -1213,21 +1213,21 @@
 
                         <!-- 动态转移方程 -->
                         <div class="math-card text-xs space-y-1.5">
-                            <div class="text-[11px] text-slate-400 font-semibold">系统状态转移差分方程与非齐次泊松到达：</div>
+                            <div class="text-[11px] text-slate-400 font-semibold">系统状态转移方程；到件与释放率由冻结情景给定：</div>
                             <div class="text-cyan-200 mono text-center py-1">
-                                $$O_j(t + \Delta t) = \max\Big(0, \; \min\big(C_j^{\text{eff}}, \; O_j(t) + \Delta A_j(t) - \Delta D_j(t)\big)\Big)$$
+                                $$O_j(t + \Delta t) = \max\big(0, \; O_j(t) + A_j(t) - D_j(t)\big)$$
                             </div>
                         </div>
 
-                        <!-- 离散事件时序推进明细表 -->
+                        <!-- 分时时序推进明细表 -->
                         <div v-if="simulationResult.discrete_events" class="space-y-1.5">
-                            <span class="text-[11px] font-semibold text-slate-300">离散事件日历时序推进与瓶颈监测表:</span>
+                            <span class="text-[11px] font-semibold text-slate-300">分时时序推进与瓶颈监测表:</span>
                             <div class="overflow-x-auto max-h-40">
                                 <table class="w-full text-left text-[10px] mono border border-slate-800">
                                     <thead class="bg-slate-800 text-slate-400 sticky top-0">
                                         <tr>
                                             <th class="p-1.5">时刻</th>
-                                            <th>离散事件描述</th>
+                                            <th>状态转移描述</th>
                                             <th>到达量</th>
                                             <th>未扩容基准</th>
                                             <th>优化后方案</th>
@@ -1254,7 +1254,7 @@
 
                         <!-- 仿真器日志 -->
                         <div v-if="simulationResult.solver_logs" class="space-y-1">
-                            <span class="text-[11px] font-semibold text-slate-300">DES 仿真引擎事件日志:</span>
+                            <span class="text-[11px] font-semibold text-slate-300">确定性情景推演日志:</span>
                             <div class="solver-terminal max-h-24">
                                 <div v-for="(log, idx) in simulationResult.solver_logs" :key="idx" class="log-line">
                                     {{ log }}

@@ -14,6 +14,26 @@ const app = createApp({
         const crisisResult = ref(null);
         const isPeakDay = ref(false);
 
+        const comparisonMetric = (key) => overview.value?.comparison_metrics?.[key] || null;
+        const metricValue = (key, side, divisor = 1, digits = 1) => {
+            const value = comparisonMetric(key)?.[side];
+            return Number.isFinite(Number(value)) ? (Number(value) / divisor).toFixed(digits) : '—';
+        };
+        const improvementText = (key) => {
+            const value = comparisonMetric(key)?.diff_pct;
+            if (!Number.isFinite(Number(value))) return '仅报告绝对变化';
+            return `${Number(value) >= 0 ? '改善' : '变差'} ${Math.abs(Number(value)).toFixed(1)}%`;
+        };
+        const changeText = (value) => {
+            if (!Number.isFinite(Number(value))) return '暂无可比结果';
+            return `${Number(value) >= 0 ? '改善' : '变差'} ${Math.abs(Number(value)).toFixed(1)}%`;
+        };
+        const savingValue = (key, divisor = 1, digits = 1) => {
+            const metric = comparisonMetric(key);
+            if (!metric || !Number.isFinite(Number(metric.baseline)) || !Number.isFinite(Number(metric.optimized))) return '—';
+            return ((Number(metric.baseline) - Number(metric.optimized)) / divisor).toFixed(digits);
+        };
+
         const toggleViewMode = () => {
             viewMode.value = viewMode.value === 'split' ? 'wide' : 'split';
             nextTick(() => {
@@ -758,7 +778,7 @@ const app = createApp({
                             <div class="font-bold text-rose-400">【🔴 现状独立往返干线: HUB ⇄ ${route.community_id}】</div>
                             <div>往返里程: <span class="mono font-bold text-rose-300">${route.dist_km || route.distance_km || 0} km</span></div>
                             <div>单程往返耗时: <span class="mono text-slate-300">${route.time_min || route.drive_time_min || 0} min</span></div>
-                            <div class="text-slate-400 text-[10px]">5条专车点对点往返，全网总长 24.84 km，空驶严重</div>
+                            <div class="text-slate-400 text-[10px]">5条车辆点对点往返，全网总长 ${metricValue('trunk_distance', 'baseline', 1, 2)} km</div>
                         </div>`
                     );
                     mapLayers.push(bLine);
@@ -782,9 +802,9 @@ const app = createApp({
                             `<div class="text-xs space-y-1">
                                 <div class="font-bold text-cyan-400">【🟢 M1 亦庄干线巡回 TSP 闭环】</div>
                                 <div>巡回总里程: <span class="mono font-bold text-white">${overview.value.trunk_routing.tour_dist_km} km</span></div>
-                                <div>相比独立往返压降: <span class="text-emerald-400 font-bold">${overview.value.trunk_routing.saving_pct}% (-11.42 km)</span></div>
+                                <div>相比独立往返: <span class="text-emerald-400 font-bold">${improvementText('trunk_distance')} (${savingValue('trunk_distance', 1, 2)} km)</span></div>
                                 <div>无人车巡回耗时: <span class="mono text-slate-200">${overview.value.trunk_routing.travel_time_min} min</span></div>
-                                <div class="text-emerald-400 text-[10px]">统仓共配串联5社区，空驶彻底清零</div>
+                                <div class="text-emerald-400 text-[10px]">统仓共配串联5社区；距离为直线距离乘绕行系数估算</div>
                             </div>`
                         );
                         mapLayers.push(trunkLine);
@@ -819,15 +839,14 @@ const app = createApp({
             }
 
             // ---------------------------------------------------------------------
-            // 6. 绘制设施点 (智能柜/接驳点: 现状单柜爆仓 vs 优化MIP副柜 vs 双方案同屏)
+            // 6. 绘制设施点（容量状态只采用后端约束计算结果）
             // ---------------------------------------------------------------------
             if (schemeMode.value === 'baseline') {
-                // 🔴 现状模式：单柜 (84格/有效50件)，C02/C04/C05 严重超载爆仓
                 const baseFacs = p.baseline_plan?.facilities || p.layout?.facilities || [];
                 baseFacs.forEach(f => {
                     if (f.active === false) return;
-                    const isBurst = f.is_full_risk || (['C02', 'C04', 'C05'].includes(cid));
-                    const satPct = f.saturation_pct || (isBurst ? 152 : 45);
+                    const isBurst = Boolean(f.is_full_risk);
+                    const satPct = Number(f.saturation_pct ?? 0);
 
                     const fMarker = L.marker([f.lat, f.lng], {
                         icon: L.divIcon({
@@ -846,16 +865,15 @@ const app = createApp({
                             <div class="${isBurst ? 'text-rose-400 font-bold' : 'text-slate-300'}">
                                 ${isBurst ? '⚠️ 严重超载爆柜！包裹大量外溢' : '常规负荷状态'}
                             </div>
-                            <div>现状固定格口: 84 格 (有效承载仅 50 件)</div>
-                            <div>自提需求量: <span class="mono font-bold text-white">${f.assigned_demand || (p.forecast ? p.forecast.daily_locker : 50)} 件</span></div>
+                            <div>有效容量: <span class="mono font-bold text-white">${f.effective_capacity ?? 0} 件</span></div>
+                            <div>指派自提需求: <span class="mono font-bold text-white">${f.assigned_demand ?? 0} 件</span></div>
                             <div>峰值饱和度: <span class="mono font-bold ${isBurst ? 'text-rose-400' : 'text-slate-200'}">${satPct}%</span></div>
-                            <div class="text-[10px] text-slate-400">痛点：无副柜扩容，居民取件拥堵，包裹滞留</div>
+                            <div class="text-[10px] text-slate-400">状态由当前社区容量约束计算，不按社区编号预设</div>
                         </div>`
                     );
                     mapLayers.push(fMarker);
                 });
             } else if (schemeMode.value === 'optimized') {
-                // 🟢 优化模式：MIP 自适应加装副柜，饱和度健康受控在 60~70%
                 const optFacs = p.optimized_plan?.facilities || p.layout?.facilities || [];
                 optFacs.forEach(f => {
                     if (!f.active) return;
@@ -872,19 +890,19 @@ const app = createApp({
                     fMarker.bindPopup(
                         `<div class="text-xs space-y-1">
                             <div class="font-bold text-emerald-400 text-sm">【🟢 优化智能柜: ${f.name}】</div>
-                            <div class="text-emerald-300 font-bold">✅ 爆柜瓶颈彻底消除！安全平稳运行</div>
+                            <div class="${f.is_full_risk ? 'text-rose-300' : 'text-emerald-300'} font-bold">${f.is_full_risk ? '⚠️ 容量约束未通过' : '✅ 当前情景容量约束通过'}</div>
                             <div>MIP定容配置: 主柜 ${f.main_lockers} 组 + 扩容副柜 <span class="text-emerald-300 font-bold">${f.slave_units}</span> 组</div>
                             <div>总格口数: <span class="mono font-bold text-white">${f.total_slots}</span> 格</div>
                             <div>日有效承载: <span class="mono font-bold text-cyan-300">${f.effective_capacity}</span> 件</div>
-                            <div>运行饱和度: <span class="mono font-bold text-emerald-400">${f.saturation_pct || Math.round(f.utilization_rate * 100)}%</span> (安全区间 60~70%)</div>
-                            <div class="text-[10px] text-slate-400">100m 极速便民自提圈，便民覆盖率 100%</div>
+                            <div>容量负荷率: <span class="mono font-bold text-emerald-400">${f.saturation_pct ?? Math.round((f.utilization_rate ?? 0) * 100)}%</span></div>
+                            <div class="text-[10px] text-slate-400">150m服务约束由后端逐楼栋校验</div>
                         </div>`
                     );
                     mapLayers.push(fMarker);
 
                     if (showRings.value) {
                         const circle = L.circle([f.lat, f.lng], {
-                            radius: 100,
+                            radius: 150,
                             color: '#10b981',
                             weight: 1.5,
                             fillColor: '#10b981',
@@ -897,11 +915,14 @@ const app = createApp({
             } else {
                 // ⚡ 双方案同屏对比模式 (Diff)
                 const optFacs = p.optimized_plan?.facilities || p.layout?.facilities || [];
+                const baseFacs = p.baseline_plan?.facilities || [];
+                const baseById = new Map(baseFacs.map(item => [item.facility_id || item.id, item]));
                 optFacs.forEach(f => {
                     if (!f.active) return;
-                    const isBurst = f.is_full_risk || (['C02', 'C04', 'C05'].includes(cid));
-                    const baseSat = f.baseline_saturation_pct || (isBurst ? 152 : 45);
-                    const optSat = f.saturation_pct || Math.round(f.utilization_rate * 100);
+                    const baseFacility = baseById.get(f.facility_id || f.id);
+                    const isBurst = Boolean(baseFacility?.is_full_risk);
+                    const baseSat = baseFacility ? `${baseFacility.saturation_pct ?? 0}%` : '无对应现有柜';
+                    const optSat = f.saturation_pct ?? Math.round((f.utilization_rate ?? 0) * 100);
 
                     const diffHtml = isBurst
                         ? `<div class="relative w-9 h-9 flex items-center justify-center cursor-pointer">
@@ -932,7 +953,7 @@ const app = createApp({
                                     <span>🔴 现状方案 (As-Is):</span>
                                     <span class="text-[10px] px-1 rounded ${isBurst ? 'bg-rose-800 text-white' : 'bg-slate-800'}">${isBurst ? '爆柜风险' : '正常'}</span>
                                 </div>
-                                <div class="text-slate-300">单柜 (50件容量) · 饱和度: <b class="text-rose-400">${baseSat}%</b></div>
+                                <div class="text-slate-300">容量状态: <b class="text-rose-400">${baseSat}</b></div>
                             </div>
                             <div class="bg-emerald-950/50 p-2 rounded border border-emerald-800/70 space-y-0.5">
                                 <div class="text-emerald-400 font-bold flex items-center justify-between">
@@ -942,7 +963,7 @@ const app = createApp({
                                 <div class="text-slate-300">副柜 <b class="text-emerald-300">+${f.slave_units}</b> 组 (${f.effective_capacity}件) · 饱和度: <b class="text-emerald-300">${optSat}%</b></div>
                             </div>
                             <div class="text-[10px] text-cyan-300 pt-0.5">
-                                容量跃升: +${f.effective_capacity - 50} 件 | 彻底消灭满柜滞留
+                                优化容量 ${f.effective_capacity} 件；是否可行以约束校验为准
                             </div>
                         </div>`
                     );
@@ -950,7 +971,7 @@ const app = createApp({
 
                     if (showRings.value) {
                         const circle = L.circle([f.lat, f.lng], {
-                            radius: 100,
+                            radius: 150,
                             color: '#06b6d4',
                             weight: 1.5,
                             fillColor: '#06b6d4',
@@ -980,8 +1001,8 @@ const app = createApp({
                     baseLine.bindPopup(
                         `<div class="text-xs space-y-1">
                             <div class="font-bold text-rose-400">【🔴 现状快递员全量步巡路线 (As-Is)】</div>
-                            <div>步巡总里程: <span class="mono font-bold text-rose-400">${p.baseline_plan?.courier_walk_dist_km || 13.78} km</span></div>
-                            <div>人工总工时: <span class="mono font-bold text-rose-400">${p.baseline_plan?.courier_total_hours || 151.2} h</span></div>
+                            <div>步巡总里程: <span class="mono font-bold text-rose-400">${p.baseline_plan?.courier_walk_dist_km ?? '—'} km</span></div>
+                            <div>人工总工时: <span class="mono font-bold text-rose-400">${p.baseline_plan?.courier_total_hours ?? '—'} h</span></div>
                             <div class="text-slate-300 text-[10px]">纯人工覆盖全部楼栋自提与上门，疲劳过载</div>
                         </div>`
                     );
@@ -1024,8 +1045,8 @@ const app = createApp({
                     cLine.bindPopup(
                         `<div class="text-xs space-y-1">
                             <div class="font-bold text-orange-400">【🟢 优化后快递员精准上门步巡】</div>
-                            <div>步巡里程: <span class="mono font-bold text-emerald-400">${p.routing.courier_walk_dist_km} km</span> <span class="text-emerald-400 text-[10px]">(-34.2%)</span></div>
-                            <div>上门工时: <span class="mono font-bold text-emerald-400">${p.routing.courier_total_hours} h</span> <span class="text-emerald-400 text-[10px]">(-59.8%)</span></div>
+                            <div>步巡里程: <span class="mono font-bold text-emerald-400">${p.routing.courier_walk_dist_km} km</span> <span class="text-emerald-400 text-[10px]">改善 ${p.community_comparison?.walk_saving_pct ?? '—'}%</span></div>
+                            <div>上门工时: <span class="mono font-bold text-emerald-400">${p.routing.courier_total_hours} h</span> <span class="text-emerald-400 text-[10px]">改善 ${p.community_comparison?.hours_saving_pct ?? '—'}%</span></div>
                             <div class="text-slate-300 text-[10px]">人机接驳协同，专注高品质入户服务</div>
                         </div>`
                     );
@@ -1218,7 +1239,12 @@ const app = createApp({
             }
 
             // 3. 仿真三方案多维雷达图 (#chart-radar)
-            if (chartRadar) {
+            if (chartRadar && sim.scenarios_comparison) {
+                const rows = sim.scenarios_comparison;
+                const maxCost = Math.max(...rows.map(s => s.annual_cost_rmb || 0), 1);
+                const maxCarbon = Math.max(...rows.map(s => s.annual_carbon_kg || 0), 1);
+                const maxHours = Math.max(...rows.map(s => s.courier_hours || 0), 1);
+                const maxTrunk = Math.max(...rows.map(s => s.trunk_km || 0), 1);
                 chartRadar.setOption({
                     backgroundColor: 'transparent',
                     legend: { data: ['现状(纯人工)', '优化后人工', '人机协同(推荐)'], textStyle: { color: '#94a3b8' }, bottom: 0 },
@@ -1228,7 +1254,7 @@ const app = createApp({
                         indicator: [
                             { name: '时效响应', max: 100 },
                             { name: '工时节约', max: 100 },
-                            { name: '低碳减排', max: 100 },
+                            { name: '低运营碳', max: 100 },
                             { name: '经济效益', max: 100 },
                             { name: '便民覆盖', max: 100 }
                         ],
@@ -1239,16 +1265,22 @@ const app = createApp({
                     },
                     series: [{
                         type: 'radar',
-                        data: [
-                            { value: [30, 20, 25, 40, 50], name: '现状(纯人工)', itemStyle: { color: '#64748b' } },
-                            { value: [65, 55, 60, 60, 75], name: '优化后人工', itemStyle: { color: '#f59e0b' } },
-                            { value: [95, 92, 90, 88, 96], name: '人机协同(推荐)', itemStyle: { color: '#06b6d4' }, areaStyle: { color: 'rgba(6, 182, 212, 0.25)' } }
-                        ]
+                        data: rows.map((s, index) => ({
+                            value: [
+                                100 * (1 - (s.trunk_km || 0) / maxTrunk),
+                                100 * (1 - (s.courier_hours || 0) / maxHours),
+                                100 * (1 - (s.annual_carbon_kg || 0) / maxCarbon),
+                                100 * (1 - (s.annual_cost_rmb || 0) / maxCost),
+                                s.bottleneck === 'FEASIBLE' ? 100 : 0
+                            ],
+                            name: ['现状(纯人工)', '优化后人工', '人机协同(推荐)'][index],
+                            itemStyle: { color: ['#64748b', '#f59e0b', '#06b6d4'][index] }
+                        }))
                     }]
                 });
             }
 
-            // 4. 仿真年运营成本与减碳柱状图 (#chart-cost)
+            // 4. 仿真年运营成本与运营碳排图 (#chart-cost)
             if (chartCost && sim.scenarios_comparison) {
                 const names = sim.scenarios_comparison.map(s => s.scenario);
                 const costs = sim.scenarios_comparison.map(s => Math.round(s.annual_cost_rmb / 10000));
@@ -1266,7 +1298,7 @@ const app = createApp({
                     ],
                     series: [
                         { name: '年运营总成本 (万元)', type: 'bar', data: costs, itemStyle: { color: '#f59e0b' }, barWidth: 26 },
-                        { name: '年碳排放 (kg CO₂)', type: 'line', yAxisIndex: 1, data: carbons, itemStyle: { color: '#10b981' }, lineStyle: { width: 3 } }
+                        { name: '年碳排放 (kg CO₂)', type: 'line', yAxisIndex: 1, data: carbons, itemStyle: { color: '#f59e0b' }, lineStyle: { width: 3 } }
                     ]
                 });
             }
@@ -1359,12 +1391,11 @@ const app = createApp({
 
             // 5. Tab 0 全景对比: 满柜时序对抗曲线 (#chart-comp-saturation)
             if (chartCompSaturation) {
-                const hours = (sim.timeline && sim.timeline.hours) ? sim.timeline.hours : 
-                    ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
-                const baseSat = (sim.timeline && sim.timeline.locker_occupancy_baseline) ? sim.timeline.locker_occupancy_baseline :
-                    [25, 65, 112, 138, 148, 152, 149, 142, 135, 120, 105, 90, 75, 55];
-                const optSat = (sim.timeline && sim.timeline.locker_occupancy_optimized) ? sim.timeline.locker_occupancy_optimized :
-                    [18, 38, 52, 63, 67, 68.5, 66, 62, 58, 52, 45, 38, 30, 22];
+                const hours = sim.timeline?.hours || [];
+                const baseSat = sim.timeline?.locker_occupancy_baseline || [];
+                const optSat = sim.timeline?.locker_occupancy_optimized || [];
+                const finiteSaturation = [...baseSat, ...optSat].map(Number).filter(Number.isFinite);
+                const saturationMax = Math.max(120, Math.ceil((Math.max(0, ...finiteSaturation) + 10) / 20) * 20);
 
                 chartCompSaturation.setOption({
                     backgroundColor: 'transparent',
@@ -1378,18 +1409,18 @@ const app = createApp({
                             return tip;
                         }
                     },
-                    legend: { data: ['🔴 现状未扩容单柜(持续爆仓)', '🟢 MIP优化自适应扩容(安全受控)'], textStyle: { color: '#94a3b8', fontSize: 11 }, top: 0 },
+                    legend: { data: ['🔴 S0现有柜体占用', '🟢 S2优化柜体占用'], textStyle: { color: '#94a3b8', fontSize: 11 }, top: 0 },
                     grid: { top: 35, left: 45, right: 25, bottom: 25 },
                     xAxis: { type: 'category', data: hours, axisLabel: { color: '#94a3b8', fontSize: 11 }, axisLine: { lineStyle: { color: '#334155' } } },
                     yAxis: { 
                         type: 'value', 
-                        max: 160, 
+                        max: saturationMax,
                         axisLabel: { formatter: '{value}%', color: '#94a3b8' }, 
                         splitLine: { lineStyle: { color: '#1e293b' } } 
                     },
                     series: [
                         {
-                            name: '🔴 现状未扩容单柜(持续爆仓)',
+                            name: '🔴 S0现有柜体占用',
                             type: 'line',
                             data: baseSat,
                             itemStyle: { color: '#ef4444' },
@@ -1401,7 +1432,7 @@ const app = createApp({
                             }
                         },
                         {
-                            name: '🟢 MIP优化自适应扩容(安全受控)',
+                            name: '🟢 S2优化柜体占用',
                             type: 'line',
                             smooth: true,
                             data: optSat,
@@ -1414,7 +1445,15 @@ const app = createApp({
             }
 
             // 6. Tab 0 全景对比: 综合效益多维雷达对照 (#chart-comp-radar)
-            if (chartCompRadar) {
+            if (chartCompRadar && overview.value?.comparison_metrics) {
+                const metrics = overview.value.comparison_metrics;
+                const lowerScore = (key, side) => {
+                    const base = Number(metrics[key]?.baseline ?? 0);
+                    const value = Number(metrics[key]?.[side] ?? 0);
+                    return value > 0 && base > 0 ? Math.min(100, 100 * base / value) : 0;
+                };
+                const s0FeasibleScore = simulationResult.value?.summary?.scheme_status?.S0 === 'FEASIBLE' ? 100 : 0;
+                const feasibleScore = simulationResult.value?.summary?.scheme_status?.S2 === 'FEASIBLE' ? 100 : 0;
                 chartCompRadar.setOption({
                     backgroundColor: 'transparent',
                     legend: { data: ['🔴 现状纯人工 (As-Is)', '🟢 人机协同 (To-Be)'], textStyle: { color: '#94a3b8', fontSize: 10 }, bottom: 0 },
@@ -1437,19 +1476,22 @@ const app = createApp({
                     series: [{
                         type: 'radar',
                         data: [
-                            { value: [35, 25, 20, 30, 15, 45], name: '🔴 现状纯人工 (As-Is)', itemStyle: { color: '#f43f5e' }, lineStyle: { type: 'dashed', width: 2 } },
-                            { value: [95, 92, 98, 90, 96, 95], name: '🟢 人机协同 (To-Be)', itemStyle: { color: '#06b6d4' }, areaStyle: { color: 'rgba(6, 182, 212, 0.28)' }, lineStyle: { width: 2.5 } }
+                            { value: [100, 100, 100, 100, s0FeasibleScore, Number(metrics.coverage_rate?.baseline ?? 0)], name: '🔴 现状纯人工 (As-Is)', itemStyle: { color: '#f43f5e' }, lineStyle: { type: 'dashed', width: 2 } },
+                            { value: [lowerScore('trunk_distance', 'optimized'), lowerScore('labor_hours', 'optimized'), lowerScore('annual_carbon', 'optimized'), lowerScore('annual_cost', 'optimized'), feasibleScore, Number(metrics.coverage_rate?.optimized ?? 0)], name: '🟢 人机协同 (To-Be)', itemStyle: { color: '#06b6d4' }, areaStyle: { color: 'rgba(6, 182, 212, 0.28)' }, lineStyle: { width: 2.5 } }
                         ]
                     }]
                 });
             }
 
-            // 7. Tab 0 全景对比: 年运营成本与碳减排双降柱状图 (#chart-comp-cost)
-            if (chartCompCost) {
+            // 7. Tab 0 全景对比: 年运营成本与运营碳排对比 (#chart-comp-cost)
+            if (chartCompCost && overview.value?.comparison_metrics) {
+                const metrics = overview.value.comparison_metrics;
+                const costData = [metrics.annual_cost.baseline / 10000, metrics.annual_cost.optimized / 10000];
+                const carbonData = [metrics.annual_carbon.baseline, metrics.annual_carbon.optimized];
                 chartCompCost.setOption({
                     backgroundColor: 'transparent',
                     tooltip: { trigger: 'axis' },
-                    legend: { data: ['年运营成本 (万元)', '年干线碳排 (kg CO₂)'], textStyle: { color: '#94a3b8', fontSize: 10 }, top: 0 },
+                    legend: { data: ['年运营成本 (万元)', '年运营碳排 (kg CO₂e)'], textStyle: { color: '#94a3b8', fontSize: 10 }, top: 0 },
                     grid: { top: 35, left: 45, right: 45, bottom: 25 },
                     xAxis: { type: 'category', data: ['🔴 现状方案 (As-Is)', '🟢 优化协同 (To-Be)'], axisLabel: { color: '#94a3b8', fontSize: 10 }, axisLine: { lineStyle: { color: '#334155' } } },
                     yAxis: [
@@ -1460,7 +1502,7 @@ const app = createApp({
                         { 
                             name: '年运营成本 (万元)', 
                             type: 'bar', 
-                            data: [283.4, 131.4], 
+                            data: costData,
                             itemStyle: { 
                                 color: (params) => params.dataIndex === 0 ? '#ef4444' : '#10b981' 
                             }, 
@@ -1468,10 +1510,10 @@ const app = createApp({
                             label: { show: true, position: 'top', color: '#fff', fontSize: 11, formatter: '{c} 万' }
                         },
                         { 
-                            name: '年干线碳排 (kg CO₂)', 
+                            name: '年运营碳排 (kg CO₂e)',
                             type: 'line', 
                             yAxisIndex: 1, 
-                            data: [1459.2, 187.3], 
+                            data: carbonData,
                             itemStyle: { color: '#38bdf8' }, 
                             lineStyle: { width: 3 },
                             label: { show: true, position: 'top', color: '#38bdf8', fontSize: 10, formatter: '{c} kg' }
@@ -1532,6 +1574,11 @@ const app = createApp({
             setSchemeMode,
             loading,
             overview,
+            comparisonMetric,
+            metricValue,
+            improvementText,
+            changeText,
+            savingValue,
             selectedCommunityId,
             planResult,
             simulationResult,

@@ -40,6 +40,9 @@ class AICopilot:
         capex = layout_data.get("total_capex", 0)
         uv_dist = routing_data.get("unmanned_vehicle_dist_km", 0)
         courier_hours = routing_data.get("courier_total_hours", 0)
+        baseline_hours = routing_data.get("baseline_courier_total_hours", 0)
+        hours_improvement = ((baseline_hours - courier_hours) / baseline_hours * 100) if baseline_hours > 0 else 0
+        layout_status = layout_data.get("solver_metrics", {}).get("status", "UNKNOWN")
 
         report = f"""
 ### 📊 AI 智能诊断评估报告：{cname} ({cid})
@@ -51,13 +54,13 @@ class AICopilot:
   - **智能柜自提比例**：**{locker_pct}%** ({forecast_data.get('daily_locker', 0)} 件/日)
 
 #### 二、 基础设施定容与网络优化策略
-- **智能柜配置**：已消除传统单柜配置模式，通过 MIP 模型自适应部署基础主柜与扩容副柜，总配置建设成本 **¥{capex:,.0f}**。
-- **便民度指标**：优化后居民加权平均取件步行距离控制在 **{avg_walk:.1f} 米**（优于国家“一刻钟便民生活圈”150米红线要求），有效消除超长步巡与取件排队瓶颈。
+- **智能柜配置**：模型自适应部署基础主柜与扩容副柜，总配置建设成本 **¥{capex:,.0f}**；当前约束状态为 **{layout_status}**。
+- **便民度指标**：优化后居民加权平均取件步行距离为 **{avg_walk:.1f} 米**，是否满足150米服务约束以逐楼栋约束校验为准。
 
-#### 三、 人机协同调度与降本减碳表现
+#### 三、 人机协同调度表现
 - **路网巡航**：X3无人配送车每日社区内巡航里程 **{uv_dist:.2f} km**，承担全部干线接驳与柜机投递，替代了原有人工驾车高频往返的低效环节。
-- **人力解放**：网格快递员转为“专职末端温情交付”，日均人工工时降至 **{courier_hours:.1f} 小时**（较纯人工模式解放工时达 **58.8%** 以上）。
-- **运营评价**：系统综合投资回报期预测仅为 **0.51 年**，具备极高的高级别自动驾驶示范区（BDA）实证推广价值。
+- **人工投入**：当前社区日均人工工时为 **{courier_hours:.1f} 小时**，相对同次计算的社区基准改善 **{hours_improvement:.1f}%**。
+- **口径说明**：本报告是社区参数沙盒结果；全网成本、碳排和投资回收期仅以统一评价接口及`data/evaluation_results_v1.json`为准。
 """
         return report.strip()
 

@@ -833,6 +833,9 @@ class EvaluationEngine:
             "trunk_distance": item("E01", "干线运输总里程", "km"),
             "courier_walk_distance": item("E02", "社区内步巡总里程", "km"),
             "labor_hours": item("R01", "全网人工投入工时", "h"),
+            "coverage_rate": item("S03", "150m覆盖率", "%"),
+            "unfinished_packages": item("S04", "日终未完成件量", "件"),
+            "completion_rate": item("B01", "需求承载率", "%"),
             "full_risk_count": {
                 "label": "满柜风险社区数", "unit": "个",
                 "baseline": full["S0"]["community_count"], "optimized": full["S2"]["community_count"],

@@ -376,3 +376,39 @@ body {
     z-index: 10;
     backdrop-filter: blur(8px);
 }
+
+@media (max-width: 767px) {
+    .app-header {
+        height: 3.5rem !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .app-header h1 {
+        font-size: 0.75rem !important;
+    }
+
+    .brand-badge,
+    .brand-subtitle,
+    .global-controls,
+    .secondary-command-bar,
+    .map-panel {
+        display: none !important;
+    }
+
+    .content-panel {
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0.75rem !important;
+    }
+
+    .content-panel .flex.justify-between.items-center,
+    .content-panel .flex.justify-between.items-start {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .comparison-card {
+        padding: 0.75rem;
+    }
+}

@@ -229,7 +229,7 @@ class DemandForecastEngine:
             "solver_metrics": {
                 "solver_name": "MNL-Logit & Spatial Downscaling Solver",
                 "solve_time_ms": solve_time_ms,
-                "status": "OPTIMAL",
+                "status": "COMPUTED_BALANCED",
                 "convergence": "Strict Balance Verified (error < 0.001)"
             },
             "solver_logs": solver_logs,

@@ -18,10 +18,11 @@ plt.rcParams['figure.dpi'] = 300
 
 # 导入仿真引擎获取真实数据
 current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
+demo_dir = os.path.join(current_dir, "demo")
+if demo_dir not in sys.path:
+    sys.path.insert(0, demo_dir)
 
-from demo.core.simulation_engine import SimulationEngine
+from core.simulation_engine import SimulationEngine
 
 def generate_all_chapter8_figures(output_dir=None):
     if output_dir is None:
@@ -93,10 +94,12 @@ def generate_all_chapter8_figures(output_dir=None):
     # 图 8-2: 现状方案与人机协同方案关键指标对比
     # =========================================================================
     fig, ax = plt.subplots(figsize=(8.5, 4.8))
-    categories = ['干线总里程\n(km/日)', '人工步巡总里程\n(km/日)', '全网人工总工时\n(h/日)', '满柜风险社区数\n(个)']
-    baseline_vals = [19.94, 13.78, 151.17, 3]
-    collab_vals = [13.32, 9.07, 62.28, 0]
-    savings = ['-33.2%', '-34.2%', '-58.8%', '-100%']
+    metrics = res_normal["comparison_metrics"]
+    metric_keys = ["trunk_distance", "courier_walk_distance", "labor_hours", "completion_rate"]
+    categories = ['干线总里程\n(km/日)', '人工步巡总里程\n(km/日)', '全网人工总工时\n(h/日)', '需求承载率\n(%)']
+    baseline_vals = [metrics[key]["baseline"] for key in metric_keys]
+    collab_vals = [metrics[key]["optimized"] for key in metric_keys]
+    savings = [metrics[key]["diff_pct"] for key in metric_keys]
 
     x = np.arange(len(categories))
     width = 0.32
@@ -114,10 +117,10 @@ def generate_all_chapter8_figures(output_dir=None):
     for i, (rb, rc) in enumerate(zip(rects_base, rects_collab)):
         hb = rb.get_height()
         hc = rc.get_height()
-        ax.annotate(f'{hb:.1f}' if hb != 3 else '3', xy=(rb.get_x() + rb.get_width()/2, hb), xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=9, fontweight='bold', color='#64748B')
-        ax.annotate(f'{hc:.1f}' if hc != 0 else '0', xy=(rc.get_x() + rc.get_width()/2, hc), xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=9, fontweight='bold', color=c_teal)
+        ax.annotate(f'{hb:.1f}', xy=(rb.get_x() + rb.get_width()/2, hb), xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=9, fontweight='bold', color='#64748B')
+        ax.annotate(f'{hc:.1f}', xy=(rc.get_x() + rc.get_width()/2, hc), xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=9, fontweight='bold', color=c_teal)
         # 标注改善率徽章
-        ax.annotate(f'降幅 {savings[i]}', xy=(rc.get_x() + rc.get_width()/2, max(hb, hc) * 0.55 + 5), ha='center', fontsize=9, fontweight='bold', color=c_rose,
+        ax.annotate(f'改善 {savings[i]:.1f}%', xy=(rc.get_x() + rc.get_width()/2, max(hb, hc) * 0.55 + 5), ha='center', fontsize=9, fontweight='bold', color=c_rose,
                     bbox=dict(boxstyle="round,pad=0.2", fc="#FFF1F2", ec=c_rose, lw=1))
 
     fig.tight_layout()
@@ -133,9 +136,9 @@ def generate_all_chapter8_figures(output_dir=None):
     cr_list = res_normal["community_results"]
     durations = [c["sim_duration_min"] for c in cr_list]
     c_labels = [f'{c["name"]}\n({c["community_id"]})' for c in cr_list]
-    risks = [c["full_risk_baseline"] for c in cr_list]
+    risks = [c["overflow_pkgs_baseline"] > 0 for c in cr_list]
 
-    bar_colors = [c_rose if r == "是" else c_emerald for r in risks]
+    bar_colors = [c_rose if r else c_emerald for r in risks]
     bars = ax.bar(c_labels, durations, width=0.45, color=bar_colors, edgecolor='white', linewidth=1.2, alpha=0.9)
 
     # 绘制单班 480 分钟红线
@@ -148,14 +151,14 @@ def generate_all_chapter8_figures(output_dir=None):
     for bar, c, r in zip(bars, cr_list, risks):
         h = bar.get_height()
         ax.annotate(f'{h:.1f} min', xy=(bar.get_x() + bar.get_width()/2, h), xytext=(0, 4), textcoords="offset points", ha='center', va='bottom', fontsize=9, fontweight='bold')
-        risk_txt = "【基准满柜风险】" if r == "是" else "【容量安全】"
-        risk_col = c_rose if r == "是" else c_emerald
+        risk_txt = "【S0未完成/溢出】" if r else "【S0无未完成】"
+        risk_col = c_rose if r else c_emerald
         ax.annotate(risk_txt, xy=(bar.get_x() + bar.get_width()/2, h * 0.45), ha='center', fontsize=8.5, fontweight='bold', color='white',
                     bbox=dict(boxstyle="round,pad=0.25", fc=risk_col, ec="none"))
 
     # 自定义图例
-    patch_safe = mpatches.Patch(color=c_emerald, label='单柜容量安全社区 (C01, C03)')
-    patch_risk = mpatches.Patch(color=c_rose, label='未扩容满柜风险社区 (C02, TT, C04)')
+    patch_safe = mpatches.Patch(color=c_emerald, label='S0无未完成件社区')
+    patch_risk = mpatches.Patch(color=c_rose, label='S0存在未覆盖或容量溢出社区')
     ax.legend(handles=[ax.lines[0], patch_safe, patch_risk], loc='upper left', framealpha=0.9, fontsize=9)
 
     fig.tight_layout()
@@ -172,8 +175,8 @@ def generate_all_chapter8_figures(output_dir=None):
     sat_base = res_normal["timeline"]["locker_occupancy_baseline"]
     sat_opt = res_normal["timeline"]["locker_occupancy_optimized"]
 
-    ax.plot(hours, sat_base, color=c_rose, linewidth=2.5, linestyle='--', marker='o', label='未扩容基准单柜饱和度 (连续7时段严重溢出爆柜)')
-    ax.plot(hours, sat_opt, color=c_emerald, linewidth=3.0, marker='s', label='MIP副柜扩容与分流后饱和度 (峰值平稳控制在68.5%以下)')
+    ax.plot(hours, sat_base, color=c_rose, linewidth=2.5, linestyle='--', marker='o', label='S0已覆盖现有柜体占用率')
+    ax.plot(hours, sat_opt, color=c_emerald, linewidth=3.0, marker='s', label='S2优化柜体占用率')
     ax.fill_between(hours, sat_opt, color=c_emerald, alpha=0.12)
 
     # 100% 满柜警戒红线
@@ -182,15 +185,13 @@ def generate_all_chapter8_figures(output_dir=None):
     ax.set_title('图8-4 全天 08:00—21:00 智能柜格口在存快件动态饱和度时序变化曲线', fontsize=12, fontweight='bold', pad=15)
     ax.set_xlabel('运营时段 (小时)', fontsize=11, fontweight='bold', color=c_slate)
     ax.set_ylabel('格口动态饱和度 (%)', fontsize=11, fontweight='bold', color=c_slate)
-    ax.set_ylim(0, 180)
+    finite_sat = [float(v) for v in sat_base + sat_opt if v is not None]
+    ax.set_ylim(0, max(120, max(finite_sat, default=0) + 15))
     ax.grid(True, linestyle='--', alpha=0.35)
     ax.legend(loc='upper right', framealpha=0.9, fontsize=9.5)
 
-    # 标注爆柜区间 (使用类别索引精确定位在左侧空白区)
-    ax.annotate('未扩容基准单柜\n连续7时段严重爆柜\n峰值达 152%', xy=(4, 172), xytext=(1.5, 125),
-                arrowprops=dict(facecolor=c_rose, shrink=0.08, width=1.5, headwidth=6),
-                fontsize=8.5, fontweight='bold', color=c_rose,
-                bbox=dict(boxstyle="round,pad=0.3", fc="#FFF1F2", ec=c_rose, lw=1))
+    ax.text(0.01, 0.97, '说明：S0未覆盖需求单列为未完成件，不计入已覆盖柜体占用率。',
+            transform=ax.transAxes, va='top', fontsize=8.5, color=c_slate)
 
     fig.tight_layout()
     p4 = os.path.join(output_dir, "图8-4_智能柜格口占用时序动态折线图.png")

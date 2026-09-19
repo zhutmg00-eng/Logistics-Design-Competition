@@ -22,9 +22,14 @@ parsed_*.txt
 全网数据搜集_主题二与分工方案汇总/
 G数据_已汇总/
 
-# Temporary Local Screenshots (Excluding docs/images)
+# Temporary Local Screenshots & Test Profiles (Excluding docs/images)
 demo/*.png
 *.log
+tmp/
+.codex_tmp/
+.playwright-cli/
+output/playwright/
+academic-research-skills/
 
 # IDE & System
 .vscode/

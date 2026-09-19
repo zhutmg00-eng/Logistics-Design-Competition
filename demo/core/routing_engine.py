@@ -492,7 +492,8 @@ class RoutingEngine:
         main_depot = stops[0]
 
         # 第一阶段：带容量约束的 K-Means 空间聚类划分
-        clusters = self.clusterer.cluster(buildings)
+        community_seed = self.random_seed + sum(ord(ch) for ch in str(community_id))
+        clusters = self.clusterer.cluster(buildings, seed=community_seed)
         trips_needed = len(clusters)
         solver_logs.append(f"[STAGE 1] Capacitated K-Means partitioned {len(buildings)} buildings into {trips_needed} spatial cluster trips (CAP=400 pkgs).")
 
@@ -518,7 +519,10 @@ class RoutingEngine:
             for b in c_bldgs:
                 trip_points.append({"id": b["building_id"], "name": b["name"], "lat": b["lat"], "lng": b["lng"]})
 
-            trip_sa = self.sa_optimizer.optimize(trip_points, fixed_start=True, dynamic_hour=int(dep_time.split(":")[0]))
+            trip_sa = self.sa_optimizer.optimize(
+                trip_points, fixed_start=True, dynamic_hour=int(dep_time.split(":")[0]),
+                seed=community_seed + trip_idx,
+            )
             trip_uv_dist = trip_sa["best_dist_km"]
             total_uv_dist_km += trip_uv_dist
 
@@ -530,7 +534,10 @@ class RoutingEngine:
             trip_courier_dist = 0.0
             if door_bldgs:
                 c_points = [main_depot] + [{"id": b["building_id"], "name": b["name"], "lat": b["lat"], "lng": b["lng"]} for b in door_bldgs]
-                c_sa = self.sa_optimizer.optimize(c_points, fixed_start=True, dynamic_hour=int(dep_time.split(":")[0]))
+                c_sa = self.sa_optimizer.optimize(
+                    c_points, fixed_start=True, dynamic_hour=int(dep_time.split(":")[0]),
+                    seed=community_seed + 100 + trip_idx,
+                )
                 trip_courier_dist = c_sa["best_dist_km"]
                 total_courier_walk_km += trip_courier_dist
                 for p in c_sa["best_tour"][1:]:
@@ -561,7 +568,9 @@ class RoutingEngine:
         # 现状对比：纯人工无无人车辅助时，全量楼栋步巡里程
         active_buildings = [b for b in buildings if b.get("daily_pkgs", 0) > 0] or list(buildings)
         baseline_pts = [main_depot] + [{"id": b["building_id"], "name": b["name"], "lat": b["lat"], "lng": b["lng"]} for b in active_buildings]
-        baseline_res = self.sa_optimizer.optimize(baseline_pts, fixed_start=True, dynamic_hour=10)
+        baseline_res = self.sa_optimizer.optimize(
+            baseline_pts, fixed_start=True, dynamic_hour=10, seed=community_seed + 999
+        )
         baseline_courier_walk_km = round(baseline_res["best_dist_km"] * 1.25, 2)
         baseline_courier_path = [{"lat": p["lat"], "lng": p["lng"], "name": p.get("name", "")} for p in baseline_res["best_tour"]]
 
@@ -594,7 +603,15 @@ class RoutingEngine:
         solve_time_ms = round((time.perf_counter() - start_time) * 1000, 3)
         solver_logs.append(f"[STAGE 2] ISA optimized {trips_needed} trip sub-tours. UV intra-community dist: {total_uv_dist_km:.2f} km, Courier walk: {total_courier_walk_km:.2f} km.")
         solver_logs.append(f"[BENCHMARK] Baseline Manual Walk: {baseline_courier_walk_km:.2f} km -> Reduced to {total_courier_walk_km:.2f} km (Savings={(baseline_courier_walk_km-total_courier_walk_km)/baseline_courier_walk_km*100:.1f}%).")
-        solver_logs.append(f"[STATUS] M2 Solved via Two-Stage K-Means + ISA in {solve_time_ms} ms (Status: GLOBALLY_FEASIBLE_OPTIMAL).")
+        violation_count = sum(
+            1 for item in constraint_checks
+            if item.get("status") in {"OVERLOAD_VIOLATION", "OVERTIME_WARNING", "VIOLATED"}
+        )
+        solver_status = "INFEASIBLE" if violation_count else "HEURISTIC_FEASIBLE"
+        solver_logs.append(
+            f"[STATUS] M2 two-stage heuristic finished with seed={community_seed} in "
+            f"{solve_time_ms} ms (Status: {solver_status})."
+        )
 
         math_formulation = {
             "model_code": "M2",
@@ -625,7 +642,9 @@ class RoutingEngine:
                 "solver_name": "Two-Stage Capacitated K-Means + ISA",
                 "solve_time_ms": solve_time_ms,
                 "trips": trips_needed,
-                "status": "OPTIMAL"
+                "status": solver_status,
+                "random_seed": community_seed,
+                "hard_constraint_violations": violation_count
             },
             "solver_logs": solver_logs,
             "math_formulation": math_formulation
