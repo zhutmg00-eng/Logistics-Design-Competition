@@ -303,20 +303,24 @@ def get_all_math_models():
                 ]
             },
             {
-                "code": "M2",
-                "chapter": "第7章 7.3",
-                "name": "社区人机协同双层路径规划模型 (Bi-level Intra-Community CVRP)",
-                "type": "带容量约束车辆路径规划 (CVRP)",
-                "objective": r"\min Z_2 = \sum_{k \in \mathcal{K}} \left( \sum_{i,j \in \mathcal{N}} d_{ij} x_{ijk} + \tau n_k \right) + \omega \sum_{i,j \in \mathcal{B}_{\text{door}}} d_{ij} w_{ij}",
-                "description": "无人车承担干线接驳与社区智能柜巡航投柜；人工快递员从接驳点出发，仅对上门需求楼栋开展精细化步巡交付。",
+                "code": "M2/M3",
+                "chapter": "第7章 7.9",
+                "name": "带时窗与时空交接的两级协同多目标路径规划模型 (2E-MDVRPTW-DC) [黄景辉 等, 2026]",
+                "type": "双目标带时窗与时空交接两级车辆路径规划 (2E-MDVRPTW-DC)",
+                "objective": r"\min Z_1 = F + C_{\text{var}} + C^{\text{pen}}, \quad \max Z_2 = \sum_{i \in \mathcal{C}} S_i",
+                "description": "全面融合深圳大学黄景辉等（2026）最新研究成果，构建总成本最小化（固定+变动+两阶段超时惩罚）与客户时间敏感满意度最大化的双目标规划体系，施加人机交接时空强同步与动力电池 >=20% 安全余量约束。",
                 "variables": [
-                    {"symbol": "x_{ijk}", "type": "0-1 决策变量", "meaning": "无人车班次 k 是否在节点 i, j 之间行驶"},
-                    {"symbol": "w_{ij}", "type": "0-1 决策变量", "meaning": "快递员步巡上门是否在楼栋 i, j 之间步行"}
+                    {"symbol": "z_{ij}^u, z_{ij}^k", "type": "0-1 决策变量", "meaning": "无人设备 u 或配送员 k 是否在弧 (i, j) 间运行"},
+                    {"symbol": "T_{rc}^k", "type": "连续变量", "meaning": "配送员 k 从社区接驳点 r 出发执行末端配送的时刻"},
+                    {"symbol": "A_{sr}^u", "type": "连续变量", "meaning": "无人设备 u 到达社区接驳点 r 的时刻"},
+                    {"symbol": "S_i", "type": "效用变量", "meaning": "客户 i 的时间敏感满意度效用评分 [0, 1]"}
                 ],
                 "constraints": [
-                    {"name": "无人车单车次载重体积双约束", "formula": r"\sum_{i \in \mathcal{N}} q_i \cdot y_{ik} \le \text{CAP} \; (400\,\text{件}), \quad \forall k \in \mathcal{K}"},
-                    {"name": "节点被访唯一性约束", "formula": r"\sum_{k \in \mathcal{K}} y_{ik} = 1, \quad \forall i \in \mathcal{N}"},
-                    {"name": "快递员工时与劳动强度约束", "formula": r"T_{\text{walk}} + T_{\text{service}} \le T_{\max} \; (480\,\text{min})"}
+                    {"name": "两级时空交接强同步约束", "formula": r"T_{rc}^k \ge A_{sr}^u + H_r^u \cdot z_{sr}^u, \quad \forall s \in \mathcal{S}, r \in \mathcal{R}, c \in \mathcal{C}"},
+                    {"name": "动力电池安全回航余量约束", "formula": r"V_{sr}^u \ge 0.2 \cdot F_{\max}^u \cdot z_{rs}^u, \quad \forall s \in \mathcal{S}, r \in \mathcal{R}"},
+                    {"name": "无人车单趟次物理容量上限约束", "formula": r"\sum_{i \in \mathcal{N}} q_i \cdot y_{ik} \le \text{CAP} \; (400\,\text{件}), \quad \forall k \in \mathcal{K}"},
+                    {"name": "两阶段超时分段惩罚机制", "formula": r"C_i^{\text{pen}} = \begin{cases} 0 & t_i^k \le b_i \\ c_1(t_i^k-b_i) & b_i < t_i^k \le b'_i \\ c_1(b'_i-b_i)+c_2(t_i^k-b'_i) & t_i^k > b'_i \end{cases}"},
+                    {"name": "快递员步巡上门单人工时红线", "formula": r"T_{\text{walk}} + T_{\text{service}} \le T_{\max} \; (480\,\text{min})"}
                 ]
             },
             {

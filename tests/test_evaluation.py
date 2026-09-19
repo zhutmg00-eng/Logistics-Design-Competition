@@ -11,6 +11,7 @@ if str(DEMO) not in sys.path:
 
 from core.data_manager import DataManager
 from core.evaluation_engine import EvaluationEngine
+from core.forecast_model import DemandForecastEngine
 from core.routing_engine import RoutingEngine
 
 
@@ -111,6 +112,23 @@ class UnifiedEvaluationTests(unittest.TestCase):
         self.assertEqual(first["tour"], second["tour"])
         self.assertEqual(first["tour_dist_km"], second["tour_dist_km"])
         self.assertEqual("HEURISTIC_FEASIBLE", first["solver_metrics"]["optimality_status"])
+
+    def test_2e_mdvrptw_dc_collaborative_routing(self):
+        dm = DataManager()
+        fe = DemandForecastEngine()
+        eng = RoutingEngine(random_seed=20260919)
+        comm = dm.get_community_summary("C01")
+        fc = fe.predict_community("C01", comm["total_households"])
+        bldgs = fe.predict_buildings(comm["demand_nodes"], fc)
+        res = eng.solve_community_m2("C01", bldgs, comm["facilities"])
+        
+        self.assertIn("satisfaction_score", res)
+        self.assertIn("handover_sync_valid", res)
+        self.assertIn("battery_reserve_pct", res)
+        self.assertIn("penalty_cost", res)
+        self.assertTrue(res["handover_sync_valid"])
+        self.assertGreaterEqual(res["satisfaction_score"], 90.0)
+        self.assertGreaterEqual(res["battery_reserve_pct"], 20.0)
 
 
 if __name__ == "__main__":
