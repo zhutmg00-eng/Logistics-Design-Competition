@@ -1,0 +1,6091 @@
+{
+  "evaluation_version": "1.0.0",
+  "generated_at": "2026-09-19",
+  "input_version": "2026-09-19-v1",
+  "input_digest": "8ee03908dbcf9c149d01fc7ffca37f2cacc2fbfe783473cd2754583d4429f584",
+  "source_digests": {
+    "data/五社区无人配送模型数据汇总.xlsx": "a3a676d1a9e5ead1b7fcb6430f830f1b2ccd2054f4b88f27befb073419882774",
+    "data/02_无人配送车与智能柜参数包.xlsx": "eb422738cafb35593c9d00d0f0bf5b12fa81c455b6045293230793a36d2e9e2d"
+  },
+  "frozen_input_summary": {
+    "community_count": 5,
+    "households": {
+      "C01": 272,
+      "C02": 433,
+      "C03": 420,
+      "C04": 2141,
+      "C05": 1050
+    },
+    "normal_day_total": 2589.6,
+    "normal_day_by_community": {
+      "C01": 163.2,
+      "C02": 259.8,
+      "C03": 252.0,
+      "C04": 1284.6,
+      "C05": 630.0
+    },
+    "distance_method": "WGS84直线距离×1.25备用绕行系数（D类）",
+    "operating_days": 250
+  },
+  "scheme_definitions": {
+    "S0": "现状独立往返+现有设施+全人工社区作业",
+    "S1": "优化巡回干线+优化节点容量+人工执行",
+    "S2": "与S1相同网络设施+无人车巡航+人工上门及异常"
+  },
+  "metric_definitions": {
+    "E01": {
+      "name": "干线运输总里程",
+      "unit": "km/日",
+      "formula": "Σ执行干线路段距离"
+    },
+    "E02": {
+      "name": "人工社区内行走里程",
+      "unit": "km/日",
+      "formula": "Σ人工步巡闭环里程"
+    },
+    "E03": {
+      "name": "无人车运行里程",
+      "unit": "km/日",
+      "formula": "Σ无人车实际班次路径"
+    },
+    "E04": {
+      "name": "机动车总里程",
+      "unit": "km/日",
+      "formula": "燃油与电动车里程分别累计"
+    },
+    "E05": {
+      "name": "发车趟次",
+      "unit": "次/日",
+      "formula": "Σ实际执行班次"
+    },
+    "E06": {
+      "name": "系统完成时间",
+      "unit": "min/日",
+      "formula": "末件完成时刻-首件可出库时刻"
+    },
+    "E07": {
+      "name": "人均小时处理效率",
+      "unit": "件/人时",
+      "formula": "完成件量/人工总工时"
+    },
+    "E08": {
+      "name": "准时完成率",
+      "unit": "%",
+      "formula": "时限内完成件量/到达件量"
+    },
+    "R01": {
+      "name": "人工总工时",
+      "unit": "人时/日",
+      "formula": "Σ每名人员实际工作分钟/60"
+    },
+    "R02": {
+      "name": "最低配置人数",
+      "unit": "人",
+      "formula": "ceil(人工总分钟/480)并校验时间窗"
+    },
+    "R03": {
+      "name": "无人车配置数",
+      "unit": "台",
+      "formula": "满足班次时序且含1台故障备用"
+    },
+    "R04": {
+      "name": "单趟装载率",
+      "unit": "%",
+      "formula": "q_k/CAP"
+    },
+    "R05": {
+      "name": "柜体有效容量",
+      "unit": "件",
+      "formula": "Σ启用柜体有效容量"
+    },
+    "S01": {
+      "name": "加权平均取件距离",
+      "unit": "m",
+      "formula": "Σ(q_i*d_i)/Σq_i，仅统计已指派自提件"
+    },
+    "S02": {
+      "name": "95分位取件距离",
+      "unit": "m",
+      "formula": "需求加权P95"
+    },
+    "S03": {
+      "name": "150m覆盖率",
+      "unit": "%",
+      "formula": "150m内已服务自提需求/全部自提需求"
+    },
+    "S04": {
+      "name": "日终未完成件量",
+      "unit": "件",
+      "formula": "21:00仍未入柜或未交付件量"
+    },
+    "S05": {
+      "name": "满柜风险",
+      "unit": "个、min、件",
+      "formula": "动态占用超过容量的社区数、时长与溢出件量"
+    },
+    "S06": {
+      "name": "峰值柜体占用率",
+      "unit": "%",
+      "formula": "max_t O(t)/C_eff；不截断"
+    },
+    "S07": {
+      "name": "上门件履约率",
+      "unit": "%",
+      "formula": "已完成上门件/应上门件"
+    },
+    "C01": {
+      "name": "新增初始投资CAPEX",
+      "unit": "元",
+      "formula": "新增车辆+柜体+换电+系统"
+    },
+    "C02": {
+      "name": "年现金运营成本OPEX",
+      "unit": "元/年",
+      "formula": "人工+能源+保险+维保+平台+柜运维"
+    },
+    "C03": {
+      "name": "年化总成本",
+      "unit": "元/年",
+      "formula": "OPEX+年折旧"
+    },
+    "C04": {
+      "name": "单件履约成本",
+      "unit": "元/件",
+      "formula": "年化总成本/年完成件量"
+    },
+    "C05": {
+      "name": "年运营节约额",
+      "unit": "元/年",
+      "formula": "OPEX_S0-OPEX_方案"
+    },
+    "C06": {
+      "name": "静态投资回收期",
+      "unit": "年",
+      "formula": "增量CAPEX/年度现金节约；节约<=0时不可用"
+    },
+    "G01": {
+      "name": "年能源消耗",
+      "unit": "L、kWh/年",
+      "formula": "Σ里程*单位能耗*运营日"
+    },
+    "G02": {
+      "name": "年运营碳排放",
+      "unit": "kgCO2e/年",
+      "formula": "燃油量*EF_fuel+用电量*EF_grid"
+    },
+    "G03": {
+      "name": "年碳减排量",
+      "unit": "kgCO2e/年",
+      "formula": "CO2_S0-CO2_方案"
+    },
+    "G04": {
+      "name": "单件碳排放",
+      "unit": "kgCO2e/件",
+      "formula": "年运营碳排放/年完成件量"
+    },
+    "B01": {
+      "name": "需求承载率",
+      "unit": "%",
+      "formula": "完成件量/到达件量"
+    },
+    "B02": {
+      "name": "异常恢复时间",
+      "unit": "min",
+      "formula": "异常发生至积压恢复到正常阈值"
+    },
+    "B03": {
+      "name": "约束违反次数",
+      "unit": "次",
+      "formula": "容量、工时、距离、时间窗硬约束违反总数"
+    },
+    "B04": {
+      "name": "算法稳定性",
+      "unit": "km",
+      "formula": "30个固定种子结果的均值、标准差、最好和最差"
+    },
+    "B05": {
+      "name": "求解时间",
+      "unit": "ms",
+      "formula": "统一输入至方案结果的墙钟时间"
+    }
+  },
+  "required_main_results": [
+    "S0-N",
+    "S1-N",
+    "S2-N",
+    "S0-P20",
+    "S2-P20"
+  ],
+  "comparison_normal": {
+    "E01": {
+      "name": "干线运输总里程",
+      "unit": "km/日",
+      "S0": 24.84,
+      "S1": 13.42,
+      "S2": 13.42,
+      "S1_vs_S0_pct": 46.0,
+      "S2_vs_S0_pct": 46.0
+    },
+    "E02": {
+      "name": "人工社区内行走里程",
+      "unit": "km/日",
+      "S0": 5.39,
+      "S1": 9.05,
+      "S2": 5.29,
+      "S1_vs_S0_pct": -67.9,
+      "S2_vs_S0_pct": 1.9
+    },
+    "E06": {
+      "name": "系统完成时间",
+      "unit": "min/日",
+      "S0": 780.0,
+      "S1": 439.1,
+      "S2": 464.8,
+      "S1_vs_S0_pct": 43.7,
+      "S2_vs_S0_pct": 40.4
+    },
+    "E07": {
+      "name": "人均小时处理效率",
+      "unit": "件/人时",
+      "S0": 9.1,
+      "S1": 39.31,
+      "S2": 47.76,
+      "S1_vs_S0_pct": 332.0,
+      "S2_vs_S0_pct": 424.8
+    },
+    "R01": {
+      "name": "人工总工时",
+      "unit": "人时/日",
+      "S0": 123.52,
+      "S1": 65.87,
+      "S2": 54.22,
+      "S1_vs_S0_pct": 46.7,
+      "S2_vs_S0_pct": 56.1
+    },
+    "S01": {
+      "name": "加权平均取件距离",
+      "unit": "m",
+      "S0": 63.8,
+      "S1": 70.0,
+      "S2": 70.0,
+      "S1_vs_S0_pct": -9.7,
+      "S2_vs_S0_pct": -9.7
+    },
+    "S03": {
+      "name": "150m覆盖率",
+      "unit": "%",
+      "S0": 6.5,
+      "S1": 100.0,
+      "S2": 100.0,
+      "S1_vs_S0_pct": 1438.5,
+      "S2_vs_S0_pct": 1438.5
+    },
+    "S04": {
+      "name": "日终未完成件量",
+      "unit": "件",
+      "S0": 1465.1,
+      "S1": 0.0,
+      "S2": 0.0,
+      "S1_vs_S0_pct": 100.0,
+      "S2_vs_S0_pct": 100.0
+    },
+    "S06": {
+      "name": "峰值柜体占用率",
+      "unit": "%",
+      "S0": 83.6,
+      "S1": 43.7,
+      "S2": 43.7,
+      "S1_vs_S0_pct": 47.7,
+      "S2_vs_S0_pct": 47.7
+    },
+    "C02": {
+      "name": "年现金运营成本OPEX",
+      "unit": "元/年",
+      "S0": 2456355.0,
+      "S1": 1773090.0,
+      "S2": 1571795.0,
+      "S1_vs_S0_pct": 27.8,
+      "S2_vs_S0_pct": 36.0
+    },
+    "C03": {
+      "name": "年化总成本",
+      "unit": "元/年",
+      "S0": 2456355.0,
+      "S1": 1779911.0,
+      "S2": 1642076.0,
+      "S1_vs_S0_pct": 27.5,
+      "S2_vs_S0_pct": 33.1
+    },
+    "C04": {
+      "name": "单件履约成本",
+      "unit": "元/件",
+      "S0": 8.74,
+      "S1": 2.75,
+      "S2": 2.54,
+      "S1_vs_S0_pct": 68.5,
+      "S2_vs_S0_pct": 70.9
+    },
+    "G02": {
+      "name": "年运营碳排放",
+      "unit": "kgCO2e/年",
+      "S0": 4479.1,
+      "S1": 12248.0,
+      "S2": 11457.9,
+      "S1_vs_S0_pct": -173.4,
+      "S2_vs_S0_pct": -155.8
+    },
+    "G04": {
+      "name": "单件碳排放",
+      "unit": "kgCO2e/件",
+      "S0": 0.0159,
+      "S1": 0.0189,
+      "S2": 0.0177,
+      "S1_vs_S0_pct": -18.9,
+      "S2_vs_S0_pct": -11.3
+    },
+    "B01": {
+      "name": "需求承载率",
+      "unit": "%",
+      "S0": 43.4,
+      "S1": 100.0,
+      "S2": 100.0,
+      "S1_vs_S0_pct": 130.4,
+      "S2_vs_S0_pct": 130.4
+    },
+    "S05": {
+      "name": "满柜风险",
+      "unit": "个、min、件",
+      "S0": {
+        "community_count": 3,
+        "full_minutes": 0,
+        "overflow_pkgs": 1465.1
+      },
+      "S1": {
+        "community_count": 0,
+        "full_minutes": 0,
+        "overflow_pkgs": 0.0
+      },
+      "S2": {
+        "community_count": 0,
+        "full_minutes": 0,
+        "overflow_pkgs": 0.0
+      }
+    },
+    "C06": {
+      "name": "静态投资回收期",
+      "unit": "年",
+      "S0": null,
+      "S1": 0.11,
+      "S2": 0.51
+    },
+    "G03": {
+      "name": "年碳减排量",
+      "unit": "kgCO2e/年",
+      "S0": 0.0,
+      "S1": -7768.9,
+      "S2": -6978.8
+    }
+  },
+  "results": {
+    "S0-N": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "N",
+      "scenario_name": "普通日",
+      "scheme_code": "S0",
+      "scheme_name": "现状基准方案",
+      "status": "INFEASIBLE",
+      "network_metrics": {
+        "E01": 24.84,
+        "E02": 5.39,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 24.84,
+          "electric_km": 0.0,
+          "total_km": 24.84
+        },
+        "E05": 5,
+        "E06": 780.0,
+        "E07": 9.1,
+        "E08": 43.4
+      },
+      "resource_metrics": {
+        "R01": 123.52,
+        "R02": 16,
+        "R03": 0,
+        "R04": {
+          "average_pct": 86.3,
+          "max_pct": 86.3
+        },
+        "R05": 775.2
+      },
+      "service_metrics": {
+        "S01": 63.8,
+        "S02": 129.0,
+        "S03": 6.5,
+        "S04": 1465.1,
+        "S05": {
+          "community_count": 3,
+          "full_minutes": 0,
+          "overflow_pkgs": 1465.1
+        },
+        "S06": 83.6,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 0.0,
+        "C02": 2456355.0,
+        "C03": 2456355.0,
+        "C04": 8.74,
+        "C05": 0.0,
+        "C06": null,
+        "breakdown": {
+          "labor": 2315994.0,
+          "energy": 8362.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 112000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 745.2,
+          "electricity_kwh": 4000.0
+        },
+        "G02": 4479.1,
+        "G03": 0.0,
+        "G04": 0.0159
+      },
+      "robustness_metrics": {
+        "B01": 43.4,
+        "B02": 0.0,
+        "B03": 3,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 9.779
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.0,
+          "labor_hours": 7.71,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 12.39,
+          "locker_capacity": 84.0,
+          "peak_occupancy_pct": 83.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 22.2,
+          "coverage_pct": 82.2
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 0.0,
+          "labor_hours": 12.15,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 1.2,
+          "unmanned_km": 0.0,
+          "labor_hours": 60.25,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 964.0,
+          "coverage_pct": -0.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.16,
+          "unmanned_km": 0.0,
+          "labor_hours": 29.69,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 478.9,
+          "coverage_pct": 0.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 7.69,
+            "capacity": 775.2,
+            "saturation_pct": 1.0
+          },
+          {
+            "time": "09:00",
+            "occupancy": 14.0,
+            "capacity": 775.2,
+            "saturation_pct": 1.8
+          },
+          {
+            "time": "10:00",
+            "occupancy": 21.74,
+            "capacity": 775.2,
+            "saturation_pct": 2.8
+          },
+          {
+            "time": "11:00",
+            "occupancy": 28.09,
+            "capacity": 775.2,
+            "saturation_pct": 3.6
+          },
+          {
+            "time": "12:00",
+            "occupancy": 24.79,
+            "capacity": 775.2,
+            "saturation_pct": 3.2
+          },
+          {
+            "time": "13:00",
+            "occupancy": 22.49,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "14:00",
+            "occupancy": 22.61,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "15:00",
+            "occupancy": 22.7,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "16:00",
+            "occupancy": 22.66,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "17:00",
+            "occupancy": 15.77,
+            "capacity": 775.2,
+            "saturation_pct": 2.0
+          },
+          {
+            "time": "18:00",
+            "occupancy": 13.56,
+            "capacity": 775.2,
+            "saturation_pct": 1.7
+          },
+          {
+            "time": "19:00",
+            "occupancy": 12.96,
+            "capacity": 775.2,
+            "saturation_pct": 1.7
+          },
+          {
+            "time": "20:00",
+            "occupancy": 16.74,
+            "capacity": 775.2,
+            "saturation_pct": 2.2
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 1465.1,
+          "rhs": 0,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 6.545,
+          "rhs": 100,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 463.199,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 780.0,
+          "rhs": 780.0,
+          "status": "VIOLATED"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S1-N": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "N",
+      "scenario_name": "普通日",
+      "scheme_code": "S1",
+      "scheme_name": "网络与设施优化方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 13.42,
+        "E02": 9.05,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 13.42,
+          "electric_km": 0.0,
+          "total_km": 13.42
+        },
+        "E05": 1,
+        "E06": 439.1,
+        "E07": 39.31,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 65.87,
+        "R02": 9,
+        "R03": 0,
+        "R04": {
+          "average_pct": 86.3,
+          "max_pct": 86.3
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 43.7,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 71796.0,
+        "C02": 1773090.0,
+        "C03": 1779911.0,
+        "C04": 2.75,
+        "C05": 683265.0,
+        "C06": 0.11,
+        "breakdown": {
+          "labor": 1235069.0,
+          "energy": 14021.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 402.6,
+          "electricity_kwh": 18000.0
+        },
+        "G02": 12248.0,
+        "G03": -7768.9,
+        "G04": 0.0189
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 0.0,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 7.942
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.44,
+          "unmanned_km": 0.0,
+          "labor_hours": 8.27,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.85,
+          "unmanned_km": 0.0,
+          "labor_hours": 8.15,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 27.9,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 2.9,
+          "unmanned_km": 0.0,
+          "labor_hours": 13.32,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 2.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 23.78,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 42.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.78,
+          "unmanned_km": 0.0,
+          "labor_hours": 11.59,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 43.7,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 117.58,
+            "capacity": 1884.0,
+            "saturation_pct": 6.2
+          },
+          {
+            "time": "09:00",
+            "occupancy": 213.99,
+            "capacity": 1884.0,
+            "saturation_pct": 11.4
+          },
+          {
+            "time": "10:00",
+            "occupancy": 332.24,
+            "capacity": 1884.0,
+            "saturation_pct": 17.6
+          },
+          {
+            "time": "11:00",
+            "occupancy": 429.21,
+            "capacity": 1884.0,
+            "saturation_pct": 22.8
+          },
+          {
+            "time": "12:00",
+            "occupancy": 378.83,
+            "capacity": 1884.0,
+            "saturation_pct": 20.1
+          },
+          {
+            "time": "13:00",
+            "occupancy": 343.57,
+            "capacity": 1884.0,
+            "saturation_pct": 18.2
+          },
+          {
+            "time": "14:00",
+            "occupancy": 345.53,
+            "capacity": 1884.0,
+            "saturation_pct": 18.3
+          },
+          {
+            "time": "15:00",
+            "occupancy": 346.91,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "16:00",
+            "occupancy": 346.3,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "17:00",
+            "occupancy": 240.94,
+            "capacity": 1884.0,
+            "saturation_pct": 12.8
+          },
+          {
+            "time": "18:00",
+            "occupancy": 207.22,
+            "capacity": 1884.0,
+            "saturation_pct": 11.0
+          },
+          {
+            "time": "19:00",
+            "occupancy": 198.0,
+            "capacity": 1884.0,
+            "saturation_pct": 10.5
+          },
+          {
+            "time": "20:00",
+            "occupancy": 255.77,
+            "capacity": 1884.0,
+            "saturation_pct": 13.6
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 439.136,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 439.136,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S2-N": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "N",
+      "scenario_name": "普通日",
+      "scheme_code": "S2",
+      "scheme_name": "人机协同推荐方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 13.42,
+        "E02": 5.29,
+        "E03": 7.27,
+        "E04": {
+          "fuel_km": 0.0,
+          "electric_km": 20.69,
+          "total_km": 20.69
+        },
+        "E05": 10,
+        "E06": 464.8,
+        "E07": 47.76,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 54.22,
+        "R02": 7,
+        "R03": 2,
+        "R04": {
+          "average_pct": 73.4,
+          "max_pct": 100.0
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 43.7,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 449796.0,
+        "C02": 1571795.0,
+        "C03": 1642076.0,
+        "C04": 2.54,
+        "C05": 884560.0,
+        "C06": 0.51,
+        "breakdown": {
+          "labor": 1016716.0,
+          "energy": 11079.0,
+          "vehicle_fixed": 40000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 0.0,
+          "electricity_kwh": 18465.5
+        },
+        "G02": 11457.9,
+        "G03": -6978.8,
+        "G04": 0.0177
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 0.0,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.486
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.15,
+          "labor_hours": 8.25,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.08,
+          "unmanned_km": 0.77,
+          "labor_hours": 7.02,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 27.9,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 1.33,
+          "labor_hours": 12.99,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 1.16,
+          "unmanned_km": 3.66,
+          "labor_hours": 16.32,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 42.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.1,
+          "unmanned_km": 1.36,
+          "labor_hours": 7.83,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 43.7,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 117.58,
+            "capacity": 1884.0,
+            "saturation_pct": 6.2
+          },
+          {
+            "time": "09:00",
+            "occupancy": 213.99,
+            "capacity": 1884.0,
+            "saturation_pct": 11.4
+          },
+          {
+            "time": "10:00",
+            "occupancy": 332.24,
+            "capacity": 1884.0,
+            "saturation_pct": 17.6
+          },
+          {
+            "time": "11:00",
+            "occupancy": 429.21,
+            "capacity": 1884.0,
+            "saturation_pct": 22.8
+          },
+          {
+            "time": "12:00",
+            "occupancy": 378.83,
+            "capacity": 1884.0,
+            "saturation_pct": 20.1
+          },
+          {
+            "time": "13:00",
+            "occupancy": 343.57,
+            "capacity": 1884.0,
+            "saturation_pct": 18.2
+          },
+          {
+            "time": "14:00",
+            "occupancy": 345.53,
+            "capacity": 1884.0,
+            "saturation_pct": 18.3
+          },
+          {
+            "time": "15:00",
+            "occupancy": 346.91,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "16:00",
+            "occupancy": 346.3,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "17:00",
+            "occupancy": 240.94,
+            "capacity": 1884.0,
+            "saturation_pct": 12.8
+          },
+          {
+            "time": "18:00",
+            "occupancy": 207.22,
+            "capacity": 1884.0,
+            "saturation_pct": 11.0
+          },
+          {
+            "time": "19:00",
+            "occupancy": 198.0,
+            "capacity": 1884.0,
+            "saturation_pct": 10.5
+          },
+          {
+            "time": "20:00",
+            "occupancy": 255.77,
+            "capacity": 1884.0,
+            "saturation_pct": 13.6
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 464.784,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 464.784,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S0-P15": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "P15",
+      "scenario_name": "中高峰日",
+      "scheme_code": "S0",
+      "scheme_name": "现状基准方案",
+      "status": "INFEASIBLE",
+      "network_metrics": {
+        "E01": 24.84,
+        "E02": 5.39,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 24.84,
+          "electric_km": 0.0,
+          "total_km": 24.84
+        },
+        "E05": 5,
+        "E06": 780.0,
+        "E07": 9.12,
+        "E08": 43.2
+      },
+      "resource_metrics": {
+        "R01": 183.94,
+        "R02": 23,
+        "R03": 0,
+        "R04": {
+          "average_pct": 100.0,
+          "max_pct": 100.0
+        },
+        "R05": 775.2
+      },
+      "service_metrics": {
+        "S01": 63.8,
+        "S02": 129.0,
+        "S03": 6.5,
+        "S04": 2206.2,
+        "S05": {
+          "community_count": 3,
+          "full_minutes": 360,
+          "overflow_pkgs": 2206.2
+        },
+        "S06": 125.4,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 0.0,
+        "C02": 3589305.0,
+        "C03": 3589305.0,
+        "C04": 8.56,
+        "C05": 0.0,
+        "C06": null,
+        "breakdown": {
+          "labor": 3448944.0,
+          "energy": 8362.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 112000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 745.2,
+          "electricity_kwh": 4000.0
+        },
+        "G02": 4479.1,
+        "G03": 0.0,
+        "G04": 0.0107
+      },
+      "robustness_metrics": {
+        "B01": 43.2,
+        "B02": 0.0,
+        "B03": 3,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.987
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 244.8,
+          "door_demand": 244.8,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.0,
+          "labor_hours": 11.52,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 389.7,
+          "door_demand": 202.5,
+          "locker_demand": 187.2,
+          "walk_km": 1.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 18.46,
+          "locker_capacity": 84.0,
+          "peak_occupancy_pct": 125.4,
+          "full_minutes": 360,
+          "overflow_pkgs": 41.8,
+          "coverage_pct": 82.2
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 378.0,
+          "door_demand": 378.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 0.0,
+          "labor_hours": 18.03,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1926.9,
+          "door_demand": 480.9,
+          "locker_demand": 1446.0,
+          "walk_km": 1.2,
+          "unmanned_km": 0.0,
+          "labor_hours": 90.22,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 1446.0,
+          "coverage_pct": 0.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 945.0,
+          "door_demand": 226.7,
+          "locker_demand": 718.4,
+          "walk_km": 1.16,
+          "unmanned_km": 0.0,
+          "labor_hours": 44.39,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 718.4,
+          "coverage_pct": 0.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 11.54,
+            "capacity": 775.2,
+            "saturation_pct": 1.5
+          },
+          {
+            "time": "09:00",
+            "occupancy": 21.01,
+            "capacity": 775.2,
+            "saturation_pct": 2.7
+          },
+          {
+            "time": "10:00",
+            "occupancy": 32.62,
+            "capacity": 775.2,
+            "saturation_pct": 4.2
+          },
+          {
+            "time": "11:00",
+            "occupancy": 42.14,
+            "capacity": 775.2,
+            "saturation_pct": 5.4
+          },
+          {
+            "time": "12:00",
+            "occupancy": 37.19,
+            "capacity": 775.2,
+            "saturation_pct": 4.8
+          },
+          {
+            "time": "13:00",
+            "occupancy": 33.73,
+            "capacity": 775.2,
+            "saturation_pct": 4.4
+          },
+          {
+            "time": "14:00",
+            "occupancy": 33.92,
+            "capacity": 775.2,
+            "saturation_pct": 4.4
+          },
+          {
+            "time": "15:00",
+            "occupancy": 34.06,
+            "capacity": 775.2,
+            "saturation_pct": 4.4
+          },
+          {
+            "time": "16:00",
+            "occupancy": 34.0,
+            "capacity": 775.2,
+            "saturation_pct": 4.4
+          },
+          {
+            "time": "17:00",
+            "occupancy": 23.65,
+            "capacity": 775.2,
+            "saturation_pct": 3.1
+          },
+          {
+            "time": "18:00",
+            "occupancy": 20.34,
+            "capacity": 775.2,
+            "saturation_pct": 2.6
+          },
+          {
+            "time": "19:00",
+            "occupancy": 19.44,
+            "capacity": 775.2,
+            "saturation_pct": 2.5
+          },
+          {
+            "time": "20:00",
+            "occupancy": 25.11,
+            "capacity": 775.2,
+            "saturation_pct": 3.2
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 3884.4,
+          "rhs": 3884.4,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 2206.185,
+          "rhs": 0,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 6.545,
+          "rhs": 100,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 479.853,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 780.0,
+          "rhs": 780.0,
+          "status": "VIOLATED"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 3884.4,
+        "door_total": 1532.8,
+        "locker_total": 2351.6,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S1-P15": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "P15",
+      "scenario_name": "中高峰日",
+      "scheme_code": "S1",
+      "scheme_name": "网络与设施优化方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 13.42,
+        "E02": 9.05,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 13.42,
+          "electric_km": 0.0,
+          "total_km": 13.42
+        },
+        "E05": 1,
+        "E06": 449.1,
+        "E07": 39.92,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 97.3,
+        "R02": 13,
+        "R03": 0,
+        "R04": {
+          "average_pct": 100.0,
+          "max_pct": 100.0
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 65.6,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 71796.0,
+        "C02": 2362335.0,
+        "C03": 2369155.0,
+        "C04": 2.44,
+        "C05": 1226970.0,
+        "C06": 0.06,
+        "breakdown": {
+          "labor": 1824314.0,
+          "energy": 14021.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 402.6,
+          "electricity_kwh": 18000.0
+        },
+        "G02": 12248.0,
+        "G03": -7768.9,
+        "G04": 0.0126
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 0.0,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.19
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 244.8,
+          "door_demand": 244.8,
+          "locker_demand": 0.0,
+          "walk_km": 0.44,
+          "unmanned_km": 0.0,
+          "labor_hours": 12.35,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 389.7,
+          "door_demand": 202.5,
+          "locker_demand": 187.2,
+          "walk_km": 1.85,
+          "unmanned_km": 0.0,
+          "labor_hours": 11.99,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 41.8,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 378.0,
+          "door_demand": 378.0,
+          "locker_demand": 0.0,
+          "walk_km": 2.9,
+          "unmanned_km": 0.0,
+          "labor_hours": 19.62,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1926.9,
+          "door_demand": 480.9,
+          "locker_demand": 1446.0,
+          "walk_km": 2.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 35.41,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 63.9,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 945.0,
+          "door_demand": 226.7,
+          "locker_demand": 718.4,
+          "walk_km": 1.78,
+          "unmanned_km": 0.0,
+          "labor_hours": 17.17,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 65.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 176.37,
+            "capacity": 1884.0,
+            "saturation_pct": 9.4
+          },
+          {
+            "time": "09:00",
+            "occupancy": 320.99,
+            "capacity": 1884.0,
+            "saturation_pct": 17.0
+          },
+          {
+            "time": "10:00",
+            "occupancy": 498.36,
+            "capacity": 1884.0,
+            "saturation_pct": 26.5
+          },
+          {
+            "time": "11:00",
+            "occupancy": 643.81,
+            "capacity": 1884.0,
+            "saturation_pct": 34.2
+          },
+          {
+            "time": "12:00",
+            "occupancy": 568.25,
+            "capacity": 1884.0,
+            "saturation_pct": 30.2
+          },
+          {
+            "time": "13:00",
+            "occupancy": 515.35,
+            "capacity": 1884.0,
+            "saturation_pct": 27.4
+          },
+          {
+            "time": "14:00",
+            "occupancy": 518.3,
+            "capacity": 1884.0,
+            "saturation_pct": 27.5
+          },
+          {
+            "time": "15:00",
+            "occupancy": 520.36,
+            "capacity": 1884.0,
+            "saturation_pct": 27.6
+          },
+          {
+            "time": "16:00",
+            "occupancy": 519.46,
+            "capacity": 1884.0,
+            "saturation_pct": 27.6
+          },
+          {
+            "time": "17:00",
+            "occupancy": 361.4,
+            "capacity": 1884.0,
+            "saturation_pct": 19.2
+          },
+          {
+            "time": "18:00",
+            "occupancy": 310.83,
+            "capacity": 1884.0,
+            "saturation_pct": 16.5
+          },
+          {
+            "time": "19:00",
+            "occupancy": 297.0,
+            "capacity": 1884.0,
+            "saturation_pct": 15.8
+          },
+          {
+            "time": "20:00",
+            "occupancy": 383.65,
+            "capacity": 1884.0,
+            "saturation_pct": 20.4
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 3884.4,
+          "rhs": 3884.4,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 449.062,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 449.062,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 3884.4,
+        "door_total": 1532.8,
+        "locker_total": 2351.6,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S2-P15": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "P15",
+      "scenario_name": "中高峰日",
+      "scheme_code": "S2",
+      "scheme_name": "人机协同推荐方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 13.42,
+        "E02": 5.29,
+        "E03": 8.86,
+        "E04": {
+          "fuel_km": 0.0,
+          "electric_km": 22.28,
+          "total_km": 22.28
+        },
+        "E05": 12,
+        "E06": 479.4,
+        "E07": 48.61,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 79.91,
+        "R02": 10,
+        "R03": 2,
+        "R04": {
+          "average_pct": 89.3,
+          "max_pct": 100.0
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 65.6,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 449796.0,
+        "C02": 2053323.0,
+        "C03": 2123604.0,
+        "C04": 2.19,
+        "C05": 1535982.0,
+        "C06": 0.29,
+        "breakdown": {
+          "labor": 1498222.0,
+          "energy": 11101.0,
+          "vehicle_fixed": 40000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 0.0,
+          "electricity_kwh": 18501.4
+        },
+        "G02": 11480.1,
+        "G03": -7001.0,
+        "G04": 0.0118
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 0.0,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.115
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 244.8,
+          "door_demand": 244.8,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.15,
+          "labor_hours": 12.33,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 389.7,
+          "door_demand": 202.5,
+          "locker_demand": 187.2,
+          "walk_km": 1.08,
+          "unmanned_km": 0.77,
+          "labor_hours": 10.4,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 41.8,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 378.0,
+          "door_demand": 378.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 1.33,
+          "labor_hours": 19.29,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1926.9,
+          "door_demand": 480.9,
+          "locker_demand": 1446.0,
+          "walk_km": 1.16,
+          "unmanned_km": 4.57,
+          "labor_hours": 24.34,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 63.9,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 945.0,
+          "door_demand": 226.7,
+          "locker_demand": 718.4,
+          "walk_km": 1.1,
+          "unmanned_km": 2.04,
+          "labor_hours": 11.61,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 65.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 176.37,
+            "capacity": 1884.0,
+            "saturation_pct": 9.4
+          },
+          {
+            "time": "09:00",
+            "occupancy": 320.99,
+            "capacity": 1884.0,
+            "saturation_pct": 17.0
+          },
+          {
+            "time": "10:00",
+            "occupancy": 498.36,
+            "capacity": 1884.0,
+            "saturation_pct": 26.5
+          },
+          {
+            "time": "11:00",
+            "occupancy": 643.81,
+            "capacity": 1884.0,
+            "saturation_pct": 34.2
+          },
+          {
+            "time": "12:00",
+            "occupancy": 568.25,
+            "capacity": 1884.0,
+            "saturation_pct": 30.2
+          },
+          {
+            "time": "13:00",
+            "occupancy": 515.35,
+            "capacity": 1884.0,
+            "saturation_pct": 27.4
+          },
+          {
+            "time": "14:00",
+            "occupancy": 518.3,
+            "capacity": 1884.0,
+            "saturation_pct": 27.5
+          },
+          {
+            "time": "15:00",
+            "occupancy": 520.36,
+            "capacity": 1884.0,
+            "saturation_pct": 27.6
+          },
+          {
+            "time": "16:00",
+            "occupancy": 519.46,
+            "capacity": 1884.0,
+            "saturation_pct": 27.6
+          },
+          {
+            "time": "17:00",
+            "occupancy": 361.4,
+            "capacity": 1884.0,
+            "saturation_pct": 19.2
+          },
+          {
+            "time": "18:00",
+            "occupancy": 310.83,
+            "capacity": 1884.0,
+            "saturation_pct": 16.5
+          },
+          {
+            "time": "19:00",
+            "occupancy": 297.0,
+            "capacity": 1884.0,
+            "saturation_pct": 15.8
+          },
+          {
+            "time": "20:00",
+            "occupancy": 383.65,
+            "capacity": 1884.0,
+            "saturation_pct": 20.4
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 3884.4,
+          "rhs": 3884.4,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 479.431,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 479.431,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 3884.4,
+        "door_total": 1532.8,
+        "locker_total": 2351.6,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S0-P20": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "P20",
+      "scenario_name": "大促高峰日",
+      "scheme_code": "S0",
+      "scheme_name": "现状基准方案",
+      "status": "INFEASIBLE",
+      "network_metrics": {
+        "E01": 24.84,
+        "E02": 5.39,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 24.84,
+          "electric_km": 0.0,
+          "total_km": 24.84
+        },
+        "E05": 5,
+        "E06": 780.0,
+        "E07": 9.11,
+        "E08": 43.0
+      },
+      "resource_metrics": {
+        "R01": 244.37,
+        "R02": 31,
+        "R03": 0,
+        "R04": {
+          "average_pct": 100.0,
+          "max_pct": 100.0
+        },
+        "R05": 775.2
+      },
+      "service_metrics": {
+        "S01": 63.8,
+        "S02": 129.0,
+        "S03": 6.5,
+        "S04": 2952.8,
+        "S05": {
+          "community_count": 3,
+          "full_minutes": 420,
+          "overflow_pkgs": 2952.8
+        },
+        "S06": 167.2,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 0.0,
+        "C02": 4722255.0,
+        "C03": 4722255.0,
+        "C04": 8.48,
+        "C05": 0.0,
+        "C06": null,
+        "breakdown": {
+          "labor": 4581894.0,
+          "energy": 8362.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 112000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 745.2,
+          "electricity_kwh": 4000.0
+        },
+        "G02": 4479.1,
+        "G03": 0.0,
+        "G04": 0.008
+      },
+      "robustness_metrics": {
+        "B01": 43.0,
+        "B02": 0.0,
+        "B03": 3,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.812
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 326.4,
+          "door_demand": 326.4,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.0,
+          "labor_hours": 15.33,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 519.6,
+          "door_demand": 270.0,
+          "locker_demand": 249.6,
+          "walk_km": 1.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 24.52,
+          "locker_capacity": 84.0,
+          "peak_occupancy_pct": 167.2,
+          "full_minutes": 420,
+          "overflow_pkgs": 67.0,
+          "coverage_pct": 82.2
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 504.0,
+          "door_demand": 504.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 0.0,
+          "labor_hours": 23.91,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 2569.2,
+          "door_demand": 641.2,
+          "locker_demand": 1928.0,
+          "walk_km": 1.2,
+          "unmanned_km": 0.0,
+          "labor_hours": 120.2,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 1928.0,
+          "coverage_pct": -0.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 1260.0,
+          "door_demand": 302.2,
+          "locker_demand": 957.8,
+          "walk_km": 1.16,
+          "unmanned_km": 0.0,
+          "labor_hours": 59.09,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 957.8,
+          "coverage_pct": 0.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 15.39,
+            "capacity": 775.2,
+            "saturation_pct": 2.0
+          },
+          {
+            "time": "09:00",
+            "occupancy": 28.01,
+            "capacity": 775.2,
+            "saturation_pct": 3.6
+          },
+          {
+            "time": "10:00",
+            "occupancy": 43.49,
+            "capacity": 775.2,
+            "saturation_pct": 5.6
+          },
+          {
+            "time": "11:00",
+            "occupancy": 56.18,
+            "capacity": 775.2,
+            "saturation_pct": 7.2
+          },
+          {
+            "time": "12:00",
+            "occupancy": 49.59,
+            "capacity": 775.2,
+            "saturation_pct": 6.4
+          },
+          {
+            "time": "13:00",
+            "occupancy": 44.97,
+            "capacity": 775.2,
+            "saturation_pct": 5.8
+          },
+          {
+            "time": "14:00",
+            "occupancy": 45.23,
+            "capacity": 775.2,
+            "saturation_pct": 5.8
+          },
+          {
+            "time": "15:00",
+            "occupancy": 45.41,
+            "capacity": 775.2,
+            "saturation_pct": 5.9
+          },
+          {
+            "time": "16:00",
+            "occupancy": 45.33,
+            "capacity": 775.2,
+            "saturation_pct": 5.8
+          },
+          {
+            "time": "17:00",
+            "occupancy": 31.54,
+            "capacity": 775.2,
+            "saturation_pct": 4.1
+          },
+          {
+            "time": "18:00",
+            "occupancy": 27.12,
+            "capacity": 775.2,
+            "saturation_pct": 3.5
+          },
+          {
+            "time": "19:00",
+            "occupancy": 25.92,
+            "capacity": 775.2,
+            "saturation_pct": 3.3
+          },
+          {
+            "time": "20:00",
+            "occupancy": 33.48,
+            "capacity": 775.2,
+            "saturation_pct": 4.3
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 5179.2,
+          "rhs": 5179.2,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 2952.78,
+          "rhs": 0,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 6.545,
+          "rhs": 100,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 472.97,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 780.0,
+          "rhs": 780.0,
+          "status": "VIOLATED"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 5179.2,
+        "door_total": 2043.8,
+        "locker_total": 3135.4,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S1-P20": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "P20",
+      "scenario_name": "大促高峰日",
+      "scheme_code": "S1",
+      "scheme_name": "网络与设施优化方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 13.42,
+        "E02": 9.05,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 13.42,
+          "electric_km": 0.0,
+          "total_km": 13.42
+        },
+        "E05": 1,
+        "E06": 454.3,
+        "E07": 40.24,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 128.72,
+        "R02": 17,
+        "R03": 0,
+        "R04": {
+          "average_pct": 100.0,
+          "max_pct": 100.0
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 87.4,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 71796.0,
+        "C02": 2951579.0,
+        "C03": 2958400.0,
+        "C04": 2.28,
+        "C05": 1770676.0,
+        "C06": 0.04,
+        "breakdown": {
+          "labor": 2413558.0,
+          "energy": 14021.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 402.6,
+          "electricity_kwh": 18000.0
+        },
+        "G02": 12248.0,
+        "G03": -7768.9,
+        "G04": 0.0095
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 0.0,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.042
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 326.4,
+          "door_demand": 326.4,
+          "locker_demand": 0.0,
+          "walk_km": 0.44,
+          "unmanned_km": 0.0,
+          "labor_hours": 16.43,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 519.6,
+          "door_demand": 270.0,
+          "locker_demand": 249.6,
+          "walk_km": 1.85,
+          "unmanned_km": 0.0,
+          "labor_hours": 15.83,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 55.7,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 504.0,
+          "door_demand": 504.0,
+          "locker_demand": 0.0,
+          "walk_km": 2.9,
+          "unmanned_km": 0.0,
+          "labor_hours": 25.92,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 2569.2,
+          "door_demand": 641.2,
+          "locker_demand": 1928.0,
+          "walk_km": 2.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 47.04,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 85.2,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 1260.0,
+          "door_demand": 302.2,
+          "locker_demand": 957.8,
+          "walk_km": 1.78,
+          "unmanned_km": 0.0,
+          "labor_hours": 22.74,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 87.4,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 235.15,
+            "capacity": 1884.0,
+            "saturation_pct": 12.5
+          },
+          {
+            "time": "09:00",
+            "occupancy": 427.98,
+            "capacity": 1884.0,
+            "saturation_pct": 22.7
+          },
+          {
+            "time": "10:00",
+            "occupancy": 664.49,
+            "capacity": 1884.0,
+            "saturation_pct": 35.3
+          },
+          {
+            "time": "11:00",
+            "occupancy": 858.42,
+            "capacity": 1884.0,
+            "saturation_pct": 45.6
+          },
+          {
+            "time": "12:00",
+            "occupancy": 757.66,
+            "capacity": 1884.0,
+            "saturation_pct": 40.2
+          },
+          {
+            "time": "13:00",
+            "occupancy": 687.13,
+            "capacity": 1884.0,
+            "saturation_pct": 36.5
+          },
+          {
+            "time": "14:00",
+            "occupancy": 691.07,
+            "capacity": 1884.0,
+            "saturation_pct": 36.7
+          },
+          {
+            "time": "15:00",
+            "occupancy": 693.82,
+            "capacity": 1884.0,
+            "saturation_pct": 36.8
+          },
+          {
+            "time": "16:00",
+            "occupancy": 692.61,
+            "capacity": 1884.0,
+            "saturation_pct": 36.8
+          },
+          {
+            "time": "17:00",
+            "occupancy": 481.87,
+            "capacity": 1884.0,
+            "saturation_pct": 25.6
+          },
+          {
+            "time": "18:00",
+            "occupancy": 414.44,
+            "capacity": 1884.0,
+            "saturation_pct": 22.0
+          },
+          {
+            "time": "19:00",
+            "occupancy": 395.99,
+            "capacity": 1884.0,
+            "saturation_pct": 21.0
+          },
+          {
+            "time": "20:00",
+            "occupancy": 511.54,
+            "capacity": 1884.0,
+            "saturation_pct": 27.2
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 5179.2,
+          "rhs": 5179.2,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 454.317,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 454.317,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 5179.2,
+        "door_total": 2043.8,
+        "locker_total": 3135.4,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S2-P20": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "P20",
+      "scenario_name": "大促高峰日",
+      "scheme_code": "S2",
+      "scheme_name": "人机协同推荐方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 13.42,
+        "E02": 5.29,
+        "E03": 13.48,
+        "E04": {
+          "fuel_km": 0.0,
+          "electric_km": 26.9,
+          "total_km": 26.9
+        },
+        "E05": 17,
+        "E06": 453.6,
+        "E07": 48.94,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 105.84,
+        "R02": 14,
+        "R03": 2,
+        "R04": {
+          "average_pct": 82.0,
+          "max_pct": 100.0
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 87.4,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 449796.0,
+        "C02": 2539607.0,
+        "C03": 2609888.0,
+        "C04": 2.02,
+        "C05": 2182648.0,
+        "C06": 0.21,
+        "breakdown": {
+          "labor": 1984444.0,
+          "energy": 11163.0,
+          "vehicle_fixed": 40000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 0.0,
+          "electricity_kwh": 18605.2
+        },
+        "G02": 11544.5,
+        "G03": -7065.4,
+        "G04": 0.0089
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 0.0,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.02
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 326.4,
+          "door_demand": 326.4,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.15,
+          "labor_hours": 16.41,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 519.6,
+          "door_demand": 270.0,
+          "locker_demand": 249.6,
+          "walk_km": 1.08,
+          "unmanned_km": 1.54,
+          "labor_hours": 13.77,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 55.7,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 504.0,
+          "door_demand": 504.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 2.67,
+          "labor_hours": 25.59,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 2569.2,
+          "door_demand": 641.2,
+          "locker_demand": 1928.0,
+          "walk_km": 1.16,
+          "unmanned_km": 6.4,
+          "labor_hours": 32.35,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 85.2,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 1260.0,
+          "door_demand": 302.2,
+          "locker_demand": 957.8,
+          "walk_km": 1.1,
+          "unmanned_km": 2.72,
+          "labor_hours": 15.39,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 87.4,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 235.15,
+            "capacity": 1884.0,
+            "saturation_pct": 12.5
+          },
+          {
+            "time": "09:00",
+            "occupancy": 427.98,
+            "capacity": 1884.0,
+            "saturation_pct": 22.7
+          },
+          {
+            "time": "10:00",
+            "occupancy": 664.49,
+            "capacity": 1884.0,
+            "saturation_pct": 35.3
+          },
+          {
+            "time": "11:00",
+            "occupancy": 858.42,
+            "capacity": 1884.0,
+            "saturation_pct": 45.6
+          },
+          {
+            "time": "12:00",
+            "occupancy": 757.66,
+            "capacity": 1884.0,
+            "saturation_pct": 40.2
+          },
+          {
+            "time": "13:00",
+            "occupancy": 687.13,
+            "capacity": 1884.0,
+            "saturation_pct": 36.5
+          },
+          {
+            "time": "14:00",
+            "occupancy": 691.07,
+            "capacity": 1884.0,
+            "saturation_pct": 36.7
+          },
+          {
+            "time": "15:00",
+            "occupancy": 693.82,
+            "capacity": 1884.0,
+            "saturation_pct": 36.8
+          },
+          {
+            "time": "16:00",
+            "occupancy": 692.61,
+            "capacity": 1884.0,
+            "saturation_pct": 36.8
+          },
+          {
+            "time": "17:00",
+            "occupancy": 481.87,
+            "capacity": 1884.0,
+            "saturation_pct": 25.6
+          },
+          {
+            "time": "18:00",
+            "occupancy": 414.44,
+            "capacity": 1884.0,
+            "saturation_pct": 22.0
+          },
+          {
+            "time": "19:00",
+            "occupancy": 395.99,
+            "capacity": 1884.0,
+            "saturation_pct": 21.0
+          },
+          {
+            "time": "20:00",
+            "occupancy": 511.54,
+            "capacity": 1884.0,
+            "saturation_pct": 27.2
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 5179.2,
+          "rhs": 5179.2,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 453.587,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 453.587,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 5179.2,
+        "door_total": 2043.8,
+        "locker_total": 3135.4,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S0-D-R": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "D-R",
+      "scenario_name": "道路受限",
+      "scheme_code": "S0",
+      "scheme_name": "现状基准方案",
+      "status": "INFEASIBLE",
+      "network_metrics": {
+        "E01": 29.31,
+        "E02": 5.39,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 29.31,
+          "electric_km": 0.0,
+          "total_km": 29.31
+        },
+        "E05": 5,
+        "E06": 780.0,
+        "E07": 9.05,
+        "E08": 43.4
+      },
+      "resource_metrics": {
+        "R01": 124.26,
+        "R02": 16,
+        "R03": 0,
+        "R04": {
+          "average_pct": 86.3,
+          "max_pct": 86.3
+        },
+        "R05": 775.2
+      },
+      "service_metrics": {
+        "S01": 63.8,
+        "S02": 129.0,
+        "S03": 6.5,
+        "S04": 1465.1,
+        "S05": {
+          "community_count": 3,
+          "full_minutes": 0,
+          "overflow_pkgs": 1465.1
+        },
+        "S06": 83.6,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 0.0,
+        "C02": 2471238.0,
+        "C03": 2471238.0,
+        "C04": 8.79,
+        "C05": 0.0,
+        "C06": null,
+        "breakdown": {
+          "labor": 2329803.0,
+          "energy": 9435.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 112000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 879.3,
+          "electricity_kwh": 4000.0
+        },
+        "G02": 4838.6,
+        "G03": 0.0,
+        "G04": 0.0172
+      },
+      "robustness_metrics": {
+        "B01": 43.4,
+        "B02": 35.8,
+        "B03": 3,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.7
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.0,
+          "labor_hours": 7.71,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 12.39,
+          "locker_capacity": 84.0,
+          "peak_occupancy_pct": 83.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 22.2,
+          "coverage_pct": 82.2
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 0.0,
+          "labor_hours": 12.15,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 1.2,
+          "unmanned_km": 0.0,
+          "labor_hours": 60.25,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 964.0,
+          "coverage_pct": -0.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.16,
+          "unmanned_km": 0.0,
+          "labor_hours": 29.69,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 478.9,
+          "coverage_pct": 0.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 7.69,
+            "capacity": 775.2,
+            "saturation_pct": 1.0
+          },
+          {
+            "time": "09:00",
+            "occupancy": 14.0,
+            "capacity": 775.2,
+            "saturation_pct": 1.8
+          },
+          {
+            "time": "10:00",
+            "occupancy": 21.74,
+            "capacity": 775.2,
+            "saturation_pct": 2.8
+          },
+          {
+            "time": "11:00",
+            "occupancy": 28.09,
+            "capacity": 775.2,
+            "saturation_pct": 3.6
+          },
+          {
+            "time": "12:00",
+            "occupancy": 24.79,
+            "capacity": 775.2,
+            "saturation_pct": 3.2
+          },
+          {
+            "time": "13:00",
+            "occupancy": 22.49,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "14:00",
+            "occupancy": 22.61,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "15:00",
+            "occupancy": 22.7,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "16:00",
+            "occupancy": 22.66,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "17:00",
+            "occupancy": 15.77,
+            "capacity": 775.2,
+            "saturation_pct": 2.0
+          },
+          {
+            "time": "18:00",
+            "occupancy": 13.56,
+            "capacity": 775.2,
+            "saturation_pct": 1.7
+          },
+          {
+            "time": "19:00",
+            "occupancy": 12.96,
+            "capacity": 775.2,
+            "saturation_pct": 1.7
+          },
+          {
+            "time": "20:00",
+            "occupancy": 16.74,
+            "capacity": 775.2,
+            "saturation_pct": 2.2
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 1465.1,
+          "rhs": 0,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 6.545,
+          "rhs": 100,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 465.961,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 780.0,
+          "rhs": 780.0,
+          "status": "VIOLATED"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S1-D-R": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "D-R",
+      "scenario_name": "道路受限",
+      "scheme_code": "S1",
+      "scheme_name": "网络与设施优化方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 15.84,
+        "E02": 9.05,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 15.84,
+          "electric_km": 0.0,
+          "total_km": 15.84
+        },
+        "E05": 1,
+        "E06": 441.8,
+        "E07": 39.08,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 66.27,
+        "R02": 9,
+        "R03": 0,
+        "R04": {
+          "average_pct": 86.3,
+          "max_pct": 86.3
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 43.7,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 71796.0,
+        "C02": 1781131.0,
+        "C03": 1787951.0,
+        "C04": 2.76,
+        "C05": 690107.0,
+        "C06": 0.1,
+        "breakdown": {
+          "labor": 1242530.0,
+          "energy": 14601.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 475.1,
+          "electricity_kwh": 18000.0
+        },
+        "G02": 12442.2,
+        "G03": -7603.6,
+        "G04": 0.0192
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 21.6,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.031
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.44,
+          "unmanned_km": 0.0,
+          "labor_hours": 8.27,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.85,
+          "unmanned_km": 0.0,
+          "labor_hours": 8.15,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 27.9,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 2.9,
+          "unmanned_km": 0.0,
+          "labor_hours": 13.32,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 2.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 23.78,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 42.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.78,
+          "unmanned_km": 0.0,
+          "labor_hours": 11.59,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 43.7,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 117.58,
+            "capacity": 1884.0,
+            "saturation_pct": 6.2
+          },
+          {
+            "time": "09:00",
+            "occupancy": 213.99,
+            "capacity": 1884.0,
+            "saturation_pct": 11.4
+          },
+          {
+            "time": "10:00",
+            "occupancy": 332.24,
+            "capacity": 1884.0,
+            "saturation_pct": 17.6
+          },
+          {
+            "time": "11:00",
+            "occupancy": 429.21,
+            "capacity": 1884.0,
+            "saturation_pct": 22.8
+          },
+          {
+            "time": "12:00",
+            "occupancy": 378.83,
+            "capacity": 1884.0,
+            "saturation_pct": 20.1
+          },
+          {
+            "time": "13:00",
+            "occupancy": 343.57,
+            "capacity": 1884.0,
+            "saturation_pct": 18.2
+          },
+          {
+            "time": "14:00",
+            "occupancy": 345.53,
+            "capacity": 1884.0,
+            "saturation_pct": 18.3
+          },
+          {
+            "time": "15:00",
+            "occupancy": 346.91,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "16:00",
+            "occupancy": 346.3,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "17:00",
+            "occupancy": 240.94,
+            "capacity": 1884.0,
+            "saturation_pct": 12.8
+          },
+          {
+            "time": "18:00",
+            "occupancy": 207.22,
+            "capacity": 1884.0,
+            "saturation_pct": 11.0
+          },
+          {
+            "time": "19:00",
+            "occupancy": 198.0,
+            "capacity": 1884.0,
+            "saturation_pct": 10.5
+          },
+          {
+            "time": "20:00",
+            "occupancy": 255.77,
+            "capacity": 1884.0,
+            "saturation_pct": 13.6
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 441.788,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 441.788,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S2-D-R": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "D-R",
+      "scenario_name": "道路受限",
+      "scheme_code": "S2",
+      "scheme_name": "人机协同推荐方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 15.84,
+        "E02": 5.29,
+        "E03": 7.27,
+        "E04": {
+          "fuel_km": 0.0,
+          "electric_km": 23.11,
+          "total_km": 23.11
+        },
+        "E05": 10,
+        "E06": 472.3,
+        "E07": 47.0,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 55.1,
+        "R02": 7,
+        "R03": 2,
+        "R04": {
+          "average_pct": 73.4,
+          "max_pct": 100.0
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 43.7,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 449796.0,
+        "C02": 1588238.0,
+        "C03": 1658519.0,
+        "C04": 2.56,
+        "C05": 883000.0,
+        "C06": 0.51,
+        "breakdown": {
+          "labor": 1033126.0,
+          "energy": 11112.0,
+          "vehicle_fixed": 40000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 0.0,
+          "electricity_kwh": 18519.9
+        },
+        "G02": 11491.6,
+        "G03": -6653.0,
+        "G04": 0.0178
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 81.8,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.006
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.15,
+          "labor_hours": 8.25,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.08,
+          "unmanned_km": 0.77,
+          "labor_hours": 7.02,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 27.9,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 1.33,
+          "labor_hours": 12.99,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 1.16,
+          "unmanned_km": 3.66,
+          "labor_hours": 16.32,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 42.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.1,
+          "unmanned_km": 1.36,
+          "labor_hours": 7.83,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 43.7,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 117.58,
+            "capacity": 1884.0,
+            "saturation_pct": 6.2
+          },
+          {
+            "time": "09:00",
+            "occupancy": 213.99,
+            "capacity": 1884.0,
+            "saturation_pct": 11.4
+          },
+          {
+            "time": "10:00",
+            "occupancy": 332.24,
+            "capacity": 1884.0,
+            "saturation_pct": 17.6
+          },
+          {
+            "time": "11:00",
+            "occupancy": 429.21,
+            "capacity": 1884.0,
+            "saturation_pct": 22.8
+          },
+          {
+            "time": "12:00",
+            "occupancy": 378.83,
+            "capacity": 1884.0,
+            "saturation_pct": 20.1
+          },
+          {
+            "time": "13:00",
+            "occupancy": 343.57,
+            "capacity": 1884.0,
+            "saturation_pct": 18.2
+          },
+          {
+            "time": "14:00",
+            "occupancy": 345.53,
+            "capacity": 1884.0,
+            "saturation_pct": 18.3
+          },
+          {
+            "time": "15:00",
+            "occupancy": 346.91,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "16:00",
+            "occupancy": 346.3,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "17:00",
+            "occupancy": 240.94,
+            "capacity": 1884.0,
+            "saturation_pct": 12.8
+          },
+          {
+            "time": "18:00",
+            "occupancy": 207.22,
+            "capacity": 1884.0,
+            "saturation_pct": 11.0
+          },
+          {
+            "time": "19:00",
+            "occupancy": 198.0,
+            "capacity": 1884.0,
+            "saturation_pct": 10.5
+          },
+          {
+            "time": "20:00",
+            "occupancy": 255.77,
+            "capacity": 1884.0,
+            "saturation_pct": 13.6
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 472.286,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 472.286,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S0-D-V": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "D-V",
+      "scenario_name": "车辆故障",
+      "scheme_code": "S0",
+      "scheme_name": "现状基准方案",
+      "status": "INFEASIBLE",
+      "network_metrics": {
+        "E01": 24.84,
+        "E02": 5.39,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 24.84,
+          "electric_km": 0.0,
+          "total_km": 24.84
+        },
+        "E05": 5,
+        "E06": 780.0,
+        "E07": 9.1,
+        "E08": 43.4
+      },
+      "resource_metrics": {
+        "R01": 123.52,
+        "R02": 16,
+        "R03": 0,
+        "R04": {
+          "average_pct": 86.3,
+          "max_pct": 86.3
+        },
+        "R05": 775.2
+      },
+      "service_metrics": {
+        "S01": 63.8,
+        "S02": 129.0,
+        "S03": 6.5,
+        "S04": 1465.1,
+        "S05": {
+          "community_count": 3,
+          "full_minutes": 0,
+          "overflow_pkgs": 1465.1
+        },
+        "S06": 83.6,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 0.0,
+        "C02": 2456355.0,
+        "C03": 2456355.0,
+        "C04": 8.74,
+        "C05": 0.0,
+        "C06": null,
+        "breakdown": {
+          "labor": 2315994.0,
+          "energy": 8362.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 112000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 745.2,
+          "electricity_kwh": 4000.0
+        },
+        "G02": 4479.1,
+        "G03": 0.0,
+        "G04": 0.0159
+      },
+      "robustness_metrics": {
+        "B01": 43.4,
+        "B02": 5.0,
+        "B03": 3,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.741
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.0,
+          "labor_hours": 7.71,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 12.39,
+          "locker_capacity": 84.0,
+          "peak_occupancy_pct": 83.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 22.2,
+          "coverage_pct": 82.2
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 0.0,
+          "labor_hours": 12.15,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 1.2,
+          "unmanned_km": 0.0,
+          "labor_hours": 60.25,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 964.0,
+          "coverage_pct": -0.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.16,
+          "unmanned_km": 0.0,
+          "labor_hours": 29.69,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 478.9,
+          "coverage_pct": 0.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 7.69,
+            "capacity": 775.2,
+            "saturation_pct": 1.0
+          },
+          {
+            "time": "09:00",
+            "occupancy": 14.0,
+            "capacity": 775.2,
+            "saturation_pct": 1.8
+          },
+          {
+            "time": "10:00",
+            "occupancy": 21.74,
+            "capacity": 775.2,
+            "saturation_pct": 2.8
+          },
+          {
+            "time": "11:00",
+            "occupancy": 28.09,
+            "capacity": 775.2,
+            "saturation_pct": 3.6
+          },
+          {
+            "time": "12:00",
+            "occupancy": 24.79,
+            "capacity": 775.2,
+            "saturation_pct": 3.2
+          },
+          {
+            "time": "13:00",
+            "occupancy": 22.49,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "14:00",
+            "occupancy": 22.61,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "15:00",
+            "occupancy": 22.7,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "16:00",
+            "occupancy": 22.66,
+            "capacity": 775.2,
+            "saturation_pct": 2.9
+          },
+          {
+            "time": "17:00",
+            "occupancy": 15.77,
+            "capacity": 775.2,
+            "saturation_pct": 2.0
+          },
+          {
+            "time": "18:00",
+            "occupancy": 13.56,
+            "capacity": 775.2,
+            "saturation_pct": 1.7
+          },
+          {
+            "time": "19:00",
+            "occupancy": 12.96,
+            "capacity": 775.2,
+            "saturation_pct": 1.7
+          },
+          {
+            "time": "20:00",
+            "occupancy": 16.74,
+            "capacity": 775.2,
+            "saturation_pct": 2.2
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 1465.1,
+          "rhs": 0,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 6.545,
+          "rhs": 100,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 463.199,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 780.0,
+          "rhs": 780.0,
+          "status": "VIOLATED"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S1-D-V": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "D-V",
+      "scenario_name": "车辆故障",
+      "scheme_code": "S1",
+      "scheme_name": "网络与设施优化方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 13.42,
+        "E02": 9.05,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 13.42,
+          "electric_km": 0.0,
+          "total_km": 13.42
+        },
+        "E05": 1,
+        "E06": 439.1,
+        "E07": 39.31,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 65.87,
+        "R02": 9,
+        "R03": 0,
+        "R04": {
+          "average_pct": 86.3,
+          "max_pct": 86.3
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 43.7,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 71796.0,
+        "C02": 1773090.0,
+        "C03": 1779911.0,
+        "C04": 2.75,
+        "C05": 683265.0,
+        "C06": 0.11,
+        "breakdown": {
+          "labor": 1235069.0,
+          "energy": 14021.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 402.6,
+          "electricity_kwh": 18000.0
+        },
+        "G02": 12248.0,
+        "G03": -7768.9,
+        "G04": 0.0189
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 5.0,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.126
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.44,
+          "unmanned_km": 0.0,
+          "labor_hours": 8.27,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.85,
+          "unmanned_km": 0.0,
+          "labor_hours": 8.15,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 27.9,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 2.9,
+          "unmanned_km": 0.0,
+          "labor_hours": 13.32,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 2.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 23.78,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 42.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.78,
+          "unmanned_km": 0.0,
+          "labor_hours": 11.59,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 43.7,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 117.58,
+            "capacity": 1884.0,
+            "saturation_pct": 6.2
+          },
+          {
+            "time": "09:00",
+            "occupancy": 213.99,
+            "capacity": 1884.0,
+            "saturation_pct": 11.4
+          },
+          {
+            "time": "10:00",
+            "occupancy": 332.24,
+            "capacity": 1884.0,
+            "saturation_pct": 17.6
+          },
+          {
+            "time": "11:00",
+            "occupancy": 429.21,
+            "capacity": 1884.0,
+            "saturation_pct": 22.8
+          },
+          {
+            "time": "12:00",
+            "occupancy": 378.83,
+            "capacity": 1884.0,
+            "saturation_pct": 20.1
+          },
+          {
+            "time": "13:00",
+            "occupancy": 343.57,
+            "capacity": 1884.0,
+            "saturation_pct": 18.2
+          },
+          {
+            "time": "14:00",
+            "occupancy": 345.53,
+            "capacity": 1884.0,
+            "saturation_pct": 18.3
+          },
+          {
+            "time": "15:00",
+            "occupancy": 346.91,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "16:00",
+            "occupancy": 346.3,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "17:00",
+            "occupancy": 240.94,
+            "capacity": 1884.0,
+            "saturation_pct": 12.8
+          },
+          {
+            "time": "18:00",
+            "occupancy": 207.22,
+            "capacity": 1884.0,
+            "saturation_pct": 11.0
+          },
+          {
+            "time": "19:00",
+            "occupancy": 198.0,
+            "capacity": 1884.0,
+            "saturation_pct": 10.5
+          },
+          {
+            "time": "20:00",
+            "occupancy": 255.77,
+            "capacity": 1884.0,
+            "saturation_pct": 13.6
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 439.136,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 439.136,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S2-D-V": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "D-V",
+      "scenario_name": "车辆故障",
+      "scheme_code": "S2",
+      "scheme_name": "人机协同推荐方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 13.42,
+        "E02": 5.29,
+        "E03": 7.27,
+        "E04": {
+          "fuel_km": 0.0,
+          "electric_km": 20.69,
+          "total_km": 20.69
+        },
+        "E05": 10,
+        "E06": 464.8,
+        "E07": 47.76,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 54.22,
+        "R02": 7,
+        "R03": 2,
+        "R04": {
+          "average_pct": 73.4,
+          "max_pct": 100.0
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 43.7,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 449796.0,
+        "C02": 1571795.0,
+        "C03": 1642076.0,
+        "C04": 2.54,
+        "C05": 884560.0,
+        "C06": 0.51,
+        "breakdown": {
+          "labor": 1016716.0,
+          "energy": 11079.0,
+          "vehicle_fixed": 40000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 0.0,
+          "electricity_kwh": 18465.5
+        },
+        "G02": 11457.9,
+        "G03": -6978.8,
+        "G04": 0.0177
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 101.4,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.128
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.15,
+          "labor_hours": 8.25,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.08,
+          "unmanned_km": 0.77,
+          "labor_hours": 7.02,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 27.9,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 1.33,
+          "labor_hours": 12.99,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 1.16,
+          "unmanned_km": 3.66,
+          "labor_hours": 16.32,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 42.6,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.1,
+          "unmanned_km": 1.36,
+          "labor_hours": 7.83,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 43.7,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 117.58,
+            "capacity": 1884.0,
+            "saturation_pct": 6.2
+          },
+          {
+            "time": "09:00",
+            "occupancy": 213.99,
+            "capacity": 1884.0,
+            "saturation_pct": 11.4
+          },
+          {
+            "time": "10:00",
+            "occupancy": 332.24,
+            "capacity": 1884.0,
+            "saturation_pct": 17.6
+          },
+          {
+            "time": "11:00",
+            "occupancy": 429.21,
+            "capacity": 1884.0,
+            "saturation_pct": 22.8
+          },
+          {
+            "time": "12:00",
+            "occupancy": 378.83,
+            "capacity": 1884.0,
+            "saturation_pct": 20.1
+          },
+          {
+            "time": "13:00",
+            "occupancy": 343.57,
+            "capacity": 1884.0,
+            "saturation_pct": 18.2
+          },
+          {
+            "time": "14:00",
+            "occupancy": 345.53,
+            "capacity": 1884.0,
+            "saturation_pct": 18.3
+          },
+          {
+            "time": "15:00",
+            "occupancy": 346.91,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "16:00",
+            "occupancy": 346.3,
+            "capacity": 1884.0,
+            "saturation_pct": 18.4
+          },
+          {
+            "time": "17:00",
+            "occupancy": 240.94,
+            "capacity": 1884.0,
+            "saturation_pct": 12.8
+          },
+          {
+            "time": "18:00",
+            "occupancy": 207.22,
+            "capacity": 1884.0,
+            "saturation_pct": 11.0
+          },
+          {
+            "time": "19:00",
+            "occupancy": 198.0,
+            "capacity": 1884.0,
+            "saturation_pct": 10.5
+          },
+          {
+            "time": "20:00",
+            "occupancy": 255.77,
+            "capacity": 1884.0,
+            "saturation_pct": 13.6
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 464.784,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 464.784,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S0-D-L": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "D-L",
+      "scenario_name": "取件滞后",
+      "scheme_code": "S0",
+      "scheme_name": "现状基准方案",
+      "status": "INFEASIBLE",
+      "network_metrics": {
+        "E01": 24.84,
+        "E02": 5.39,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 24.84,
+          "electric_km": 0.0,
+          "total_km": 24.84
+        },
+        "E05": 5,
+        "E06": 780.0,
+        "E07": 9.06,
+        "E08": 43.2
+      },
+      "resource_metrics": {
+        "R01": 123.52,
+        "R02": 16,
+        "R03": 0,
+        "R04": {
+          "average_pct": 86.3,
+          "max_pct": 86.3
+        },
+        "R05": 775.2
+      },
+      "service_metrics": {
+        "S01": 63.8,
+        "S02": 129.0,
+        "S03": 6.5,
+        "S04": 1471.1,
+        "S05": {
+          "community_count": 3,
+          "full_minutes": 360,
+          "overflow_pkgs": 1471.1
+        },
+        "S06": 117.9,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 0.0,
+        "C02": 2456355.0,
+        "C03": 2456355.0,
+        "C04": 8.78,
+        "C05": 0.0,
+        "C06": null,
+        "breakdown": {
+          "labor": 2315994.0,
+          "energy": 8362.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 112000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 745.2,
+          "electricity_kwh": 4000.0
+        },
+        "G02": 4479.1,
+        "G03": 0.0,
+        "G04": 0.016
+      },
+      "robustness_metrics": {
+        "B01": 43.2,
+        "B02": 227.7,
+        "B03": 3,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.795
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.0,
+          "labor_hours": 7.71,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 12.39,
+          "locker_capacity": 84.0,
+          "peak_occupancy_pct": 117.9,
+          "full_minutes": 360,
+          "overflow_pkgs": 28.2,
+          "coverage_pct": 82.2
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 0.0,
+          "labor_hours": 12.15,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 1.2,
+          "unmanned_km": 0.0,
+          "labor_hours": 60.25,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 964.0,
+          "coverage_pct": -0.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.16,
+          "unmanned_km": 0.0,
+          "labor_hours": 29.69,
+          "locker_capacity": 0,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 478.9,
+          "coverage_pct": 0.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 7.69,
+            "capacity": 775.2,
+            "saturation_pct": 1.0
+          },
+          {
+            "time": "09:00",
+            "occupancy": 14.77,
+            "capacity": 775.2,
+            "saturation_pct": 1.9
+          },
+          {
+            "time": "10:00",
+            "occupancy": 23.83,
+            "capacity": 775.2,
+            "saturation_pct": 3.1
+          },
+          {
+            "time": "11:00",
+            "occupancy": 32.16,
+            "capacity": 775.2,
+            "saturation_pct": 4.1
+          },
+          {
+            "time": "12:00",
+            "occupancy": 32.95,
+            "capacity": 775.2,
+            "saturation_pct": 4.3
+          },
+          {
+            "time": "13:00",
+            "occupancy": 33.63,
+            "capacity": 775.2,
+            "saturation_pct": 4.3
+          },
+          {
+            "time": "14:00",
+            "occupancy": 35.96,
+            "capacity": 775.2,
+            "saturation_pct": 4.6
+          },
+          {
+            "time": "15:00",
+            "occupancy": 37.98,
+            "capacity": 775.2,
+            "saturation_pct": 4.9
+          },
+          {
+            "time": "16:00",
+            "occupancy": 39.63,
+            "capacity": 775.2,
+            "saturation_pct": 5.1
+          },
+          {
+            "time": "17:00",
+            "occupancy": 36.02,
+            "capacity": 775.2,
+            "saturation_pct": 4.6
+          },
+          {
+            "time": "18:00",
+            "occupancy": 33.51,
+            "capacity": 775.2,
+            "saturation_pct": 4.3
+          },
+          {
+            "time": "19:00",
+            "occupancy": 31.88,
+            "capacity": 775.2,
+            "saturation_pct": 4.1
+          },
+          {
+            "time": "20:00",
+            "occupancy": 34.96,
+            "capacity": 775.2,
+            "saturation_pct": 4.5
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 1471.127,
+          "rhs": 0,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 6.545,
+          "rhs": 100,
+          "status": "VIOLATED"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 463.199,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 780.0,
+          "rhs": 780.0,
+          "status": "VIOLATED"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S1-D-L": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "D-L",
+      "scenario_name": "取件滞后",
+      "scheme_code": "S1",
+      "scheme_name": "网络与设施优化方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 13.42,
+        "E02": 9.05,
+        "E03": 0.0,
+        "E04": {
+          "fuel_km": 13.42,
+          "electric_km": 0.0,
+          "total_km": 13.42
+        },
+        "E05": 1,
+        "E06": 439.1,
+        "E07": 39.31,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 65.87,
+        "R02": 9,
+        "R03": 0,
+        "R04": {
+          "average_pct": 86.3,
+          "max_pct": 86.3
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 61.7,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 71796.0,
+        "C02": 1773090.0,
+        "C03": 1779911.0,
+        "C04": 2.75,
+        "C05": 683265.0,
+        "C06": 0.11,
+        "breakdown": {
+          "labor": 1235069.0,
+          "energy": 14021.0,
+          "vehicle_fixed": 20000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 402.6,
+          "electricity_kwh": 18000.0
+        },
+        "G02": 12248.0,
+        "G03": -7768.9,
+        "G04": 0.0189
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 0.0,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.094
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.44,
+          "unmanned_km": 0.0,
+          "labor_hours": 8.27,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.85,
+          "unmanned_km": 0.0,
+          "labor_hours": 8.15,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 39.3,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 2.9,
+          "unmanned_km": 0.0,
+          "labor_hours": 13.32,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 2.08,
+          "unmanned_km": 0.0,
+          "labor_hours": 23.78,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 60.1,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.78,
+          "unmanned_km": 0.0,
+          "labor_hours": 11.59,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 61.7,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 117.58,
+            "capacity": 1884.0,
+            "saturation_pct": 6.2
+          },
+          {
+            "time": "09:00",
+            "occupancy": 225.63,
+            "capacity": 1884.0,
+            "saturation_pct": 12.0
+          },
+          {
+            "time": "10:00",
+            "occupancy": 364.13,
+            "capacity": 1884.0,
+            "saturation_pct": 19.3
+          },
+          {
+            "time": "11:00",
+            "occupancy": 491.4,
+            "capacity": 1884.0,
+            "saturation_pct": 26.1
+          },
+          {
+            "time": "12:00",
+            "occupancy": 503.45,
+            "capacity": 1884.0,
+            "saturation_pct": 26.7
+          },
+          {
+            "time": "13:00",
+            "occupancy": 513.87,
+            "capacity": 1884.0,
+            "saturation_pct": 27.3
+          },
+          {
+            "time": "14:00",
+            "occupancy": 549.53,
+            "capacity": 1884.0,
+            "saturation_pct": 29.2
+          },
+          {
+            "time": "15:00",
+            "occupancy": 580.38,
+            "capacity": 1884.0,
+            "saturation_pct": 30.8
+          },
+          {
+            "time": "16:00",
+            "occupancy": 605.5,
+            "capacity": 1884.0,
+            "saturation_pct": 32.1
+          },
+          {
+            "time": "17:00",
+            "occupancy": 550.33,
+            "capacity": 1884.0,
+            "saturation_pct": 29.2
+          },
+          {
+            "time": "18:00",
+            "occupancy": 512.05,
+            "capacity": 1884.0,
+            "saturation_pct": 27.2
+          },
+          {
+            "time": "19:00",
+            "occupancy": 487.05,
+            "capacity": 1884.0,
+            "saturation_pct": 25.9
+          },
+          {
+            "time": "20:00",
+            "occupancy": 534.23,
+            "capacity": 1884.0,
+            "saturation_pct": 28.4
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 439.136,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 439.136,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    },
+    "S2-D-L": {
+      "input_version": "2026-09-19-v1",
+      "scenario_code": "D-L",
+      "scenario_name": "取件滞后",
+      "scheme_code": "S2",
+      "scheme_name": "人机协同推荐方案",
+      "status": "FEASIBLE",
+      "network_metrics": {
+        "E01": 13.42,
+        "E02": 5.29,
+        "E03": 7.27,
+        "E04": {
+          "fuel_km": 0.0,
+          "electric_km": 20.69,
+          "total_km": 20.69
+        },
+        "E05": 10,
+        "E06": 464.8,
+        "E07": 47.76,
+        "E08": 100.0
+      },
+      "resource_metrics": {
+        "R01": 54.22,
+        "R02": 7,
+        "R03": 2,
+        "R04": {
+          "average_pct": 73.4,
+          "max_pct": 100.0
+        },
+        "R05": 1884.0
+      },
+      "service_metrics": {
+        "S01": 70.0,
+        "S02": 128.7,
+        "S03": 100.0,
+        "S04": 0.0,
+        "S05": {
+          "community_count": 0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0
+        },
+        "S06": 61.7,
+        "S07": 100.0
+      },
+      "cost_metrics": {
+        "C01": 449796.0,
+        "C02": 1571795.0,
+        "C03": 1642076.0,
+        "C04": 2.54,
+        "C05": 884560.0,
+        "C06": 0.51,
+        "breakdown": {
+          "labor": 1016716.0,
+          "energy": 11079.0,
+          "vehicle_fixed": 40000.0,
+          "locker_opex": 504000.0
+        }
+      },
+      "carbon_metrics": {
+        "G01": {
+          "fuel_liters": 0.0,
+          "electricity_kwh": 18465.5
+        },
+        "G02": 11457.9,
+        "G03": -6978.8,
+        "G04": 0.0177
+      },
+      "robustness_metrics": {
+        "B01": 100.0,
+        "B02": 0.0,
+        "B03": 0,
+        "B04": {
+          "repetitions": 30,
+          "seeds": [
+            20260919,
+            20260920,
+            20260921,
+            20260922,
+            20260923,
+            20260924,
+            20260925,
+            20260926,
+            20260927,
+            20260928,
+            20260929,
+            20260930,
+            20260931,
+            20260932,
+            20260933,
+            20260934,
+            20260935,
+            20260936,
+            20260937,
+            20260938,
+            20260939,
+            20260940,
+            20260941,
+            20260942,
+            20260943,
+            20260944,
+            20260945,
+            20260946,
+            20260947,
+            20260948
+          ],
+          "mean_km": 13.519,
+          "std_km": 0.2527,
+          "best_km": 13.4216,
+          "worst_km": 14.1525,
+          "ci95_low_km": 13.4286,
+          "ci95_high_km": 13.6095
+        },
+        "B05": 8.087
+      },
+      "community_breakdown": [
+        {
+          "community_id": "C01",
+          "name": "梅园小区",
+          "demand": 163.2,
+          "door_demand": 163.2,
+          "locker_demand": 0.0,
+          "walk_km": 0.38,
+          "unmanned_km": 0.15,
+          "labor_hours": 8.25,
+          "locker_capacity": 230.4,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C02",
+          "name": "鹿鸣苑",
+          "demand": 259.8,
+          "door_demand": 135.0,
+          "locker_demand": 124.8,
+          "walk_km": 1.08,
+          "unmanned_km": 0.77,
+          "labor_hours": 7.02,
+          "locker_capacity": 201.6,
+          "peak_occupancy_pct": 39.3,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C03",
+          "name": "天华园二里一区",
+          "demand": 252.0,
+          "door_demand": 252.0,
+          "locker_demand": 0.0,
+          "walk_km": 1.56,
+          "unmanned_km": 1.33,
+          "labor_hours": 12.99,
+          "locker_capacity": 460.8,
+          "peak_occupancy_pct": 0.0,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C04",
+          "name": "亦城茗苑",
+          "demand": 1284.6,
+          "door_demand": 320.6,
+          "locker_demand": 964.0,
+          "walk_km": 1.16,
+          "unmanned_km": 3.66,
+          "labor_hours": 16.32,
+          "locker_capacity": 672.0,
+          "peak_occupancy_pct": 60.1,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        },
+        {
+          "community_id": "C05",
+          "name": "听涛雅苑",
+          "demand": 630.0,
+          "door_demand": 151.1,
+          "locker_demand": 478.9,
+          "walk_km": 1.1,
+          "unmanned_km": 1.36,
+          "labor_hours": 7.83,
+          "locker_capacity": 319.2,
+          "peak_occupancy_pct": 61.7,
+          "full_minutes": 0,
+          "overflow_pkgs": 0.0,
+          "coverage_pct": 100.0
+        }
+      ],
+      "time_series": {
+        "locker_occupancy": [
+          {
+            "time": "08:00",
+            "occupancy": 117.58,
+            "capacity": 1884.0,
+            "saturation_pct": 6.2
+          },
+          {
+            "time": "09:00",
+            "occupancy": 225.63,
+            "capacity": 1884.0,
+            "saturation_pct": 12.0
+          },
+          {
+            "time": "10:00",
+            "occupancy": 364.13,
+            "capacity": 1884.0,
+            "saturation_pct": 19.3
+          },
+          {
+            "time": "11:00",
+            "occupancy": 491.4,
+            "capacity": 1884.0,
+            "saturation_pct": 26.1
+          },
+          {
+            "time": "12:00",
+            "occupancy": 503.45,
+            "capacity": 1884.0,
+            "saturation_pct": 26.7
+          },
+          {
+            "time": "13:00",
+            "occupancy": 513.87,
+            "capacity": 1884.0,
+            "saturation_pct": 27.3
+          },
+          {
+            "time": "14:00",
+            "occupancy": 549.53,
+            "capacity": 1884.0,
+            "saturation_pct": 29.2
+          },
+          {
+            "time": "15:00",
+            "occupancy": 580.38,
+            "capacity": 1884.0,
+            "saturation_pct": 30.8
+          },
+          {
+            "time": "16:00",
+            "occupancy": 605.5,
+            "capacity": 1884.0,
+            "saturation_pct": 32.1
+          },
+          {
+            "time": "17:00",
+            "occupancy": 550.33,
+            "capacity": 1884.0,
+            "saturation_pct": 29.2
+          },
+          {
+            "time": "18:00",
+            "occupancy": 512.05,
+            "capacity": 1884.0,
+            "saturation_pct": 27.2
+          },
+          {
+            "time": "19:00",
+            "occupancy": 487.05,
+            "capacity": 1884.0,
+            "saturation_pct": 25.9
+          },
+          {
+            "time": "20:00",
+            "occupancy": 534.23,
+            "capacity": 1884.0,
+            "saturation_pct": 28.4
+          }
+        ]
+      },
+      "constraint_checks": [
+        {
+          "constraint": "DEMAND_CONSERVATION",
+          "lhs": 2589.6,
+          "rhs": 2589.6,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "LOCKER_CAPACITY_DYNAMIC",
+          "lhs": 0.0,
+          "rhs": 0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "PICKUP_DISTANCE_150M",
+          "lhs": 100.0,
+          "rhs": 100,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "STAFF_SHIFT_480MIN",
+          "lhs": 464.784,
+          "rhs": 480.0,
+          "status": "FEASIBLE"
+        },
+        {
+          "constraint": "SERVICE_WINDOW_780MIN",
+          "lhs": 464.784,
+          "rhs": 780.0,
+          "status": "FEASIBLE"
+        }
+      ],
+      "source_and_assumptions": {
+        "input_file": "data/evaluation_input_v1.json",
+        "demand_total": 2589.6,
+        "door_total": 1021.9,
+        "locker_total": 1567.7,
+        "distance_quality": "D：当前正式比较仍使用直线距离×绕行系数；接入高德OD后须重新冻结版本",
+        "simulation_type": "确定性情景推演（动态占用与释放），不冒充随机离散事件仿真"
+      }
+    }
+  },
+  "audit": {
+    "same_input_for_all_schemes": true,
+    "official_normal_day_total": 2589.6,
+    "stability_test": {
+      "repetitions": 30,
+      "seeds": [
+        20260919,
+        20260920,
+        20260921,
+        20260922,
+        20260923,
+        20260924,
+        20260925,
+        20260926,
+        20260927,
+        20260928,
+        20260929,
+        20260930,
+        20260931,
+        20260932,
+        20260933,
+        20260934,
+        20260935,
+        20260936,
+        20260937,
+        20260938,
+        20260939,
+        20260940,
+        20260941,
+        20260942,
+        20260943,
+        20260944,
+        20260945,
+        20260946,
+        20260947,
+        20260948
+      ],
+      "mean_km": 13.519,
+      "std_km": 0.2527,
+      "best_km": 13.4216,
+      "worst_km": 14.1525,
+      "ci95_low_km": 13.4286,
+      "ci95_high_km": 13.6095
+    },
+    "hard_constraint_status_rule": "任一硬约束VIOLATED时，方案状态只能为INFEASIBLE",
+    "dynamic_occupancy_unclipped": true,
+    "manual_improvement_entries": false
+  }
+}

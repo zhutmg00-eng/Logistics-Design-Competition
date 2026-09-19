@@ -38,13 +38,14 @@ class CapacitatedKMeansClusterer:
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return R * c * self.det_factor
 
-    def cluster(self, buildings):
+    def cluster(self, buildings, seed=20260919):
         """
         输入楼栋列表，输出 K 个带容量平衡的聚类组
         """
         if not buildings:
             return []
         
+        rng = random.Random(seed)
         n = len(buildings)
         total_load = sum(b.get("daily_pkgs", 0) for b in buildings)
         if total_load == 0:
@@ -69,7 +70,7 @@ class CapacitatedKMeansClusterer:
 
         # K-Means++ 初始化种子质心 (确保质心在空间上彼此分散)
         centroids = []
-        first_idx = random.randint(0, n - 1)
+        first_idx = rng.randint(0, n - 1)
         centroids.append((buildings[first_idx]["lat"], buildings[first_idx]["lng"]))
 
         while len(centroids) < k:
@@ -81,7 +82,7 @@ class CapacitatedKMeansClusterer:
             if sum_d == 0:
                 centroids.append((buildings[len(centroids) % n]["lat"], buildings[len(centroids) % n]["lng"]))
             else:
-                r = random.uniform(0, sum_d)
+                r = rng.uniform(0, sum_d)
                 acc = 0.0
                 for idx, d2 in enumerate(dists):
                     acc += d2
@@ -202,12 +203,13 @@ class ImprovedSimulatedAnnealing:
             d += self.haversine_km(tour[-1]["lat"], tour[-1]["lng"], tour[0]["lat"], tour[0]["lng"])
         return d
 
-    def optimize(self, points, fixed_start=True, dynamic_hour=10):
+    def optimize(self, points, fixed_start=True, dynamic_hour=10, seed=20260919):
         """
         执行改进模拟退火寻优
         points: 待访问点集合 (第一个点为固定起点/HUB)
         dynamic_hour: 当前规划时段 (用于动态交通条件阻抗折减)
         """
+        rng = random.Random(seed)
         n = len(points)
         if n <= 2:
             tour = list(points)
@@ -259,26 +261,26 @@ class ImprovedSimulatedAnnealing:
                 total_evals += 1
                 # 产生新解 (复合邻域变换算子)
                 new_tour = list(current_tour)
-                op_type = random.random()
+                op_type = rng.random()
 
                 # 固定起点 p[0] 不动，扰动 p[1:]
                 if n > 3:
                     if op_type < 0.55:
                         # 算子 1: 2-Opt 边反转 (2-opt inversion)
-                        i = random.randint(1, n - 2)
-                        j = random.randint(i + 1, n - 1)
+                        i = rng.randint(1, n - 2)
+                        j = rng.randint(i + 1, n - 1)
                         new_tour = new_tour[:i] + new_tour[i:j + 1][::-1] + new_tour[j + 1:]
                     elif op_type < 0.85:
                         # 算子 2: Swap 节点互换 (Node Swap)
-                        i = random.randint(1, n - 1)
-                        j = random.randint(1, n - 1)
+                        i = rng.randint(1, n - 1)
+                        j = rng.randint(1, n - 1)
                         if i != j:
                             new_tour[i], new_tour[j] = new_tour[j], new_tour[i]
                     else:
                         # 算子 3: Or-Opt 单节点或短片段插入 (Insertion)
-                        i = random.randint(1, n - 1)
+                        i = rng.randint(1, n - 1)
                         elem = new_tour.pop(i)
-                        ins_pos = random.randint(1, len(new_tour))
+                        ins_pos = rng.randint(1, len(new_tour))
                         new_tour.insert(ins_pos, elem)
 
                 new_dist = self.compute_tour_length(new_tour, fixed_start)
@@ -298,7 +300,7 @@ class ImprovedSimulatedAnnealing:
                 else:
                     # 以概率 P = exp(-Delta / T) 接受劣解，避免陷入局部陷阱
                     prob = math.exp(-delta_cost / t)
-                    if random.random() < prob:
+                    if rng.random() < prob:
                         current_tour = new_tour
                         current_cost = new_cost
                         current_dist = new_dist
@@ -331,11 +333,12 @@ class RoutingEngine:
     两阶段协同路径规划引擎核心调度中枢
     提供与原 FastAPI 服务及前端完全兼容的接口，底层由 Capacitated K-Means 与 ISA 双引擎驱动。
     """
-    def __init__(self, veh_speed_kmh=12.0, courier_walk_kmh=4.0, courier_drive_kmh=20.0):
+    def __init__(self, veh_speed_kmh=12.0, courier_walk_kmh=4.0, courier_drive_kmh=20.0, random_seed=20260919):
         self.veh_speed_kmh = veh_speed_kmh          # 无人车设计时速 12km/h (法定上限15km/h)
         self.courier_walk_kmh = courier_walk_kmh    # 快递员步巡速度 4km/h
         self.courier_drive_kmh = courier_drive_kmh  # 现状干线驾车 20km/h
         self.veh_capacity = 400                     # 单车次运力限制 400件
+        self.random_seed = random_seed
         self.hub = {"id": "HUB", "name": "亦庄片区物流综合枢纽 (HUB)", "lat": 39.798, "lng": 116.506}
         
         self.clusterer = CapacitatedKMeansClusterer(capacity=self.veh_capacity)
@@ -394,7 +397,7 @@ class RoutingEngine:
         solver_logs.append(f"[BENCHMARK] Baseline Independent Round-Trip Distance = {baseline_dist_km:.2f} km.")
 
         # 调用改进模拟退火算法 (ISA) 进行全局寻优
-        sa_res = self.sa_optimizer.optimize(points, fixed_start=True, dynamic_hour=9)
+        sa_res = self.sa_optimizer.optimize(points, fixed_start=True, dynamic_hour=9, seed=self.random_seed)
         final_tour = sa_res["best_tour"]
         best_dist = sa_res["best_dist_km"]
         convergence_curve = sa_res["convergence_curve"]
@@ -431,8 +434,8 @@ class RoutingEngine:
 
         solve_time_ms = round((time.perf_counter() - start_time) * 1000, 3)
         solver_logs.append(f"[ISA] Simulated Annealing completed in {sa_res['iterations']} outer steps ({sa_res['total_evaluations']} evals).")
-        solver_logs.append(f"[RESULT] Optimal Tour: {' -> '.join(p['id'] for p in final_tour)}.")
-        solver_logs.append(f"[STATUS] M1 Solved in {solve_time_ms} ms. Trunk Distance = {best_dist:.2f} km (Savings = {saving_pct}%).")
+        solver_logs.append(f"[RESULT] Best heuristic tour: {' -> '.join(p['id'] for p in final_tour)}.")
+        solver_logs.append(f"[STATUS] M1 feasible heuristic solved with seed={self.random_seed} in {solve_time_ms} ms. Trunk Distance = {best_dist:.2f} km.")
 
         math_formulation = {
             "model_code": "M1",
@@ -462,7 +465,8 @@ class RoutingEngine:
                 "solve_time_ms": solve_time_ms,
                 "iterations": sa_res["iterations"],
                 "total_evaluations": sa_res["total_evaluations"],
-                "optimality_status": "GLOBALLY_NEAR_OPTIMAL"
+                "optimality_status": "HEURISTIC_FEASIBLE",
+                "random_seed": self.random_seed
             },
             "solver_logs": solver_logs,
             "math_formulation": math_formulation

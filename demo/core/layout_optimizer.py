@@ -248,8 +248,8 @@ class LayoutOptimizer:
                 "effective_capacity": eff_cap,
                 "utilization_rate": round(assigned_pkgs / eff_cap, 2) if eff_cap > 0 else 0,
                 "saturation_pct": opt_sat,
-                "is_full_risk": False, # 扩容后彻底消除满柜风险，饱和度降至60-70%
-                "status_desc": "🛡️ 安全护盾 (MIP扩容副柜, 满柜清零)",
+                "is_full_risk": cap_slack < 0,
+                "status_desc": "容量校验通过" if cap_slack >= 0 else "容量约束违反",
                 "capex": f_capex
             })
 
@@ -264,7 +264,7 @@ class LayoutOptimizer:
             "rhs_capacity": self.max_walk_distance,
             "slack": round(self.max_walk_distance - max_building_walk, 1),
             "status": "FEASIBLE" if max_building_walk <= self.max_walk_distance else "VIOLATED",
-            "eliminated_bottleneck": True
+            "eliminated_bottleneck": max_building_walk <= self.max_walk_distance
         })
 
         # 构建 B&B 收敛迭代点
@@ -277,9 +277,11 @@ class LayoutOptimizer:
         solve_time_ms = round((time.perf_counter() - start_time) * 1000, 3)
 
         solver_logs.append(f"[B&B] Explored {bb_nodes} nodes, executed {simplex_iters} dual simplex pivots.")
-        solver_logs.append(f"[OPT] Optimal Integer Solution Found: CAPEX=¥{total_capex:,.0f}, AvgWalkDist={avg_walk_dist}m.")
-        solver_logs.append(f"[VERIFY] All capacity constraints satisfied! 100% full-locker bottlenecks eliminated.")
-        solver_logs.append(f"[STATUS] M6 MIP Solver Terminated with Optimality GAP = 0.00% in {solve_time_ms} ms.")
+        violation_count = sum(1 for item in constraint_checks if item.get("status") == "VIOLATED")
+        solver_status = "INFEASIBLE" if violation_count else "FEASIBLE_HEURISTIC"
+        solver_logs.append(f"[RESULT] Heuristic facility plan: CAPEX=¥{total_capex:,.0f}, AvgWalkDist={avg_walk_dist}m.")
+        solver_logs.append(f"[VERIFY] Hard constraint violations: {violation_count}.")
+        solver_logs.append(f"[STATUS] M6 heuristic terminated with status {solver_status} in {solve_time_ms} ms.")
 
         math_formulation = {
             "model_code": "M6",
@@ -317,11 +319,11 @@ class LayoutOptimizer:
             "avg_walk_distance_m": avg_walk_dist,
             "max_walk_distance_m": max_building_walk,
             "total_capex": total_capex,
-            "bottleneck_resolved": True,
+            "bottleneck_resolved": violation_count == 0,
             "facilities": facility_plans,
             "baseline_facilities": baseline_facilities,
             "full_risk_baseline": any(bf.get("is_full_risk", False) for bf in baseline_facilities),
-            "full_risk_optimized": False,
+            "full_risk_optimized": any(f.get("is_full_risk", False) for f in facility_plans),
             "baseline_total_capacity": sum(bf.get("effective_capacity", 0) for bf in baseline_facilities),
             "building_assignments": building_assignment,
             "decision_matrices": {
@@ -336,8 +338,9 @@ class LayoutOptimizer:
                 "solve_time_ms": solve_time_ms,
                 "nodes_explored": bb_nodes,
                 "simplex_iterations": simplex_iters,
-                "optimality_gap": "0.00%",
-                "status": "OPTIMAL_PROVEN"
+                "optimality_gap": None,
+                "status": solver_status,
+                "hard_constraint_violations": violation_count
             },
             "solver_logs": solver_logs,
             "math_formulation": math_formulation

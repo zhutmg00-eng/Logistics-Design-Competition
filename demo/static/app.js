@@ -1,6 +1,6 @@
 const { createApp, ref, onMounted, watch, nextTick } = Vue;
 
-createApp({
+const app = createApp({
     setup() {
         const activeTab = ref('comparison');
         const viewMode = ref('split'); // 'split' | 'wide'
@@ -78,18 +78,25 @@ createApp({
             renderMapLayers();
         };
 
-        // KaTeX 自动数学公式渲染
+        // KaTeX 自动数学公式渲染 (仅针对公式专用容器，严禁污染 Vue 响应式文本节点)
         const renderMath = () => {
             nextTick(() => {
                 if (window.renderMathInElement) {
-                    window.renderMathInElement(document.body, {
-                        delimiters: [
-                            { left: '$$', right: '$$', display: true },
-                            { left: '\\[', right: '\\]', display: true },
-                            { left: '\\(', right: '\\)', display: false },
-                            { left: '$', right: '$', display: false }
-                        ],
-                        throwOnError: false
+                    const containers = document.querySelectorAll('.math-card, .math-target');
+                    containers.forEach(el => {
+                        try {
+                            window.renderMathInElement(el, {
+                                delimiters: [
+                                    { left: '$$', right: '$$', display: true },
+                                    { left: '\\[', right: '\\]', display: true },
+                                    { left: '\\(', right: '\\)', display: false },
+                                    { left: '$', right: '$', display: false }
+                                ],
+                                throwOnError: false
+                            });
+                        } catch (e) {
+                            console.warn('KaTeX render notice:', e);
+                        }
                     });
                 }
             });
@@ -734,7 +741,12 @@ createApp({
             if ((schemeMode.value === 'baseline' || schemeMode.value === 'diff') &&
                 overview.value && overview.value.trunk_routing && overview.value.trunk_routing.baseline_routes) {
                 overview.value.trunk_routing.baseline_routes.forEach(route => {
-                    const bLine = L.polyline(route.round_trip_coords, {
+                    const coords = route.coords || route.round_trip_coords;
+                    if (!coords || !Array.isArray(coords) || coords.length < 2) return;
+                    const latlngs = coords.map(pt => Array.isArray(pt) ? pt : (pt && pt.lat !== undefined ? [pt.lat, pt.lng] : null)).filter(Boolean);
+                    if (latlngs.length < 2) return;
+
+                    const bLine = L.polyline(latlngs, {
                         color: '#ef4444',
                         weight: schemeMode.value === 'diff' ? 2.5 : 3.2,
                         opacity: schemeMode.value === 'diff' ? 0.75 : 0.90,
@@ -744,8 +756,8 @@ createApp({
                     bLine.bindPopup(
                         `<div class="text-xs space-y-1">
                             <div class="font-bold text-rose-400">【🔴 现状独立往返干线: HUB ⇄ ${route.community_id}】</div>
-                            <div>往返里程: <span class="mono font-bold text-rose-300">${route.distance_km} km</span></div>
-                            <div>单程往返耗时: <span class="mono text-slate-300">${route.drive_time_min} min</span></div>
+                            <div>往返里程: <span class="mono font-bold text-rose-300">${route.dist_km || route.distance_km || 0} km</span></div>
+                            <div>单程往返耗时: <span class="mono text-slate-300">${route.time_min || route.drive_time_min || 0} min</span></div>
                             <div class="text-slate-400 text-[10px]">5条专车点对点往返，全网总长 24.84 km，空驶严重</div>
                         </div>`
                     );
@@ -757,23 +769,27 @@ createApp({
             if ((schemeMode.value === 'optimized' || schemeMode.value === 'diff') &&
                 overview.value && overview.value.trunk_routing && overview.value.trunk_routing.tour) {
                 const tour = overview.value.trunk_routing.tour;
-                const latlngs = tour.map(pt => [pt.lat, pt.lng]);
-                const trunkLine = L.polyline(latlngs, {
-                    color: '#06b6d4',
-                    weight: 4.5,
-                    opacity: 0.95
-                }).addTo(map);
+                if (Array.isArray(tour) && tour.length > 1) {
+                    const latlngs = tour.map(pt => Array.isArray(pt) ? pt : (pt && pt.lat !== undefined ? [pt.lat, pt.lng] : null)).filter(Boolean);
+                    if (latlngs.length > 1) {
+                        const trunkLine = L.polyline(latlngs, {
+                            color: '#06b6d4',
+                            weight: 4.5,
+                            opacity: 0.95
+                        }).addTo(map);
 
-                trunkLine.bindPopup(
-                    `<div class="text-xs space-y-1">
-                        <div class="font-bold text-cyan-400">【🟢 M1 亦庄干线巡回 TSP 闭环】</div>
-                        <div>巡回总里程: <span class="mono font-bold text-white">${overview.value.trunk_routing.tour_dist_km} km</span></div>
-                        <div>相比独立往返压降: <span class="text-emerald-400 font-bold">${overview.value.trunk_routing.saving_pct}% (-11.42 km)</span></div>
-                        <div>无人车巡回耗时: <span class="mono text-slate-200">${overview.value.trunk_routing.travel_time_min} min</span></div>
-                        <div class="text-emerald-400 text-[10px]">统仓共配串联5社区，空驶彻底清零</div>
-                    </div>`
-                );
-                mapLayers.push(trunkLine);
+                        trunkLine.bindPopup(
+                            `<div class="text-xs space-y-1">
+                                <div class="font-bold text-cyan-400">【🟢 M1 亦庄干线巡回 TSP 闭环】</div>
+                                <div>巡回总里程: <span class="mono font-bold text-white">${overview.value.trunk_routing.tour_dist_km} km</span></div>
+                                <div>相比独立往返压降: <span class="text-emerald-400 font-bold">${overview.value.trunk_routing.saving_pct}% (-11.42 km)</span></div>
+                                <div>无人车巡回耗时: <span class="mono text-slate-200">${overview.value.trunk_routing.travel_time_min} min</span></div>
+                                <div class="text-emerald-400 text-[10px]">统仓共配串联5社区，空驶彻底清零</div>
+                            </div>`
+                        );
+                        mapLayers.push(trunkLine);
+                    }
+                }
             }
 
             // ---------------------------------------------------------------------
@@ -1558,4 +1574,10 @@ createApp({
             searchAndExploreCommunity
         };
     }
-}).mount('#app');
+});
+
+app.config.errorHandler = (err, vm, info) => {
+    console.warn('[Vue Global Error Guard]:', info, err);
+};
+
+app.mount('#app');

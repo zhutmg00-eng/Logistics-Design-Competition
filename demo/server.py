@@ -13,7 +13,7 @@ if current_dir not in sys.path:
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 
@@ -22,6 +22,7 @@ from core.forecast_model import DemandForecastEngine
 from core.layout_optimizer import LayoutOptimizer
 from core.routing_engine import RoutingEngine
 from core.simulation_engine import SimulationEngine
+from core.evaluation_engine import EvaluationEngine
 from core.ai_copilot import AICopilot
 from core.amap_client import AmapClient
 
@@ -32,7 +33,8 @@ data_manager = DataManager()
 forecast_engine = DemandForecastEngine()
 layout_optimizer = LayoutOptimizer()
 routing_engine = RoutingEngine()
-simulation_engine = SimulationEngine()
+evaluation_engine = EvaluationEngine()
+simulation_engine = SimulationEngine(evaluation_engine)
 ai_copilot = AICopilot()
 amap_client = AmapClient()
 
@@ -48,114 +50,65 @@ def read_root():
         return FileResponse(index_path)
     return {"message": "Server is running. Please add static/index.html"}
 
-GLOBAL_COMPARISON_METRICS = {
-    "trunk_distance": {
-        "label": "干线运输总里程",
-        "unit": "km",
-        "baseline": 24.84,
-        "optimized": 13.42,
-        "diff": -11.42,
-        "diff_pct": -46.0,
-        "desc": "消除5条独立往返线空驶，优化为M1多社区巡回TSP环线"
-    },
-    "courier_walk_distance": {
-        "label": "社区内步巡总里程",
-        "unit": "km",
-        "baseline": 13.78,
-        "optimized": 9.07,
-        "diff": -4.71,
-        "diff_pct": -34.2,
-        "desc": "无人车承担微循环投柜，人工仅需执行上门子集精细步巡"
-    },
-    "labor_hours": {
-        "label": "全网人工投入工时",
-        "unit": "h",
-        "baseline": 151.2,
-        "optimized": 60.8,
-        "diff": -90.4,
-        "diff_pct": -59.8,
-        "desc": "人机高效解耦，快递员免于干线奔波与重物自提投递"
-    },
-    "full_risk_count": {
-        "label": "满柜风险社区数",
-        "unit": "个",
-        "baseline": 3,
-        "optimized": 0,
-        "diff": -3,
-        "diff_pct": -100.0,
-        "desc": "MIP自适应副柜扩容，彻底攻克C02/C04/C05峰值爆柜瓶颈"
-    },
-    "annual_cost": {
-        "label": "年运营总成本",
-        "unit": "万元",
-        "baseline": 283.4,
-        "optimized": 131.4,
-        "diff": -152.0,
-        "diff_pct": -53.6,
-        "desc": "年均直接降本 152.0 万元，投资回收期仅需 0.39 年"
-    },
-    "annual_carbon": {
-        "label": "年干线碳排放量",
-        "unit": "kg CO₂",
-        "baseline": 1459.2,
-        "optimized": 187.3,
-        "diff": -1271.9,
-        "diff_pct": -87.2,
-        "desc": "燃油微卡全面替换为纯电无人配送车，绿碳减排达87.2%"
-    },
-    "payback_years": {
-        "label": "静态投资回收期",
-        "unit": "年",
-        "value": 0.39,
-        "desc": "初期硬件副柜与改造成本约55.6万元，不到5个月即可收回全部投资"
-    }
-}
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
 
-COMMUNITY_FACILITIES_STATUS = {
-    "C01": {
-        "community_name": "梅园",
-        "baseline": {"capacity": 50, "demand": 0, "saturation": 0.0, "full_risk": False, "desc": "100%上门，无自提柜需求"},
-        "optimized": {"capacity": 50, "demand": 0, "saturation": 0.0, "full_risk": False, "desc": "保持基准配置，无爆柜"}
-    },
-    "C02": {
-        "community_name": "鹿鸣苑",
-        "baseline": {"capacity": 50, "demand": 240, "saturation": 480.0, "full_risk": True, "desc": "单柜超载4.8倍，晚高峰严重爆柜"},
-        "optimized": {"capacity": 380, "demand": 240, "saturation": 63.2, "full_risk": False, "desc": "MIP配置副柜扩容，消除满柜"}
-    },
-    "C03": {
-        "community_name": "天华园",
-        "baseline": {"capacity": 50, "demand": 0, "saturation": 0.0, "full_risk": False, "desc": "100%上门，无自提柜需求"},
-        "optimized": {"capacity": 50, "demand": 0, "saturation": 0.0, "full_risk": False, "desc": "保持基准配置，无爆柜"}
-    },
-    "C04": {
-        "community_name": "亦城茗苑",
-        "baseline": {"capacity": 50, "demand": 963, "saturation": 1926.0, "full_risk": True, "desc": "超高件量密度，单柜超载19倍瘫痪"},
-        "optimized": {"capacity": 1450, "demand": 963, "saturation": 66.4, "full_risk": False, "desc": "MIP多副柜组扩容，平稳承载大促"}
-    },
-    "C05": {
-        "community_name": "听涛雅苑",
-        "baseline": {"capacity": 50, "demand": 370, "saturation": 740.0, "full_risk": True, "desc": "单柜超载7.4倍，快件滞留积压"},
-        "optimized": {"capacity": 580, "demand": 370, "saturation": 63.8, "full_risk": False, "desc": "MIP加装副柜扩容，消除满柜风险"}
-    }
-}
+GLOBAL_COMPARISON_METRICS = evaluation_engine.legacy_comparison_metrics()
+
+
+def _community_facilities_status():
+    s0 = evaluation_engine.get_result("S0", "N")
+    s2 = evaluation_engine.get_result("S2", "N")
+    baseline = {row["community_id"]: row for row in s0["community_breakdown"]}
+    optimized = {row["community_id"]: row for row in s2["community_breakdown"]}
+    status = {}
+    for cid, base in baseline.items():
+        opt = optimized[cid]
+        status[cid] = {
+            "community_name": base["name"],
+            "baseline": {
+                "capacity": base["locker_capacity"], "demand": base["locker_demand"],
+                "saturation": base["peak_occupancy_pct"], "full_risk": base["full_minutes"] > 0,
+                "coverage_pct": base["coverage_pct"], "overflow_pkgs": base["overflow_pkgs"],
+                "desc": "动态占用结果；覆盖不足单独列示"
+            },
+            "optimized": {
+                "capacity": opt["locker_capacity"], "demand": opt["locker_demand"],
+                "saturation": opt["peak_occupancy_pct"], "full_risk": opt["full_minutes"] > 0,
+                "coverage_pct": opt["coverage_pct"], "overflow_pkgs": opt["overflow_pkgs"],
+                "desc": "P20定容、普通日动态占用结果"
+            }
+        }
+    return status
 
 @app.get("/api/overview")
 def get_overview():
+    facilities_status = _community_facilities_status()
     communities = data_manager.get_all_overview()
     for c in communities:
         cid = c["id"]
-        status = COMMUNITY_FACILITIES_STATUS.get(cid, {})
+        status = facilities_status.get(cid, {})
         c["baseline_facility"] = status.get("baseline", {"capacity": 50, "saturation": 0, "full_risk": False})
         c["optimized_facility"] = status.get("optimized", {"capacity": 50, "saturation": 0, "full_risk": False})
         c["full_risk_baseline"] = c["baseline_facility"]["full_risk"]
         c["full_risk_optimized"] = c["optimized_facility"]["full_risk"]
 
     trunk_result = routing_engine.solve_trunk_m1(communities)
+    official = evaluation_engine.load_results()
+    trunk_result["baseline_dist_km"] = official["results"]["S0-N"]["network_metrics"]["E01"]
+    trunk_result["tour_dist_km"] = official["results"]["S2-N"]["network_metrics"]["E01"]
     return {
         "communities": communities,
         "trunk_routing": trunk_result,
-        "facilities_status": COMMUNITY_FACILITIES_STATUS,
+        "facilities_status": facilities_status,
         "comparison_metrics": GLOBAL_COMPARISON_METRICS,
+        "evaluation": {
+            "input_version": official["input_version"],
+            "normal_day_total": official["frozen_input_summary"]["normal_day_total"],
+            "scheme_status": {code: official["results"][f"{code}-N"]["status"] for code in ("S0", "S1", "S2")},
+            "source": "data/evaluation_results_v1.json"
+        },
         "hub": routing_engine.hub
     }
 
@@ -217,17 +170,26 @@ def calculate_plan(req: CalculationRequest):
     aggregated_logs.extend(forecast.get("solver_logs", []))
     aggregated_logs.extend(layout.get("solver_logs", []))
     aggregated_logs.extend(routing.get("solver_logs", []))
-    aggregated_logs.append(f"====== [OR PIPELINE COMPLETED IN {total_solve_time} ms | STATUS: OPTIMAL] ======")
-
     aggregated_constraints = []
     if "constraint_checks" in layout:
         aggregated_constraints.extend(layout["constraint_checks"])
     if "constraint_checks" in routing:
         aggregated_constraints.extend(routing["constraint_checks"])
 
+    violation_tokens = ("VIOLATED", "OVERLOAD_VIOLATION", "OVERTIME_WARNING", "INFEASIBLE")
+    violation_count = sum(
+        1 for item in aggregated_constraints
+        if str(item.get("status", "")).upper() in violation_tokens
+    )
+    pipeline_status = "INFEASIBLE" if violation_count else "FEASIBLE_HEURISTIC"
+    aggregated_logs.append(
+        f"====== [OR PIPELINE COMPLETED IN {total_solve_time} ms | STATUS: {pipeline_status}] ======"
+    )
+
     solver_console = {
         "total_solve_time_ms": total_solve_time,
-        "pipeline_status": "OPTIMAL_FEASIBLE",
+        "pipeline_status": pipeline_status,
+        "hard_constraint_violations": violation_count,
         "solver_breakdown": {
             "M5_forecast_ms": t_fc,
             "M6_layout_mip_ms": t_lo,
@@ -240,7 +202,7 @@ def calculate_plan(req: CalculationRequest):
     # 构建现状方案 (As-Is Baseline) 与 优化方案 (To-Be Optimized) 完整结构
     base_facs = layout.get("baseline_facilities", [])
     opt_facs = layout.get("facilities", [])
-    base_risk = layout.get("full_risk_baseline", False) or (cid in ["C02", "C04", "C05"])
+    base_risk = layout.get("full_risk_baseline", False)
     base_walk = routing.get("baseline_courier_walk_dist_km", 0)
     opt_walk = routing.get("courier_walk_dist_km", 0)
     base_hours = routing.get("baseline_courier_total_hours", 0)
@@ -269,7 +231,7 @@ def calculate_plan(req: CalculationRequest):
         "unmanned_vehicle_path": routing.get("unmanned_vehicle_path", []),
         "trips_needed": routing.get("trips_needed", 1),
         "loading_plan": routing.get("loading_plan", []),
-        "is_full_risk": False,
+        "is_full_risk": layout.get("full_risk_optimized", False),
         "total_capacity": layout.get("total_effective_capacity", 50),
         "saturation_pct": max_opt_sat if max_opt_sat > 0 else round(layout.get("overall_utilization", 0.65) * 100, 1)
     }
@@ -296,33 +258,27 @@ def calculate_plan(req: CalculationRequest):
         "baseline_plan": baseline_plan,
         "optimized_plan": optimized_plan,
         "community_comparison": community_comparison,
-        "comparison_metrics": GLOBAL_COMPARISON_METRICS,
+        "comparison_metrics": evaluation_engine.legacy_comparison_metrics(),
         "ai_report": ai_report,
         "solver_console": solver_console
     }
 
 @app.get("/api/simulation")
 def run_full_simulation(scenario: str = "normal"):
-    # 对全部5个社区运行完整仿真对比
-    summaries = data_manager.get_all_overview()
-    forecast_results = {}
-    layout_results = {}
-    routing_results = {}
+    return simulation_engine.run_simulation(scenario=scenario)
 
-    for c in summaries:
-        cid = c["id"]
-        comm_sum = data_manager.get_community_summary(cid)
-        f_res = forecast_engine.predict_community(cid, comm_sum["total_households"])
-        b_res = forecast_engine.predict_buildings(comm_sum["demand_nodes"], f_res)
-        l_res = layout_optimizer.optimize(cid, b_res, comm_sum["facilities"])
-        r_res = routing_engine.solve_community_m2(cid, b_res, l_res["facilities"])
-        
-        forecast_results[cid] = f_res
-        layout_results[cid] = l_res
-        routing_results[cid] = r_res
 
-    sim_res = simulation_engine.run_simulation(summaries, forecast_results, layout_results, routing_results, scenario=scenario)
-    return sim_res
+@app.get("/api/evaluation")
+def get_evaluation(scheme: str = "S2", scenario: str = "N"):
+    try:
+        return evaluation_engine.get_result(scheme, scenario)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Unknown scheme/scenario combination")
+
+
+@app.get("/api/evaluation/matrix")
+def get_evaluation_matrix():
+    return evaluation_engine.load_results()
 
 @app.get("/api/solver/models")
 def get_all_math_models():
