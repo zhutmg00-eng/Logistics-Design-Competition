@@ -61,6 +61,60 @@ const app = createApp({
         const amapExploring = ref(false);
         const amapExploreResult = ref(null);
 
+        // 学术级高可信模型验证图集 (Publication-Grade Academic Modeling Figures)
+        const academicFigures = ref([
+            {
+                id: 'fig1',
+                title: '图 1 两阶段协同网络时空接驳与物理约束机理',
+                subtitle: 'Two-Stage Spatio-Temporal Handover & Physical Constraints (2E-MDVRPTW-DC)',
+                png: '/static/images/models/fig1_spatiotemporal_handover_schematic.png',
+                svg: '/static/images/models/fig1_spatiotemporal_handover_schematic.svg',
+                badge: '黄景辉等(2026) · 机理拓扑',
+                summary: '构建无人设备干线循环与社区配送员微循环的时空强同步交接窗口，施加动力电池 ≥20% 安全余量及 400 件物理装载上限约束。',
+                tags: ['时空交接', '动力电池余量', '硬时窗同步', 'Nature规范']
+            },
+            {
+                id: 'fig2',
+                title: '图 2 多维核心参数灵敏度分析方阵 (2×2 Grid)',
+                subtitle: 'Multidimensional Parameter Sensitivity Analysis Matrix',
+                png: '/static/images/models/fig2_parameter_sensitivity_analysis.png',
+                svg: '/static/images/models/fig2_parameter_sensitivity_analysis.svg',
+                badge: '极值推演 · 鲁棒性验证',
+                summary: '对无人车航速 (8-25km/h)、柜体格口 (40-160格)、送货上门比例 (10%-60%) 及峰值波动率 (0.8-2.0) 进行全景扰动扫描，红虚线标定系统最优拐点。',
+                tags: ['航速最优 15km/h', '柜体 84格口', '上门拐点 30%', '鲁棒边界']
+            },
+            {
+                id: 'fig3',
+                title: '图 3 改进 NSGA-II 算法多目标 Pareto 前沿与多算子收敛对照',
+                subtitle: 'Improved NSGA-II Multi-objective Pareto Front & Convergence Analysis',
+                png: '/static/images/models/fig3_algorithm_pareto_convergence.png',
+                svg: '/static/images/models/fig3_algorithm_pareto_convergence.svg',
+                badge: '进化收敛 · 双目标前沿',
+                summary: '展示综合运营成本与客户满意度双目标 Pareto 非支配解集分布（HV=0.884），对比自适应自交叉算子在 35 代内稳定收敛的优越性。',
+                tags: ['Pareto 前沿', '超体积 HV 0.884', '35代收敛', '自适应变异']
+            },
+            {
+                id: 'fig4',
+                title: '图 4 现状 (As-Is) vs 协同优化 (To-Be) 综合效益评估与全网对比',
+                subtitle: 'As-Is vs. To-Be Comprehensive Evaluation & Multi-metric Benchmark',
+                png: '/static/images/models/fig4_asis_vs_tobe_evaluation.png',
+                svg: '/static/images/models/fig4_asis_vs_tobe_evaluation.svg',
+                badge: '成效量化 · 落地可行性',
+                summary: '六维雷达图全景评估显示协同方案综合覆盖率提升至 98.4%，干线里程下降 46.0%，人工总工时缩减 59.8%，静态投资回收期仅 0.39 年。',
+                tags: ['成本 -53.6%', '里程 -46.0%', '工时 -59.8%', '回收期 0.39年']
+            }
+        ]);
+
+        const showImageModal = ref(false);
+        const activeImage = ref(academicFigures.value[0]);
+        const openImagePreview = (fig) => {
+            activeImage.value = fig;
+            showImageModal.value = true;
+        };
+        const closeImagePreview = () => {
+            showImageModal.value = false;
+        };
+
         // 地图底图主题与向量图层控制
         const currentTileTheme = ref('amap-dark');
         const tileStatusText = ref('高德暗黑矢量底图 [在线]');
@@ -1618,7 +1672,13 @@ const app = createApp({
             amapExploring,
             amapExploreResult,
             saveAmapKey,
-            searchAndExploreCommunity
+            searchAndExploreCommunity,
+            // 学术级图谱相关
+            academicFigures,
+            showImageModal,
+            activeImage,
+            openImagePreview,
+            closeImagePreview
         };
     }
 });
