@@ -9,6 +9,7 @@ createApp({
         const selectedCommunityId = ref('C04');
         const planResult = ref(null);
         const simulationResult = ref(null);
+        const simScenario = ref('normal'); // 'normal' | 'peak' | 'disruption'
         const crisisResult = ref(null);
         const isPeakDay = ref(false);
 
@@ -48,6 +49,7 @@ createApp({
         let chartSaturation = null;
         let chartRadar = null;
         let chartCost = null;
+        let chartGantt = null;
         let chartTspConvergence = null;
         let chartMipConvergence = null;
 
@@ -503,9 +505,10 @@ createApp({
             }
         };
 
-        const fetchSimulation = async () => {
+        const fetchSimulation = async (scenario = null) => {
+            if (scenario) simScenario.value = scenario;
             try {
-                const res = await fetch('/api/simulation');
+                const res = await fetch(`/api/simulation?scenario=${simScenario.value}`);
                 simulationResult.value = await res.json();
                 nextTick(() => {
                     updateSimCharts();
@@ -514,6 +517,10 @@ createApp({
             } catch (e) {
                 console.error('Fetch simulation failed:', e);
             }
+        };
+
+        const switchSimScenario = (scenario) => {
+            fetchSimulation(scenario);
         };
 
         const onSelectCommunity = (cid) => {
@@ -1009,6 +1016,9 @@ createApp({
             const elCost = document.getElementById('chart-cost');
             if (elCost) chartCost = echarts.init(elCost);
 
+            const elGantt = document.getElementById('chart-gantt');
+            if (elGantt) chartGantt = echarts.init(elGantt);
+
             const elTsp = document.getElementById('chart-tsp-convergence');
             if (elTsp) chartTspConvergence = echarts.init(elTsp);
 
@@ -1208,6 +1218,92 @@ createApp({
                 });
             }
 
+            // 4.1 人机协同作业时序甘特图 (#chart-gantt)
+            if (chartGantt && sim.gantt_schedule) {
+                const entities = [...new Set(sim.gantt_schedule.map(t => t.entity))].reverse();
+                const parseMin = (tStr) => {
+                    const parts = tStr.split(':').map(Number);
+                    return (parts[0] - 8) * 60 + parts[1];
+                };
+
+                const data = sim.gantt_schedule.map(t => {
+                    const yIndex = entities.indexOf(t.entity);
+                    const startMin = parseMin(t.start_time);
+                    const endMin = parseMin(t.end_time);
+                    return {
+                        name: t.label,
+                        value: [yIndex, startMin, endMin, endMin - startMin, t.community, t.type],
+                        itemStyle: {
+                            color: t.type === 'UV_TRIP' ? '#06b6d4' : '#f59e0b'
+                        }
+                    };
+                });
+
+                chartGantt.setOption({
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        formatter: (params) => {
+                            const v = params.value;
+                            const startStr = `${Math.floor((v[1]+480)/60).toString().padStart(2, '0')}:${((v[1]+480)%60).toString().padStart(2, '0')}`;
+                            const endStr = `${Math.floor((v[2]+480)/60).toString().padStart(2, '0')}:${((v[2]+480)%60).toString().padStart(2, '0')}`;
+                            return `<b>${params.name}</b><br/>
+                                    执行主体: ${entities[v[0]]}<br/>
+                                    作业时段: <span class="mono text-cyan-400 font-bold">${startStr} ~ ${endStr}</span><br/>
+                                    作业耗时: <span class="mono text-emerald-400 font-bold">${v[3]} 分钟</span>`;
+                        }
+                    },
+                    grid: { top: 25, left: 140, right: 25, bottom: 25 },
+                    xAxis: {
+                        type: 'value',
+                        min: 0,
+                        max: 780,
+                        interval: 120,
+                        axisLabel: {
+                            color: '#94a3b8',
+                            formatter: (val) => {
+                                const totalM = val + 480;
+                                return `${Math.floor(totalM/60).toString().padStart(2, '0')}:${(totalM%60).toString().padStart(2, '0')}`;
+                            }
+                        },
+                        splitLine: { lineStyle: { color: '#1e293b' } }
+                    },
+                    yAxis: {
+                        type: 'category',
+                        data: entities,
+                        axisLabel: { color: '#cbd5e1', fontSize: 10 },
+                        splitLine: { show: true, lineStyle: { color: '#1e293b' } }
+                    },
+                    series: [{
+                        type: 'custom',
+                        renderItem: (params, api) => {
+                            const categoryIndex = api.value(0);
+                            const start = api.coord([api.value(1), categoryIndex]);
+                            const end = api.coord([api.value(2), categoryIndex]);
+                            const height = api.size([0, 1])[1] * 0.55;
+                            const rectShape = echarts.graphic.clipRectByRect({
+                                x: start[0],
+                                y: start[1] - height / 2,
+                                width: Math.max(end[0] - start[0], 2),
+                                height: height
+                            }, {
+                                x: params.coordSys.x,
+                                y: params.coordSys.y,
+                                width: params.coordSys.width,
+                                height: params.coordSys.height
+                            });
+                            return rectShape && {
+                                type: 'rect',
+                                transition: ['shape'],
+                                shape: rectShape,
+                                style: api.style()
+                            };
+                        },
+                        encode: { x: [1, 2], y: 0 },
+                        data: data
+                    }]
+                });
+            }
+
             // 5. Tab 0 全景对比: 满柜时序对抗曲线 (#chart-comp-saturation)
             if (chartCompSaturation) {
                 const hours = (sim.timeline && sim.timeline.hours) ? sim.timeline.hours : 
@@ -1335,6 +1431,7 @@ createApp({
             if (chartSaturation) chartSaturation.resize();
             if (chartRadar) chartRadar.resize();
             if (chartCost) chartCost.resize();
+            if (chartGantt) chartGantt.resize();
             if (chartTspConvergence) chartTspConvergence.resize();
             if (chartMipConvergence) chartMipConvergence.resize();
             if (chartCompSaturation) chartCompSaturation.resize();
@@ -1375,6 +1472,8 @@ createApp({
             selectedCommunityId,
             planResult,
             simulationResult,
+            simScenario,
+            switchSimScenario,
             crisisResult,
             isPeakDay,
             showSolverModal,

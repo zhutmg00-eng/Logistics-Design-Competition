@@ -1070,13 +1070,119 @@
                     <div class="glass-panel p-4 rounded-xl space-y-3">
                         <div class="flex justify-between items-center">
                             <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
-                                <span>⏱️</span> 第8章 配送系统离散事件仿真对抗
+                                <span>⏱️</span> 第8章 配送系统离散事件动态仿真验证 (DES)
                             </h2>
-                            <span class="px-2 py-0.5 text-xs rounded bg-cyan-950 border border-cyan-700 text-cyan-300 mono font-bold">DES 离散事件内核</span>
+                            <span class="px-2 py-0.5 text-xs rounded bg-cyan-950 border border-cyan-700 text-cyan-300 mono font-bold">M8 离散动态内核</span>
                         </div>
                         <p class="text-xs text-slate-300">
-                            全面推演“现状（纯人工）vs 优化后人工 vs 人机协同”三大方案的全网时效、饱和度与能耗表现。
+                            全面推演“现状（纯人工）vs 优化后人工 vs 人机协同”三大方案的全网时效、饱和度与能耗表现，支持大促峰值压力测试与扰动自愈推演。
                         </p>
+                        <!-- 动态情景切换 -->
+                        <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-800">
+                            <span class="text-xs text-slate-400 font-semibold">推演情景切换:</span>
+                            <button @click="switchSimScenario('normal')" :class="simScenario === 'normal' ? 'bg-cyan-600 text-white font-bold shadow' : 'bg-slate-800 text-slate-400 hover:text-white'" class="px-2.5 py-1 rounded text-xs transition">
+                                🟢 普通日基准 (1.0x)
+                            </button>
+                            <button @click="switchSimScenario('peak')" :class="simScenario === 'peak' ? 'bg-amber-600 text-white font-bold shadow' : 'bg-slate-800 text-slate-400 hover:text-white'" class="px-2.5 py-1 rounded text-xs transition">
+                                🟠 双十一大促高峰 (2.0x)
+                            </button>
+                            <button @click="switchSimScenario('disruption')" :class="simScenario === 'disruption' ? 'bg-rose-600 text-white font-bold shadow' : 'bg-slate-800 text-slate-400 hover:text-white'" class="px-2.5 py-1 rounded text-xs transition">
+                                🔴 极端扰动与满柜自愈
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 仿真汇总 KPI 卡片 -->
+                    <div v-if="simulationResult && simulationResult.summary" class="grid grid-cols-4 gap-2">
+                        <div class="glass-panel p-2.5 rounded-lg text-center">
+                            <div class="text-[10px] text-slate-400">全网快件总需求</div>
+                            <div class="text-sm font-bold text-cyan-400 mono mt-0.5">{{ simulationResult.summary.total_pkgs }} <span class="text-[10px] text-slate-400 font-normal">件</span></div>
+                            <div class="text-[9px] text-slate-500">上门: {{ simulationResult.summary.total_door_pkgs }} | 自提: {{ simulationResult.summary.total_locker_pkgs }}</div>
+                        </div>
+                        <div class="glass-panel p-2.5 rounded-lg text-center">
+                            <div class="text-[10px] text-slate-400">全网人工工时节约</div>
+                            <div class="text-sm font-bold text-emerald-400 mono mt-0.5">-{{ simulationResult.summary.courier_hours_saving_pct }}%</div>
+                            <div class="text-[9px] text-emerald-400/80">人机解耦大幅减负</div>
+                        </div>
+                        <div class="glass-panel p-2.5 rounded-lg text-center">
+                            <div class="text-[10px] text-slate-400">全网年均运营节约</div>
+                            <div class="text-sm font-bold text-amber-400 mono mt-0.5">¥{{ (simulationResult.summary.cost_saved_annual_rmb / 10000).toFixed(1) }} <span class="text-[10px] text-slate-400 font-normal">万</span></div>
+                            <div class="text-[9px] text-amber-400/80">投资回收期 &lt; 0.5 年</div>
+                        </div>
+                        <div class="glass-panel p-2.5 rounded-lg text-center">
+                            <div class="text-[10px] text-slate-400">干线绿碳减排幅度</div>
+                            <div class="text-sm font-bold text-cyan-300 mono mt-0.5">-{{ simulationResult.summary.carbon_saving_pct }}%</div>
+                            <div class="text-[9px] text-cyan-400/80">纯电替代燃油微卡</div>
+                        </div>
+                    </div>
+
+                    <!-- 各社区仿真完成时长与满柜风险表 (表8-5) -->
+                    <div v-if="simulationResult && simulationResult.community_results" class="glass-panel p-3 rounded-xl space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                <span>📊</span> 表8-5 各社区逐项仿真完成表现与满柜风险核验
+                            </span>
+                            <span class="text-[10px] text-slate-400 mono">标准单班基准: 480 min (8h)</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-[11px] mono border border-slate-800">
+                                <thead class="bg-slate-800/80 text-slate-300">
+                                    <tr>
+                                        <th class="p-2">社区名称</th>
+                                        <th>日件量</th>
+                                        <th>趟次</th>
+                                        <th>无人车里程</th>
+                                        <th>上门里程</th>
+                                        <th>仿真时长</th>
+                                        <th>工时利用率</th>
+                                        <th>基准满柜风险</th>
+                                        <th>协同优化后</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800/60">
+                                    <tr v-for="cr in simulationResult.community_results" :key="cr.community_id" class="hover:bg-slate-800/40">
+                                        <td class="p-2 font-bold text-cyan-400">{{ cr.name }} ({{ cr.community_id }})</td>
+                                        <td>{{ cr.daily_pkgs }}</td>
+                                        <td><span class="px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold">{{ cr.trips }} 趟</span></td>
+                                        <td>{{ cr.uv_dist_km }} km</td>
+                                        <td>{{ cr.courier_walk_km }} km</td>
+                                        <td class="font-bold text-amber-300">{{ cr.sim_duration_min }} min</td>
+                                        <td>
+                                            <div class="flex items-center gap-1">
+                                                <div class="w-12 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                                    <div class="h-full rounded-full" :class="cr.labor_utilization_pct > 100 ? 'bg-rose-500' : 'bg-emerald-500'" :style="{ width: Math.min(100, cr.labor_utilization_pct) + '%' }"></div>
+                                                </div>
+                                                <span :class="cr.labor_utilization_pct > 100 ? 'text-rose-400' : 'text-emerald-400'" class="text-[10px]">{{ cr.labor_utilization_pct }}%</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span :class="cr.full_risk_baseline === '是' ? 'text-rose-400 font-bold bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-800' : 'text-slate-400'">
+                                                {{ cr.full_risk_baseline }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span :class="cr.full_risk_optimized === '否' ? 'text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800' : 'text-rose-400'">
+                                                {{ cr.full_risk_optimized === '否' ? '✅ 已解除' : '需扩容' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 人机协同作业时序甘特图 -->
+                    <div class="glass-panel p-4 rounded-xl space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                <span>📅</span> 人机协同作业时序动态甘特图 (08:00 — 21:00)
+                            </span>
+                            <div class="flex items-center gap-3 text-[10px]">
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-cyan-500 inline-block"></span> 无人配送车巡回 (X3)</span>
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-amber-500 inline-block"></span> 快递员入户上门派送</span>
+                            </div>
+                        </div>
+                        <div id="chart-gantt" class="w-full h-56"></div>
                     </div>
 
                     <!-- 满柜时序对抗 ECharts -->

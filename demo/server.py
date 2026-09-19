@@ -300,7 +300,7 @@ def calculate_plan(req: CalculationRequest):
     }
 
 @app.get("/api/simulation")
-def run_full_simulation():
+def run_full_simulation(scenario: str = "normal"):
     # 对全部5个社区运行完整仿真对比
     summaries = data_manager.get_all_overview()
     forecast_results = {}
@@ -319,7 +319,7 @@ def run_full_simulation():
         layout_results[cid] = l_res
         routing_results[cid] = r_res
 
-    sim_res = simulation_engine.run_simulation(summaries, forecast_results, layout_results, routing_results)
+    sim_res = simulation_engine.run_simulation(summaries, forecast_results, layout_results, routing_results, scenario=scenario)
     return sim_res
 
 @app.get("/api/solver/models")
@@ -406,7 +406,7 @@ def get_all_math_models():
                 "description": "推演08:00至21:00全日到件、投柜、取件波峰，量化排队积压与爆柜风险，检验人机协同调度时效。",
                 "variables": [
                     {"symbol": "O_j(t)", "type": "系统状态", "meaning": "时刻 t 设施点 j 内暂存快件占用量"},
-                    {"symbol": "\Delta A_j(t)", "type": "泊松增量", "meaning": "时间步内无人车到达投递的包裹数"}
+                    {"symbol": r"\Delta A_j(t)", "type": "泊松增量", "meaning": "时间步内无人车到达投递的包裹数"}
                 ],
                 "constraints": [
                     {"name": "非齐次泊松到达过程", "formula": r"\Delta A_j(t) \sim \text{Poisson}\big(\lambda_j(t) \cdot \Delta t\big)"},
