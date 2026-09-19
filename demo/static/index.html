@@ -1528,7 +1528,7 @@
                                     </thead>
                                     <tbody class="divide-y divide-slate-800/60">
                                         <tr v-for="v in m.variables" :key="v.symbol">
-                                            <td class="py-2 mono font-bold text-cyan-300">$$\( {{ v.symbol }} \)$$</td>
+                                            <td class="py-2 mono font-bold text-cyan-300">${{ v.symbol }}$</td>
                                             <td class="text-amber-300 mono">{{ v.type }}</td>
                                             <td>{{ v.meaning }}</td>
                                         </tr>
