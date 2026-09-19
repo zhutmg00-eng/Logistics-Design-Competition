@@ -349,4 +349,30 @@ body {
     animation: glow-border 2s infinite ease-in-out;
 }
 
+/* Wide Mode & Responsive Dashboard Styling */
+.wide-mode-content {
+    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Sticky table header polish */
+.sticky-table-head th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+}

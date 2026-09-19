@@ -267,6 +267,8 @@ def calculate_plan(req: CalculationRequest):
         "unmanned_vehicle_dist_km": routing.get("unmanned_vehicle_dist_km", 0),
         "unmanned_vehicle_time_min": routing.get("unmanned_vehicle_time_min", 0),
         "unmanned_vehicle_path": routing.get("unmanned_vehicle_path", []),
+        "trips_needed": routing.get("trips_needed", 1),
+        "loading_plan": routing.get("loading_plan", []),
         "is_full_risk": False,
         "total_capacity": layout.get("total_effective_capacity", 50),
         "saturation_pct": max_opt_sat if max_opt_sat > 0 else round(layout.get("overall_utilization", 0.65) * 100, 1)

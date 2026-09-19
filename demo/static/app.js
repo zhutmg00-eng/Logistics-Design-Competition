@@ -3,6 +3,7 @@ const { createApp, ref, onMounted, watch, nextTick } = Vue;
 createApp({
     setup() {
         const activeTab = ref('comparison');
+        const viewMode = ref('split'); // 'split' | 'wide'
         const schemeMode = ref('diff'); // 'baseline' | 'optimized' | 'diff'
         const loading = ref(false);
         const overview = ref(null);
@@ -12,6 +13,19 @@ createApp({
         const simScenario = ref('normal'); // 'normal' | 'peak' | 'disruption'
         const crisisResult = ref(null);
         const isPeakDay = ref(false);
+
+        const toggleViewMode = () => {
+            viewMode.value = viewMode.value === 'split' ? 'wide' : 'split';
+            nextTick(() => {
+                updateAllActiveCharts();
+                if (map) map.invalidateSize();
+                setTimeout(() => {
+                    updateAllActiveCharts();
+                    if (map) map.invalidateSize();
+                }, 150);
+            });
+        };
+
 
         // 运筹控制台与数学看板弹窗状态
         const showSolverModal = ref(false);
@@ -89,14 +103,31 @@ createApp({
             await fetchOverview();
             await loadCommunityPlan(selectedCommunityId.value);
             await fetchSimulation();
-            initCharts();
-            renderMath();
+
+            // 挂载后立即全量灌入图表数据与解析公式
+            nextTick(() => {
+                updateAllActiveCharts();
+                renderMath();
+                if (map) {
+                    map.invalidateSize();
+                    if (activeTab.value === 'comparison' || activeTab.value === 'digital-twin') {
+                        fitAllOverview();
+                    } else {
+                        fitCurrentCommunity();
+                    }
+                }
+                setTimeout(() => {
+                    updateAllActiveCharts();
+                    if (map) map.invalidateSize();
+                }, 200);
+            });
 
             // 监听容器大小变化（自适应防塌陷）
             const mapContainer = document.getElementById('map-container');
             if (mapContainer && window.ResizeObserver) {
                 const ro = new ResizeObserver(() => {
                     if (map) map.invalidateSize();
+                    resizeCharts();
                 });
                 ro.observe(mapContainer);
             }
@@ -104,17 +135,6 @@ createApp({
             window.addEventListener('resize', () => {
                 resizeCharts();
             });
-
-            // 强制触发一次重绘与尺寸自适应
-            nextTick(() => {
-                if (map) map.invalidateSize();
-            });
-            setTimeout(() => {
-                if (map) map.invalidateSize();
-            }, 200);
-            setTimeout(() => {
-                if (map) map.invalidateSize();
-            }, 800);
         });
 
         // 初始化 Leaflet 地图与国内高德/OSM/离线底图引擎
@@ -256,7 +276,7 @@ createApp({
                 });
             }
             if (pts.length > 0) {
-                map.fitBounds(L.latLngBounds(pts).pad(0.12));
+                map.fitBounds(L.latLngBounds(pts).pad(0.06));
             }
         };
 
@@ -272,7 +292,7 @@ createApp({
                 p.buildings.forEach(b => pts.push([b.lat, b.lng]));
             }
             if (pts.length > 0) {
-                map.fitBounds(L.latLngBounds(pts).pad(0.18));
+                map.fitBounds(L.latLngBounds(pts).pad(0.08));
             }
         };
 
@@ -1000,46 +1020,54 @@ createApp({
             // ---------------------------------------------------------------------
             // 8. 智能视角聚焦当前社区多边形范围
             // ---------------------------------------------------------------------
-            fitCurrentCommunity();
+            if (activeTab.value === 'comparison' || activeTab.value === 'digital-twin') {
+                fitAllOverview();
+            } else {
+                fitCurrentCommunity();
+            }
+        };
+
+        const getOrCreateChart = (domId) => {
+            const el = document.getElementById(domId);
+            if (!el) return null;
+            let chart = echarts.getInstanceByDom(el);
+            if (!chart) {
+                chart = echarts.init(el);
+            }
+            return chart;
         };
 
         const initCharts = () => {
-            const elArr = document.getElementById('chart-arrivals');
-            if (elArr) chartArrivals = echarts.init(elArr);
-
-            const elSat = document.getElementById('chart-saturation');
-            if (elSat) chartSaturation = echarts.init(elSat);
-
-            const elRad = document.getElementById('chart-radar');
-            if (elRad) chartRadar = echarts.init(elRad);
-
-            const elCost = document.getElementById('chart-cost');
-            if (elCost) chartCost = echarts.init(elCost);
-
-            const elGantt = document.getElementById('chart-gantt');
-            if (elGantt) chartGantt = echarts.init(elGantt);
-
-            const elTsp = document.getElementById('chart-tsp-convergence');
-            if (elTsp) chartTspConvergence = echarts.init(elTsp);
-
-            const elMip = document.getElementById('chart-mip-convergence');
-            if (elMip) chartMipConvergence = echarts.init(elMip);
+            chartArrivals = getOrCreateChart('chart-arrivals');
+            chartSaturation = getOrCreateChart('chart-saturation');
+            chartRadar = getOrCreateChart('chart-radar');
+            chartCost = getOrCreateChart('chart-cost');
+            chartGantt = getOrCreateChart('chart-gantt');
+            chartTspConvergence = getOrCreateChart('chart-tsp-convergence');
+            chartMipConvergence = getOrCreateChart('chart-mip-convergence');
 
             // Tab 0 全景对比图表
-            const elCompSat = document.getElementById('chart-comp-saturation');
-            if (elCompSat) chartCompSaturation = echarts.init(elCompSat);
-
-            const elCompRad = document.getElementById('chart-comp-radar');
-            if (elCompRad) chartCompRadar = echarts.init(elCompRad);
-
-            const elCompCost = document.getElementById('chart-comp-cost');
-            if (elCompCost) chartCompCost = echarts.init(elCompCost);
+            chartCompSaturation = getOrCreateChart('chart-comp-saturation');
+            chartCompRadar = getOrCreateChart('chart-comp-radar');
+            chartCompCost = getOrCreateChart('chart-comp-cost');
         };
+
+        const updateAllActiveCharts = () => {
+            initCharts();
+            updateCharts();
+            updateTspChart();
+            updateMipChart();
+            updateSimCharts();
+            resizeCharts();
+        };
+
 
         const updateCharts = () => {
             if (!planResult.value) return;
             const fc = planResult.value.forecast;
             if (!fc || !fc.hourly_schedule) return;
+
+            if (!chartArrivals) chartArrivals = getOrCreateChart('chart-arrivals');
 
             // 1. 到件波峰时变图
             if (chartArrivals) {
@@ -1067,8 +1095,7 @@ createApp({
         const updateTspChart = () => {
             if (!overview.value || !overview.value.trunk_routing) return;
             const tr = overview.value.trunk_routing;
-            const el = document.getElementById('chart-tsp-convergence');
-            if (!chartTspConvergence && el) chartTspConvergence = echarts.init(el);
+            if (!chartTspConvergence) chartTspConvergence = getOrCreateChart('chart-tsp-convergence');
             if (!chartTspConvergence || !tr.convergence_curve) return;
 
             const labels = tr.convergence_curve.map(c => `轮次 ${c.iter}`);
@@ -1102,8 +1129,7 @@ createApp({
         const updateMipChart = () => {
             if (!planResult.value || !planResult.value.layout) return;
             const lo = planResult.value.layout;
-            const el = document.getElementById('chart-mip-convergence');
-            if (!chartMipConvergence && el) chartMipConvergence = echarts.init(el);
+            if (!chartMipConvergence) chartMipConvergence = getOrCreateChart('chart-mip-convergence');
             if (!chartMipConvergence || !lo.convergence_curve) return;
 
             const nodes = lo.convergence_curve.map(c => `Node ${c.node}`);
@@ -1134,6 +1160,15 @@ createApp({
         const updateSimCharts = () => {
             if (!simulationResult.value) return;
             const sim = simulationResult.value;
+
+            if (!chartSaturation) chartSaturation = getOrCreateChart('chart-saturation');
+            if (!chartRadar) chartRadar = getOrCreateChart('chart-radar');
+            if (!chartCost) chartCost = getOrCreateChart('chart-cost');
+            if (!chartGantt) chartGantt = getOrCreateChart('chart-gantt');
+            if (!chartCompSaturation) chartCompSaturation = getOrCreateChart('chart-comp-saturation');
+            if (!chartCompRadar) chartCompRadar = getOrCreateChart('chart-comp-radar');
+            if (!chartCompCost) chartCompCost = getOrCreateChart('chart-comp-cost');
+
 
             // 2. 仿真满柜时序对抗曲线 (#chart-saturation)
             if (chartSaturation && sim.timeline) {
@@ -1172,6 +1207,8 @@ createApp({
                     backgroundColor: 'transparent',
                     legend: { data: ['现状(纯人工)', '优化后人工', '人机协同(推荐)'], textStyle: { color: '#94a3b8' }, bottom: 0 },
                     radar: {
+                        center: ['50%', '44%'],
+                        radius: '60%',
                         indicator: [
                             { name: '时效响应', max: 100 },
                             { name: '工时节约', max: 100 },
@@ -1179,7 +1216,7 @@ createApp({
                             { name: '经济效益', max: 100 },
                             { name: '便民覆盖', max: 100 }
                         ],
-                        axisName: { color: '#94a3b8', fontSize: 11 },
+                        axisName: { color: '#94a3b8', fontSize: 10 },
                         splitArea: { show: false },
                         splitLine: { lineStyle: { color: '#1e293b' } },
                         axisLine: { lineStyle: { color: '#334155' } }
@@ -1366,6 +1403,8 @@ createApp({
                     backgroundColor: 'transparent',
                     legend: { data: ['🔴 现状纯人工 (As-Is)', '🟢 人机协同 (To-Be)'], textStyle: { color: '#94a3b8', fontSize: 10 }, bottom: 0 },
                     radar: {
+                        center: ['50%', '44%'],
+                        radius: '60%',
                         indicator: [
                             { name: '干线集约度', max: 100 },
                             { name: '工时压降', max: 100 },
@@ -1440,16 +1479,22 @@ createApp({
             if (map) map.invalidateSize();
         };
 
-        watch(activeTab, () => {
+        watch(activeTab, (newTab) => {
             nextTick(() => {
-                initCharts();
-                updateCharts();
-                updateTspChart();
-                updateMipChart();
-                updateSimCharts();
-                resizeCharts();
+                updateAllActiveCharts();
                 renderMath();
-                if (map) map.invalidateSize();
+                if (map) {
+                    map.invalidateSize();
+                    if (newTab === 'comparison' || newTab === 'digital-twin') {
+                        fitAllOverview();
+                    } else {
+                        fitCurrentCommunity();
+                    }
+                }
+                setTimeout(() => {
+                    updateAllActiveCharts();
+                    if (map) map.invalidateSize();
+                }, 150);
             });
         });
 
@@ -1465,6 +1510,8 @@ createApp({
 
         return {
             activeTab,
+            viewMode,
+            toggleViewMode,
             schemeMode,
             setSchemeMode,
             loading,
@@ -1498,6 +1545,7 @@ createApp({
             triggerCrisis,
             resizeCharts,
             renderMath,
+            updateAllActiveCharts,
             // 高德相关
             amapConfig,
             showAmapModal,
