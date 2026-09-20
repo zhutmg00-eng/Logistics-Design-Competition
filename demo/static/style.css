@@ -1,42 +1,44 @@
-/* Custom Futuristic Cyber-Logistics Styles */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+/* =========================================================================
+   面向超大城市末端配送协同决策平台 - 现代工业工程控制台样式规范
+   (去AI浮夸赛博化 · 强化对比度 · 100%本地安全字体栈 · 工业级深色质感)
+   ========================================================================= */
 
 body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #080c16;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+    background-color: #0b0f19;
     color: #e2e8f0;
     overflow-x: hidden;
 }
 
 .mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-/* Glassmorphism */
+/* 工业级深色玻璃质感面板 (去除过度发光，强调沉稳与边缘清晰度) */
 .glass-panel {
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(51, 65, 85, 0.5);
+    background: rgba(17, 24, 39, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(51, 65, 85, 0.6);
 }
 
 .glass-panel-glow {
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(14, 165, 233, 0.35);
-    box-shadow: 0 0 20px rgba(14, 165, 233, 0.12);
+    background: rgba(17, 24, 39, 0.94);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(14, 165, 233, 0.4);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
 }
 
-/* Terminal Console Styling */
+/* 运筹控制台与终端样式 */
 .solver-terminal {
     background-color: #030712;
     border: 1px solid #1f2937;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     color: #34d399;
     padding: 0.75rem;
     border-radius: 0.5rem;
     font-size: 0.75rem;
-    line-height: 1.4;
+    line-height: 1.45;
     overflow-y: auto;
     box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
 }
@@ -64,47 +66,49 @@ body {
     font-weight: 700;
 }
 
-/* Math Formula Cards */
+/* 数学模型公式卡片 (去刺眼边框，采用工业级卡片底衬) */
 .math-card {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.7) 100%);
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 0.625rem;
     padding: 0.85rem;
-    transition: all 0.2s ease-in-out;
+    transition: border-color 0.2s ease-in-out;
 }
 
 .math-card:hover {
-    border-color: rgba(56, 189, 248, 0.5);
-    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.12);
+    border-color: rgba(56, 189, 248, 0.4);
 }
 
-/* Decision Variable Matrix Badges */
+/* 决策变量矩阵样式 */
 .matrix-cell-active {
-    background-color: rgba(6, 182, 212, 0.2);
+    background-color: rgba(6, 182, 212, 0.18);
     color: #38bdf8;
-    border: 1px solid rgba(6, 182, 212, 0.5);
+    border: 1px solid rgba(6, 182, 212, 0.45);
     font-weight: 700;
 }
 
 .matrix-cell-zero {
-    background-color: rgba(30, 41, 59, 0.3);
+    background-color: rgba(30, 41, 59, 0.35);
     color: #64748b;
 }
 
-/* Glowing text and borders */
+/* 移除原过度刺眼的 text-shadow 发光效果，替换为清晰的对比度增强 */
 .glow-cyan {
-    text-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
+    color: #38bdf8;
+    font-weight: 700;
 }
 
 .glow-emerald {
-    text-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+    color: #34d399;
+    font-weight: 700;
 }
 
 .glow-amber {
-    text-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+    color: #fbbf24;
+    font-weight: 700;
 }
 
-/* Custom Scrollbars */
+/* 滚动条 */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -120,44 +124,24 @@ body {
     background: #334155;
 }
 
-/* Leaflet Map Dark Styling */
+/* Leaflet 地图深色控制台样式 */
 .leaflet-container {
     background: #0b1120 !important;
 }
 
 .leaflet-popup-content-wrapper {
-    background: rgba(15, 23, 42, 0.95) !important;
+    background: rgba(15, 23, 42, 0.96) !important;
     color: #f1f5f9 !important;
     border: 1px solid #334155;
     border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
 }
 
 .leaflet-popup-tip {
-    background: rgba(15, 23, 42, 0.95) !important;
+    background: rgba(15, 23, 42, 0.96) !important;
 }
 
-/* Pulsing radar dot animation */
-@keyframes pulse-ring {
-    0% {
-        transform: scale(0.9);
-        opacity: 0.9;
-    }
-    50% {
-        transform: scale(1.6);
-        opacity: 0.2;
-    }
-    100% {
-        transform: scale(0.9);
-        opacity: 0.9;
-    }
-}
-
-.pulse-circle {
-    animation: pulse-ring 2.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
-}
-
-/* KaTeX custom sizing in cards */
+/* KaTeX 公式尺寸微调 */
 .katex {
     font-size: 1.05em !important;
 }
@@ -165,9 +149,7 @@ body {
     margin: 0.4em 0 !important;
 }
 
-/* =======================================================
-   Leaflet Map Container & Cyber GIS Vector Engine Styles
-   ======================================================= */
+/* GIS 坐标网格底图 */
 #map-container {
     width: 100% !important;
     height: 100% !important;
@@ -176,19 +158,18 @@ body {
     outline: none;
 }
 
-/* Futuristic CAD / GIS Coordinate Grid Background */
 .cyber-gis-grid {
     background-color: #080c16;
     background-image: 
-        linear-gradient(rgba(14, 165, 233, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(14, 165, 233, 0.08) 1px, transparent 1px),
-        linear-gradient(rgba(14, 165, 233, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(14, 165, 233, 0.02) 1px, transparent 1px);
+        linear-gradient(rgba(14, 165, 233, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14, 165, 233, 0.05) 1px, transparent 1px),
+        linear-gradient(rgba(14, 165, 233, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14, 165, 233, 0.015) 1px, transparent 1px);
     background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
     background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
 }
 
-/* AutoNavi & OSM Domestic Tile Dark Cyberpunk Filters */
+/* 高德与OSM暗色滤镜 */
 .amap-dark-tiles .leaflet-tile {
     filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(92%) saturate(75%);
     -webkit-filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(92%) saturate(75%);
@@ -199,38 +180,35 @@ body {
     -webkit-filter: invert(100%) hue-rotate(180deg) brightness(80%) contrast(95%) saturate(70%);
 }
 
-/* Community Vector Labels & Tooltips */
+/* 社区标签与 Tooltip */
 .community-badge-marker {
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(6, 182, 212, 0.6);
+    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid rgba(6, 182, 212, 0.5);
     border-radius: 6px;
     color: #38bdf8;
     font-size: 11px;
     font-weight: 700;
-    padding: 2px 6px;
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+    padding: 2px 7px;
     white-space: nowrap;
     display: inline-block;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
 }
 
 .community-badge-marker:hover {
     background: rgba(8, 145, 178, 0.95);
     color: #ffffff;
-    box-shadow: 0 0 16px rgba(6, 182, 212, 0.7);
-    transform: scale(1.05);
+    border-color: #38bdf8;
 }
 
 .community-badge-active {
-    background: linear-gradient(135deg, #0891b2, #0284c7) !important;
+    background: #0284c7 !important;
     border: 1px solid #38bdf8 !important;
     color: #ffffff !important;
-    box-shadow: 0 0 18px rgba(6, 182, 212, 0.8) !important;
 }
 
 .leaflet-tooltip-pane .leaflet-tooltip {
-    background: rgba(15, 23, 42, 0.95);
+    background: rgba(15, 23, 42, 0.96);
     border: 1px solid #334155;
     color: #e2e8f0;
     font-size: 11px;
@@ -239,7 +217,6 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
-/* Leaflet Zoom Control Cyber Styling */
 .leaflet-bottom.leaflet-right {
     bottom: 55px !important;
     right: 14px !important;
@@ -266,98 +243,162 @@ body {
 }
 
 /* =======================================================
-   As-Is Baseline vs To-Be Optimized Comparison Styles
+   全景对比卡片 - 工业工程沉稳风格 (去浮夸，保对比度)
    ======================================================= */
 .comparison-card {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.75) 100%);
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    border-radius: 0.85rem;
-    padding: 1rem;
-    transition: all 0.25s ease-in-out;
+    background: rgba(17, 24, 39, 0.75);
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    border-radius: 0.75rem;
+    padding: 0.95rem;
+    transition: border-color 0.2s ease-in-out;
     position: relative;
     overflow: hidden;
 }
 
 .comparison-card:hover {
-    border-color: rgba(56, 189, 248, 0.5);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
+    border-color: rgba(56, 189, 248, 0.45);
 }
 
 .comparison-card-danger {
-    background: linear-gradient(135deg, rgba(30, 15, 20, 0.9) 0%, rgba(45, 20, 30, 0.75) 100%);
+    background: rgba(30, 15, 20, 0.75);
     border: 1px solid rgba(244, 63, 94, 0.35);
 }
 
-.comparison-card-danger:hover {
-    border-color: rgba(244, 63, 94, 0.7);
-    box-shadow: 0 8px 24px rgba(244, 63, 94, 0.2);
-}
-
 .diff-badge-down {
-    background: rgba(16, 185, 129, 0.15);
-    border: 1px solid rgba(16, 185, 129, 0.4);
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
     color: #34d399;
     font-weight: 700;
     padding: 2px 8px;
-    border-radius: 9999px;
+    border-radius: 6px;
+    font-size: 11px;
 }
 
 .diff-badge-up {
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
     color: #f87171;
     font-weight: 700;
     padding: 2px 8px;
-    border-radius: 9999px;
+    border-radius: 6px;
+    font-size: 11px;
 }
 
 .diff-badge-eliminated {
-    background: rgba(6, 182, 212, 0.2);
-    border: 1px solid rgba(6, 182, 212, 0.6);
+    background: rgba(6, 182, 212, 0.15);
+    border: 1px solid rgba(6, 182, 212, 0.45);
     color: #38bdf8;
-    font-weight: 800;
+    font-weight: 700;
     padding: 2px 8px;
-    border-radius: 9999px;
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+    border-radius: 6px;
+    font-size: 11px;
 }
 
-/* Facility Map Badges */
+/* =======================================================
+   数据可信度凭证徽章 [A/B/C/D] - 严谨工程级元数据标签
+   ======================================================= */
+.badge-cred {
+    display: inline-flex;
+    align-items: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: help;
+    transition: all 0.15s ease;
+}
+
+/* A 类: 现场实测/官方权威核算 */
+.badge-cred-a {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    color: #34d399;
+}
+.badge-cred-a:hover {
+    background: rgba(16, 185, 129, 0.28);
+    border-color: #10b981;
+}
+
+/* B 类: 国家标准/行业规范/厂商技术参数 */
+.badge-cred-b {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.45);
+    color: #60a5fa;
+}
+.badge-cred-b:hover {
+    background: rgba(59, 130, 246, 0.28);
+    border-color: #3b82f6;
+}
+
+/* C 类: 运筹模型计算/公式推导衍生 */
+.badge-cred-c {
+    background: rgba(168, 85, 247, 0.15);
+    border: 1px solid rgba(168, 85, 247, 0.45);
+    color: #c084fc;
+}
+.badge-cred-c:hover {
+    background: rgba(168, 85, 247, 0.28);
+    border-color: #a855f7;
+}
+
+/* D 类: 专家经验假设/备用情景估算 */
+.badge-cred-d {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    color: #fbbf24;
+}
+.badge-cred-d:hover {
+    background: rgba(245, 158, 11, 0.28);
+    border-color: #f59e0b;
+}
+
+/* 算法与情景状态按钮精修 */
+.scenario-btn {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+}
+.scenario-btn-active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #38bdf8;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.scenario-btn-inactive {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+.scenario-btn-inactive:hover {
+    color: #e2e8f0;
+    background: #334155;
+}
+
+/* 设施标记点 (清晰、规范) */
 .facility-burst-marker {
-    background: rgba(225, 29, 72, 0.95);
+    background: #e11d48;
     border: 2px solid #fda4af;
     border-radius: 50%;
-    box-shadow: 0 0 16px rgba(244, 63, 94, 0.9);
-    animation: pulse-ring 1.8s infinite;
 }
 
 .facility-shield-marker {
-    background: rgba(16, 185, 129, 0.95);
+    background: #10b981;
     border: 2px solid #6ee7b7;
     border-radius: 50%;
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.8);
 }
 
-/* Scheme Switcher Animation */
-@keyframes glow-border {
-    0% { border-color: rgba(6, 182, 212, 0.4); }
-    50% { border-color: rgba(6, 182, 212, 0.9); }
-    100% { border-color: rgba(6, 182, 212, 0.4); }
-}
-
-.scheme-active-glow {
-    animation: glow-border 2s infinite ease-in-out;
-}
-
-/* Wide Mode & Responsive Dashboard Styling */
-.wide-mode-content {
-    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
+/* 动效：柔和淡入 */
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(6px);
+        transform: translateY(4px);
     }
     to {
         opacity: 1;
@@ -366,49 +407,112 @@ body {
 }
 
 .animate-fadeIn {
-    animation: fadeIn 0.25s ease-out forwards;
+    animation: fadeIn 0.2s ease-out forwards;
 }
 
-/* Sticky table header polish */
-.sticky-table-head th {
+/* 工业级表格规范：粘性表头、斑马纹与悬停高亮 */
+.industrial-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.industrial-table th {
     position: sticky;
     top: 0;
     z-index: 10;
-    backdrop-filter: blur(8px);
+    background-color: #1e293b;
+    color: #cbd5e1;
+    font-weight: 600;
+    border-bottom: 1px solid #334155;
+    padding: 0.5rem 0.75rem;
 }
 
+.industrial-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+}
+
+.industrial-table tbody tr:nth-child(even) {
+    background-color: rgba(30, 41, 59, 0.25);
+}
+
+.industrial-table tbody tr:hover {
+    background-color: rgba(51, 65, 85, 0.4) !important;
+}
+
+/* 轻量级现代 Toast 提示组件 */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.toast-item {
+    pointer-events: auto;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.toast-success {
+    background: #064e3b;
+    border: 1px solid #10b981;
+    color: #6ee7b7;
+}
+
+.toast-warning {
+    background: #78350f;
+    border: 1px solid #f59e0b;
+    color: #fde68a;
+}
+
+.toast-error {
+    background: #7f1d1d;
+    border: 1px solid #ef4444;
+    color: #fca5a5;
+}
+
+.toast-info {
+    background: #0c4a6e;
+    border: 1px solid #0284c7;
+    color: #7dd3fc;
+}
+
+/* 响应式优化 (避免移动端粗暴隐藏核心控制功能) */
 @media (max-width: 767px) {
     .app-header {
-        height: 3.5rem !important;
-        padding-left: 0.75rem !important;
-        padding-right: 0.75rem !important;
-    }
-
-    .app-header h1 {
-        font-size: 0.75rem !important;
-    }
-
-    .brand-badge,
-    .brand-subtitle,
-    .global-controls,
-    .secondary-command-bar,
-    .map-panel {
-        display: none !important;
-    }
-
-    .content-panel {
-        width: 100% !important;
-        max-width: none !important;
-        padding: 0.75rem !important;
-    }
-
-    .content-panel .flex.justify-between.items-center,
-    .content-panel .flex.justify-between.items-start {
+        height: auto !important;
+        padding: 0.5rem 0.75rem !important;
         flex-wrap: wrap;
         gap: 0.5rem;
     }
 
-    .comparison-card {
-        padding: 0.75rem;
+    .secondary-command-bar {
+        height: auto !important;
+        padding: 0.5rem 0.75rem !important;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .map-panel {
+        width: 100% !important;
+        height: 350px !important;
+    }
+
+    .content-panel {
+        width: 100% !important;
+        padding: 0.75rem !important;
     }
 }

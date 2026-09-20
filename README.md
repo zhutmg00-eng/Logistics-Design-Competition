@@ -43,6 +43,34 @@
 
 ![现状基准 (As-Is) vs 协同优化 (To-Be) 综合效益多维对比图](docs/images/models/fig4_asis_vs_tobe_evaluation.png)
 
+### 2.4 多尺度社区配送需求概率估计与情景模拟模型 (第5章学术图集)
+针对城市末端配送需求在社区宏观尺度、楼栋微观尺度与日内时序尺度的多维异质性，构建了基于贝叶斯层次 Gamma-Poisson / Dirichlet-Multinomial 的概率生成与情景推演体系：
+
+#### 图 5-1 多尺度社区配送需求概率估计与情景模拟总体框架
+构建“先验输入—贝叶斯层次生成—多尺度时空分解—蒙特卡洛分位数推演—运筹优化底座输出”完整五层数理架构。
+
+![图 5-1 多尺度社区配送需求概率估计与情景模拟总体框架](docs/images/demand/fig5_1_demand_estimation_framework.png)
+
+#### 图 5-2 核心随机变量与贝叶斯层次概率生成机制
+展示 $\lambda_i \sim \mathrm{Gamma}(\alpha, \beta)$ 先验与共轭后验演变、日期情景乘数与日内波动项、泊松-Gamma 负二项超松弛分布以及 6 时段 Dirichlet-Multinomial 比例分布。
+
+![图 5-2 核心随机变量与贝叶斯层次概率生成机制图](docs/images/demand/fig5_2_probabilistic_generative_mechanism.png)
+
+#### 图 5-3 五个案例社区日需求情景估计与分位数分布对比
+全网 4316 户 5 大社区常态与大促 P50/P80/P90 负荷对比，揭示户数线性驱动机制（$R^2=0.999$）与 1.75 倍大促稳定放大效应。
+
+![图 5-3 五个案例社区日需求情景估计与分位数分布对比图](docs/images/demand/fig5_3_five_communities_scenario_demand.png)
+
+#### 图 5-4 五社区 6 时段分时需求演变与峰值负荷对比
+展现 08:00—22:00 连续 6 时段到件波动，重点校核 17:00—20:00 晚高峰负荷集中度（亦城茗苑大促 P80 达 806 件/3小时，作为消灭爆柜的关键输入）。
+
+![图 5-4 五社区 6 时段分时需求演变与峰值负荷对比图](docs/images/demand/fig5_4_temporal_demand_profile_6slots.png)
+
+#### 图 5-5 亦城茗苑多维核心参数灵敏度矩阵与响应分析
+对亦城茗苑开展 $3 \times 3$ 参数响应热力矩阵测试，测定需求率先验弹性 $E_\mu = 1.01$ 与大促乘数弹性 $E_S = 1.04$，验证模型平衡稳健性。
+
+![图 5-5 亦城茗苑多维核心参数灵敏度矩阵与响应分析](docs/images/demand/fig5_5_parameter_sensitivity_matrix.png)
+
 ---
 
 ## 3. 核心运筹优化模型与数学表达
@@ -62,16 +90,22 @@ $$x_{ij} \in \{0, 1\}, \quad u_i \in \mathbb{R}$$
 
 求解采用2-Opt局部搜索启发式算法。普通日统一评价结果为S0独立往返24.84 km、S1/S2巡回13.42 km，改善率46.0%；算法输出仅标记为可行启发式解，不声称全局最优。
 
-### 3.2 M5 多尺度需求预测与二项 Logit 服务模式选择模型
-结合社区宏观户数强度与微观人群属性，基于随机效用最大化（RUM）理论建立离散选择模型，划分送货上门（Doorstep Delivery）与智能柜自提（Locker Self-pickup）需求：
+### 3.2 M5 贝叶斯层次概率需求估计与多尺度分解模型
+详见专门技术文档：[第5章 多尺度社区配送需求概率估计与情景模拟模型](docs/第5章_多尺度社区配送需求概率估计与情景模拟模型.md)。
 
-$$V_{\text{door}, i} = \beta_{0, \text{door}} + \beta_{\text{age}} \cdot \text{AgeRatio}_i + \beta_{\text{stair}} \cdot (1 - \text{HighRise}_i)$$
+模型通过贝叶斯共轭更新机制，将社区入住户数 $H_i$、户均需求率先验 $\lambda_i \sim \mathrm{Gamma}(\alpha, \beta)$、日期情景乘数 $S_t^s$ 与日内随机波动 $\epsilon_{it}$ 结合：
 
-$$V_{\text{locker}, i} = \beta_{0, \text{locker}} - \beta_{\text{walk}} \cdot \frac{D_{\text{walk}, i}}{100} + \beta_{\text{flex}} \cdot \text{YoungRatio}_i$$
+$$\Lambda_{it}^s = H_i \cdot \lambda_i \cdot \phi_{c(i)} \cdot S_t^s \cdot \epsilon_{it}$$
+
+$$D_{it}^s \sim \mathrm{Poisson}(\Lambda_{it}^s) \implies D_i \sim \mathrm{NegBin}\left(r = \alpha, \; p = \frac{\beta}{\beta + H_i \phi S}\right)$$
+
+结合时段 Dirichlet-Multinomial 与服务方式二项 Logit 模型：
+
+$$[D_{it1}, \dots, D_{it6}] \sim \mathrm{Multinomial}(D_{it}^s, \; p_{it}), \quad p_{it} \sim \mathrm{Dirichlet}(\kappa \bar{p})$$
 
 $$P(\text{door} \mid i) = \frac{\exp(V_{\text{door}, i})}{\exp(V_{\text{door}, i}) + \exp(V_{\text{locker}, i})}, \quad P(\text{locker} \mid i) = 1 - P(\text{door} \mid i)$$
 
-微观楼栋层快件量按户数与建筑形态权重守恒拆分，并生成 08:00 至 21:00 典型 6 时段分时到件负荷曲线。
+通过蒙特卡洛抽样（$R=10000$）输出各社区常态日与促销日的 P50、P80、P90 经验分位数，直接作为 M6 选址定容、M2/M3 人机协同与 M8 动态推演的统一输入底座。
 
 ### 3.3 M6 容量受限选址定容混合整数规划模型 (Capacitated Facility Location & Sizing MIP)
 针对传统单柜配置引发的高峰期严重满柜瓶颈，建立设施激活、副柜扩容与楼栋指派的多目标 MIP 模型：

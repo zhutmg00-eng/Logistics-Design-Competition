@@ -821,11 +821,13 @@ class EvaluationEngine:
 
         def item(code: str, label: str, unit: str) -> Dict[str, Any]:
             row = comp[code]
-            base, optimized = row["S0"], row["S2"]
+            base, s1_val, optimized = row["S0"], row.get("S1"), row["S2"]
             return {
-                "label": label, "unit": unit, "baseline": base, "optimized": optimized,
+                "label": label, "unit": unit, "baseline": base, "s1": s1_val, "optimized": optimized,
                 "diff": round(optimized - base, 2) if isinstance(base, (int, float)) and isinstance(optimized, (int, float)) else None,
-                "diff_pct": row.get("S2_vs_S0_pct"), "desc": "由统一评价结果自动生成",
+                "diff_pct": row.get("S2_vs_S0_pct"),
+                "diff_s1_pct": row.get("S1_vs_S0_pct"),
+                "desc": "由统一评价结果自动生成",
             }
 
         full = comp["S05"]
@@ -838,12 +840,14 @@ class EvaluationEngine:
             "completion_rate": item("B01", "需求承载率", "%"),
             "full_risk_count": {
                 "label": "满柜风险社区数", "unit": "个",
-                "baseline": full["S0"]["community_count"], "optimized": full["S2"]["community_count"],
+                "baseline": full["S0"]["community_count"],
+                "s1": full["S1"]["community_count"],
+                "optimized": full["S2"]["community_count"],
                 "diff": full["S2"]["community_count"] - full["S0"]["community_count"],
                 "diff_pct": self.improvement_rate(float(full["S0"]["community_count"]), float(full["S2"]["community_count"])),
                 "desc": "按动态占用与释放过程计算",
             },
             "annual_cost": item("C02", "年现金运营成本", "元"),
             "annual_carbon": item("G02", "年运营碳排放量", "kgCO2e"),
-            "payback_years": {"label": "静态投资回收期", "unit": "年", "value": comp["C06"]["S2"], "desc": "年度现金节约为正时计算"},
+            "payback_years": {"label": "静态投资回收期", "unit": "年", "s1": comp["C06"]["S1"], "value": comp["C06"]["S2"], "desc": "年度现金节约为正时计算"},
         }

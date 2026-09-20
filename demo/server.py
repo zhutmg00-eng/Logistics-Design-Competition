@@ -98,11 +98,32 @@ def get_overview():
     official = evaluation_engine.load_results()
     trunk_result["baseline_dist_km"] = official["results"]["S0-N"]["network_metrics"]["E01"]
     trunk_result["tour_dist_km"] = official["results"]["S2-N"]["network_metrics"]["E01"]
+    credibility_tags = {
+        "E01": {"tag": "D", "type": "情景估算", "desc": "WGS84直线距离×1.25备用绕行系数"},
+        "E02": {"tag": "D", "type": "情景估算", "desc": "社区内步巡备用绕行系数1.30"},
+        "E06": {"tag": "C", "type": "模型推导", "desc": "甘特图时序时空强同步推演"},
+        "E07": {"tag": "C", "type": "模型推导", "desc": "完成件量 / 人工总工时"},
+        "R01": {"tag": "C", "type": "模型推导", "desc": "纯人工/人机协同工时模型累计"},
+        "S01": {"tag": "D", "type": "情景估算", "desc": "Haversine加权平均取件距离"},
+        "S03": {"tag": "D", "type": "情景估算", "desc": "150m便民红线自提需求覆盖比例"},
+        "S04": {"tag": "C", "type": "模型推导", "desc": "21:00动态占用推演未完成件量"},
+        "S05": {"tag": "C", "type": "模型推导", "desc": "未截断动态占用满柜时长与溢出件量"},
+        "S06": {"tag": "C", "type": "模型推导", "desc": "峰值柜体占用率推演"},
+        "C02": {"tag": "C", "type": "模型推导", "desc": "年现金运营成本OPEX"},
+        "C03": {"tag": "C", "type": "模型推导", "desc": "年化总成本 (OPEX+折旧)"},
+        "C04": {"tag": "C", "type": "模型推导", "desc": "年化总成本 / 年完成件量"},
+        "C06": {"tag": "C", "type": "模型推导", "desc": "增量CAPEX / 年度现金节约"},
+        "G02": {"tag": "A", "type": "实测标准", "desc": "国网电价与生态环境部全国电力碳足迹因子0.6205"},
+        "G04": {"tag": "C", "type": "模型推导", "desc": "年运营碳排放 / 年完成件量"},
+        "B01": {"tag": "C", "type": "模型推导", "desc": "完成件量 / 到达件量承载率"}
+    }
     return {
         "communities": communities,
         "trunk_routing": trunk_result,
         "facilities_status": facilities_status,
-        "comparison_metrics": GLOBAL_COMPARISON_METRICS,
+        "comparison_metrics": evaluation_engine.legacy_comparison_metrics(),
+        "comparison_normal": official.get("comparison_normal", {}),
+        "credibility_tags": credibility_tags,
         "evaluation": {
             "input_version": official["input_version"],
             "normal_day_total": official["frozen_input_summary"]["normal_day_total"],
@@ -129,9 +150,40 @@ class CalculationRequest(BaseModel):
 @app.post("/api/calculate")
 def calculate_plan(req: CalculationRequest):
     cid = req.community_id
-    summary = data_manager.get_community_summary(cid)
-    if not summary["info"] and cid not in ["CUSTOM", "NEW"]:
-        raise HTTPException(status_code=404, detail="Community not found")
+    if cid == "ALL":
+        communities = data_manager.get_all_overview()
+        total_households = sum(c["households"] for c in communities)
+        all_demand_nodes = []
+        all_facilities = []
+        all_road_nodes = []
+        all_road_edges = []
+        for c in communities:
+            s = data_manager.get_community_summary(c["id"])
+            all_demand_nodes.extend(s["demand_nodes"])
+            all_facilities.extend(s["facilities"])
+            all_road_nodes.extend(s["road_nodes"])
+            all_road_edges.extend(s["road_edges"])
+
+        summary = {
+            "info": {
+                "id": "ALL",
+                "name": "亦庄示范区 (全域5社区底座)",
+                "households": total_households,
+                "center": [39.792, 116.495],
+                "polygon": []
+            },
+            "demand_nodes": all_demand_nodes,
+            "facilities": all_facilities,
+            "road_nodes": all_road_nodes,
+            "road_edges": all_road_edges,
+            "total_households": total_households,
+            "total_daily_pkgs": sum(c["daily_pkgs"] for c in communities),
+            "total_peak_pkgs": sum(c["peak_pkgs"] for c in communities)
+        }
+    else:
+        summary = data_manager.get_community_summary(cid)
+        if not summary["info"] and cid not in ["CUSTOM", "NEW"]:
+            raise HTTPException(status_code=404, detail="Community not found")
 
     households = req.custom_households or summary["total_households"] or 500
     custom_params = {}
@@ -321,6 +373,31 @@ def get_all_math_models():
                     {"name": "无人车单趟次物理容量上限约束", "formula": r"\sum_{i \in \mathcal{N}} q_i \cdot y_{ik} \le \text{CAP} \; (400\,\text{件}), \quad \forall k \in \mathcal{K}"},
                     {"name": "两阶段超时分段惩罚机制", "formula": r"C_i^{\text{pen}} = \begin{cases} 0 & t_i^k \le b_i \\ c_1(t_i^k-b_i) & b_i < t_i^k \le b'_i \\ c_1(b'_i-b_i)+c_2(t_i^k-b'_i) & t_i^k > b'_i \end{cases}"},
                     {"name": "快递员步巡上门单人工时红线", "formula": r"T_{\text{walk}} + T_{\text{service}} \le T_{\max} \; (480\,\text{min})"}
+                ]
+            },
+            {
+                "code": "M2-ISA",
+                "chapter": "第7章 7.3",
+                "name": "两阶段容量聚类与改进模拟退火协同路径规划模型 (Capacitated K-Means & ISA)",
+                "type": "两阶段启发式运筹算法 (Cluster-First, Route-Second)",
+                "objective": r"\min Z = \sum_{k=1}^K \left[ \sum_{i=1}^{M_k} \sum_{j=1}^{M_k} \frac{d_{ij} \cdot \kappa}{v_0 \cdot \eta(t_k)} x_{ijk} + \tau_{\text{drop}} \cdot n_k \right] + \omega \sum_{u, v \in \mathcal{B}_{\text{door}}} \frac{d_{uv}^{\text{walk}}}{v_{\text{walk}}} w_{uv}",
+                "description": "遵循“先区域聚类，后路径寻优”运筹优化范式。第一阶段采用带无人车单趟容量约束（CAP=400件）的 K-Means 自适应空间划分；第二阶段针对各微网格采用引入时变交通阻抗折减因子 eta(t) 与复合邻域结构（2-Opt/Swap/Or-Opt）的改进模拟退火算法进行协同路径寻优。",
+                "variables": [
+                    {"symbol": "K", "type": "自适应整数", "meaning": "聚类簇数 / 所需无人车发车班次总数"},
+                    {"symbol": "Z_j", "type": "空间坐标向量", "meaning": "第 j 个微网格簇质心空间坐标"},
+                    {"symbol": "x_{ijk}", "type": "0-1 决策变量", "meaning": "车次 k 无人车是否从节点 i 驶往节点 j"},
+                    {"symbol": "w_{uv}", "type": "0-1 决策变量", "meaning": "快递员步巡是否从上门楼栋 u 步行至楼栋 v"},
+                    {"symbol": r"\eta(t)", "type": "时变连续变量", "meaning": "时变路网速度折减因子 (早晚高峰 0.85~0.90，平峰 1.0)"},
+                    {"symbol": "T", "type": "连续状态变量", "meaning": "模拟退火系统温度 (初始 1000.0, 终止 0.005)"}
+                ],
+                "constraints": [
+                    {"name": "聚类簇数自适应下界公式", "formula": r"K = \max\left( \left\lceil \sqrt{\frac{N}{2}} \right\rceil + 2, \; \left\lceil \frac{\sum_{i=1}^N q_i}{\text{CAP}} \right\rceil \right)"},
+                    {"name": "单车次物理容量硬约束", "formula": r"\sum_{i \in S_j} q_i \le \text{CAP} \; (400\,\text{件}), \quad \forall j = 1, \dots, K"},
+                    {"name": "考虑非机动车道绕行修正距离", "formula": r"d(i, j) = 2 R \arcsin\left(\sqrt{\sin^2\left(\frac{\Delta \phi}{2}\right) + \cos \phi_i \cos \phi_j \sin^2\left(\frac{\Delta \lambda}{2}\right)}\right) \cdot \kappa \; (\kappa=1.30)"},
+                    {"name": "Van Laarhoven & Aarts 几何降温准则", "formula": r"T_{k+1} = \alpha T_k, \quad \alpha = 0.95, \; T_0 = 1000.0^\circ\text{C}, \; \varepsilon = 0.005"},
+                    {"name": "Metropolis 状态转移准则", "formula": r"P(\text{Accept } X') = \begin{cases} 1, & \Delta Z < 0 \\ \exp(-\Delta Z / T), & \Delta Z \ge 0 \end{cases}"},
+                    {"name": "复合邻域结构算子扰动分布", "formula": r"P_{\text{op}} = \{ \text{2-Opt}: 55\%, \; \text{Swap}: 30\%, \; \text{Or-Opt}: 15\% \}"},
+                    {"name": "动态交通阻抗折减", "formula": r"v(t) = v_0 \cdot \eta(t), \quad v_0 = 12.0\,\text{km/h}, \; \eta \in [0.85, 1.00]"}
                 ]
             },
             {
