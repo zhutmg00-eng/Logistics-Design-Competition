@@ -280,6 +280,50 @@ const app = createApp({
             }
         ]);
 
+        // 第7章 无人配送与人工协同运行优化图集 (Chapter 7 Publication Figures)
+        const operationFigures = ref([
+            {
+                id: 'fig7_1',
+                title: '图 7-1 基于网络模型输出的协同运行优化总体框架与多主体协同作业流程泳道图',
+                subtitle: 'Collaborative Operational Framework & Multi-Agent Swimlane Workflow',
+                png: '/static/images/operation/fig7_1_collaborative_framework_and_swimlane.png',
+                svg: '/static/images/operation/fig7_1_collaborative_framework_and_swimlane.svg',
+                badge: '第7章 · 协同框架',
+                summary: '构建“路网加权图构建—Dijkstra最短通行时间—CVRP路径字典序优化—运力排班—资源兜底”六步运行决策框架，结合接驳点/无人车/智能柜/配送员4主体泳道图与异常回流机制。',
+                tags: ['6步决策流', '4主体泳道图', '人机协同分工', '异常柔性兜底']
+            },
+            {
+                id: 'fig7_2',
+                title: '图 7-2 多主体分散配送 vs 共同配送机制、鹿鸣苑节点路网映射及 Dijkstra 最短通行时间矩阵',
+                subtitle: 'Decentralized vs. Joint Co-delivery, C02 Mapping & Dijkstra Heatmap',
+                png: '/static/images/operation/fig7_2_decentralized_vs_joint_and_c02_dijkstra.png',
+                svg: '/static/images/operation/fig7_2_decentralized_vs_joint_and_c02_dijkstra.svg',
+                badge: '共同配送 · 路网拓扑',
+                summary: '对比多主体重复进区里程与共同配送集约化单一车次；展示鹿鸣苑接驳点、智能柜、住宅节点在336条道路边的精确映射；输出Dijkstra真实路网最短时间热力矩阵。',
+                tags: ['重复里程消除', '路网节点映射', 'Dijkstra矩阵', '装载率90%-98%']
+            },
+            {
+                id: 'fig7_3',
+                title: '图 7-3 五社区配送批次对比、装载率基准线、C04高峰7批次载货量不可拆分性验证及车辆容量敏感性分析',
+                subtitle: 'Batches Benchmark, Load Rates, C04 Non-splittable Validation & Capacity Sensitivity',
+                png: '/static/images/operation/fig7_3_routing_batches_loads_and_sensitivity.png',
+                svg: '/static/images/operation/fig7_3_routing_batches_loads_and_sensitivity.svg',
+                badge: '批次装载 · 运力刚性',
+                summary: '普通日全网8批次增至高峰15批次；普通日大规模社区装载率达90%-98%；严格验证C04因4个特大节点不可拆分性强制7批次（非理论6批次）；验证400->450件扩容显著收益。',
+                tags: ['普通8批/高峰15批', '不可拆分性验证', 'C04强约束7批', '450件基准容量']
+            },
+            {
+                id: 'fig7_4',
+                title: '图 7-4 亦城茗苑普通日与高峰日路径空间对比、五社区工作负荷与电耗核算及异常恢复闭环机制',
+                subtitle: 'C04 Route Evolution, Workload & Battery Consumption, Contingency Closed Loop',
+                png: '/static/images/operation/fig7_4_c04_routes_workload_and_contingency.png',
+                svg: '/static/images/operation/fig7_4_c04_routes_workload_and_contingency.svg',
+                badge: '空间拓扑 · 异常自愈',
+                summary: '空间直观呈现C04普通日3条闭合环线向高峰日7条放射/环线拓扑演变；核算五社区单车工作量（最高107.5min仅占8h工时的22.4%）与电耗（最大5.6%无需日间换电）；提出8类异常快速恢复闭环。',
+                tags: ['C04拓扑演变', '单车负荷<110min', '全日电耗<5.6%', '8类异常闭环']
+            }
+        ]);
+
         const showImageModal = ref(false);
         const activeImage = ref(academicFigures.value[0]);
         const openImagePreview = (fig) => {
@@ -2000,6 +2044,7 @@ const app = createApp({
             academicFigures,
             demandFigures,
             networkFigures,
+            operationFigures,
             showImageModal,
             activeImage,
             openImagePreview,
