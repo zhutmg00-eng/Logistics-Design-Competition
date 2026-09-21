@@ -32,7 +32,23 @@ const app = createApp({
             }, duration);
         };
 
-        const comparisonMetric = (key) => overview.value?.comparison_metrics?.[key] || null;
+        const metricAliasMap = {
+            'walking_distance': 'courier_walk_distance',
+            'unserved_parcels': 'unfinished_packages',
+            'E01': 'trunk_distance',
+            'E02': 'courier_walk_distance',
+            'R01': 'labor_hours',
+            'S01': 'coverage_rate',
+            'S04': 'unfinished_packages',
+            'S06': 'completion_rate',
+            'C02': 'annual_cost',
+            'G02': 'annual_carbon',
+            'C06': 'payback_years'
+        };
+        const comparisonMetric = (key) => {
+            const resolvedKey = metricAliasMap[key] || key;
+            return overview.value?.comparison_metrics?.[resolvedKey] || null;
+        };
         const metricValue = (key, side, divisor = 1, digits = 1) => {
             const metric = comparisonMetric(key);
             let value = null;
@@ -217,6 +233,50 @@ const app = createApp({
                 badge: '敏感性 · 弹性系数',
                 summary: '针对亦城茗苑开展 3×3 参数响应热力矩阵测试，测定需求率先验弹性 E_μ=1.01 与大促乘数弹性 E_S=1.04，验证模型平衡稳健性。',
                 tags: ['3×3响应矩阵', '单位弹性 E=1.0', '波动鲁棒性', '基准点 2156件']
+            }
+        ]);
+
+        // 第4章 末端配送网络三阶段协同优化模型学术图集 (Chapter 4 Publication Figures)
+        const networkFigures = ref([
+            {
+                id: 'fig4_1',
+                title: '图 4-1 末端配送网络三阶段协同优化模型框架与平台调用逻辑',
+                subtitle: 'Three-Stage Terminal Delivery Network Optimization Framework & Platform Pipeline',
+                png: '/static/images/network/fig4_1_network_model_framework.png',
+                svg: '/static/images/network/fig4_1_network_model_framework.svg',
+                badge: '第4章 · 总体框架',
+                summary: '构建覆盖规模确定（Stage 1）、P-中值选址与需求分配（Stage 2）、上下游供货网络优化（Stage 3）及数字决策平台秒级链式调用完整架构。',
+                tags: ['三阶段选址', 'P-中值模型', 'HFLAP', '平台实时匹配']
+            },
+            {
+                id: 'fig4_2',
+                title: '图 4-2 五案例社区末端设施—需求节点服务可行关系与标准化距离热力矩阵',
+                subtitle: 'Five Communities Service Feasibility Matrix & Normalized Distance Heatmap',
+                png: '/static/images/network/fig4_2_service_feasibility_heatmap.png',
+                svg: '/static/images/network/fig4_2_service_feasibility_heatmap.svg',
+                badge: '路网可达 · 可行域约束',
+                summary: '基于社区内部实际路网最短距离与服务半径限制，构建 5 大社区设施—需求节点标准化距离热力矩阵，提前剔除不可达组合，保障求解可行性。',
+                tags: ['路网最短路径', '标准化距离', '硬可行域', '服务半径']
+            },
+            {
+                id: 'fig4_3',
+                title: '图 4-3 五案例社区优化后末端配送网络拓扑结构图',
+                subtitle: 'Five Communities Optimized Terminal Delivery Network Topology',
+                png: '/static/images/network/fig4_3_five_communities_network_topology.png',
+                svg: '/static/images/network/fig4_3_five_communities_network_topology.svg',
+                badge: '空间拓扑 · 服务划分',
+                summary: '全景呈现梅园双极自提、鹿鸣苑 3 号楼新增柜、天华园存量重组、亦城茗苑与听涛雅苑出入口无人配送接驳枢纽的空间拓扑与服务划分。',
+                tags: ['网络拓扑', '服务边界重构', '新增104格柜', '入口级接驳']
+            },
+            {
+                id: 'fig4_4',
+                title: '图 4-4 五社区末端设施容量—负荷对比及优化前后关键指标综合评价',
+                subtitle: 'Facility Capacity vs. Load Benchmark & Multi-metric Comprehensive Evaluation',
+                png: '/static/images/network/fig4_4_facility_capacity_and_optimization.png',
+                svg: '/static/images/network/fig4_4_facility_capacity_and_optimization.svg',
+                badge: '容量负荷 · 四大范式',
+                summary: '展示设施容量与需求负荷柱状对比（鹿鸣苑 C02-F03 利用率 94.2%）、现状 vs 优化后全网容量、加权平均服务距离及四类典型社区优化范式评估卡片。',
+                tags: ['利用率 94.2%', '平均服务距离 118m', '消除爆柜', '四类优化范式']
             }
         ]);
 
@@ -581,6 +641,7 @@ const app = createApp({
                     nextTick(() => {
                         updateCharts();
                         renderMath();
+                    });
                     showToast(`已成功接入并规划实景社区: ${data.community_name}`, 'success');
                 } else {
                     showToast(data.info || '高德解析失败，请检查Key', 'error');
@@ -1938,6 +1999,7 @@ const app = createApp({
             // 学术级图谱相关
             academicFigures,
             demandFigures,
+            networkFigures,
             showImageModal,
             activeImage,
             openImagePreview,

@@ -502,56 +502,204 @@
                     <div class="glass-panel p-4 rounded-xl space-y-3">
                         <div class="flex justify-between items-center">
                             <h3 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                                <span>📋</span> 现状纯人工模式 vs 优化后人机协同 作业模式多维全景对比表
+                                <span>📋</span> 现状基准 (S0) vs 网络设施优化 (S1) vs 人机协同推荐 (S2) 作业模式多维全景对比表
                             </h3>
-                            <span class="text-xs text-slate-400">全流程机制对比</span>
+                            <span class="text-xs text-slate-400">全流程机理与凭证对比</span>
                         </div>
                         <div class="overflow-x-auto rounded-lg border border-slate-800">
                             <table class="industrial-table text-xs">
                                 <thead>
                                     <tr>
-                                        <th class="w-28">作业维度</th>
-                                        <th class="text-rose-300">🔴 现状纯人工作业模式 (As-Is)</th>
-                                        <th class="text-emerald-300">🟢 优化人机协同作业模式 (To-Be)</th>
-                                        <th class="text-cyan-300 w-48">🚀 优化成效与系统提升</th>
+                                        <th class="w-32">作业维度与口径代码</th>
+                                        <th class="text-rose-300">🔴 S0 现状基准 (As-Is)</th>
+                                        <th class="text-amber-300">🟡 S1 网络设施优化 (Facility Only)</th>
+                                        <th class="text-emerald-300">🟢 S2 人机协同推荐 (To-Be)</th>
+                                        <th class="text-cyan-300 w-44">🚀 优化成效与系统提升</th>
                                     </tr>
                                 </thead>
                                 <tbody class="text-slate-300 divide-y divide-slate-800">
                                     <tr>
-                                        <td class="font-bold text-slate-200">1. 干线运输拓扑</td>
-                                        <td>HUB 向 5 社区独立往返，{{ metricValue('trunk_distance', 'baseline', 1, 2) }} km/日</td>
-                                        <td>S1/S2 采用同一巡回干线，{{ metricValue('trunk_distance', 'optimized', 1, 2) }} km/日</td>
-                                        <td class="font-bold text-emerald-400">{{ improvementText('trunk_distance') }}</td>
+                                        <td>
+                                            <div class="font-bold text-slate-200">1. 干线运输拓扑</div>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 mono">
+                                                <span>E01 里程</span>
+                                                <span class="badge-cred badge-cred-a" :title="credibilityTag('E01').desc">[A 实测]</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>HUB 向 5 社区独立往返</div>
+                                            <div class="font-bold text-rose-400 mono mt-0.5">{{ metricValue('trunk_distance', 's0', 1, 2) }} km/日</div>
+                                        </td>
+                                        <td>
+                                            <div>M1 统一巡回干线</div>
+                                            <div class="font-bold text-amber-400 mono mt-0.5">{{ metricValue('trunk_distance', 's1', 1, 2) }} km/日</div>
+                                            <div class="text-[10px] text-amber-300">{{ improvementS1Text('trunk_distance') }}</div>
+                                        </td>
+                                        <td>
+                                            <div>M1 统一巡回干线</div>
+                                            <div class="font-bold text-emerald-400 mono mt-0.5">{{ metricValue('trunk_distance', 's2', 1, 2) }} km/日</div>
+                                            <div class="text-[10px] text-emerald-300">{{ improvementText('trunk_distance') }}</div>
+                                        </td>
+                                        <td class="font-semibold text-cyan-300">
+                                            消除重复折返，里程下降 46.0%，年干线燃油减碳约 3.9 吨
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td class="font-bold text-slate-200">2. 智能柜末端定容</td>
-                                        <td>单柜静态容量受限，自提件峰值导致满柜外溢，未覆盖楼栋多</td>
-                                        <td>S1/S2 按 150m 便民红线与 P20 动态峰值科学定容配比副柜</td>
-                                        <td class="font-bold text-emerald-400">风险社区 {{ comparisonMetric('full_risk_count')?.baseline ?? '—' }} ➔ {{ comparisonMetric('full_risk_count')?.optimized ?? '—' }}</td>
+                                        <td>
+                                            <div class="font-bold text-slate-200">2. 智能柜末端定容</div>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 mono">
+                                                <span>S03 满柜风险</span>
+                                                <span class="badge-cred badge-cred-c" :title="credibilityTag('S03').desc">[C 模型]</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>单柜静态容量受限，满柜外溢严重</div>
+                                            <div class="font-bold text-rose-400 mono mt-0.5">风险社区 5 处</div>
+                                        </td>
+                                        <td>
+                                            <div>按 150m 便民红线与峰值定容扩容</div>
+                                            <div class="font-bold text-amber-400 mono mt-0.5">风险社区 0 处</div>
+                                            <div class="text-[10px] text-amber-300">外溢消除 100%</div>
+                                        </td>
+                                        <td>
+                                            <div>MIP 科学定容并对接无人车补货</div>
+                                            <div class="font-bold text-emerald-400 mono mt-0.5">风险社区 0 处</div>
+                                            <div class="text-[10px] text-emerald-300">外溢消除 100%</div>
+                                        </td>
+                                        <td class="font-semibold text-emerald-400">
+                                            满柜外溢彻底消除，构建 150m 便民服务圈
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td class="font-bold text-slate-200">3. 社区微循环运力</td>
-                                        <td>快递员开燃油三轮进小区，人车混行狭窄道路，低速怠速排放尾气</td>
-                                        <td>无人配送车依据 M2 时空网格自主巡航，自动泊车对接各智能柜交付</td>
-                                        <td class="font-bold text-cyan-300">消除尾气与噪音，实现智慧微网格</td>
+                                        <td>
+                                            <div class="font-bold text-slate-200">3. 社区微循环运力</div>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 mono">
+                                                <span>E02/E03 模式</span>
+                                                <span class="badge-cred badge-cred-b" :title="credibilityTag('E02').desc">[B 标准]</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>快递员开燃油三轮进小区，人车混行怠速尾气</div>
+                                            <div class="font-bold text-rose-400 mono mt-0.5">步巡 {{ metricValue('courier_walk_distance', 's0', 1, 2) }} km/日</div>
+                                        </td>
+                                        <td>
+                                            <div>全人工多频次步巡往返驳运</div>
+                                            <div class="font-bold text-amber-400 mono mt-0.5">步巡 {{ metricValue('courier_walk_distance', 's1', 1, 2) }} km/日</div>
+                                            <div class="text-[10px] text-amber-300">步巡增加 67.9%</div>
+                                        </td>
+                                        <td>
+                                            <div>无人车自主巡航驳运至柜，人机解耦</div>
+                                            <div class="font-bold text-emerald-400 mono mt-0.5">步巡 {{ metricValue('courier_walk_distance', 's2', 1, 2) }} km/日</div>
+                                            <div class="text-[10px] text-emerald-300">{{ improvementText('courier_walk_distance') }}</div>
+                                        </td>
+                                        <td class="font-semibold text-cyan-300">
+                                            人机解耦，末端零尾气零噪音，实现微网格自主接驳
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td class="font-bold text-slate-200">4. 快递员作业负荷</td>
-                                        <td>S0 人工总工时 {{ metricValue('labor_hours', 'baseline', 1, 2) }} 人时/日，重度过载</td>
-                                        <td>S2 人工总工时 {{ metricValue('labor_hours', 'optimized', 1, 2) }} 人时/日，专注高品质入户</td>
-                                        <td class="font-bold text-emerald-400">{{ improvementText('labor_hours') }}</td>
+                                        <td>
+                                            <div class="font-bold text-slate-200">4. 快递员作业负荷</div>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 mono">
+                                                <span>R01 人工工时</span>
+                                                <span class="badge-cred badge-cred-a" :title="credibilityTag('R01').desc">[A 实测]</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>重度过载，日工作超 14 小时</div>
+                                            <div class="font-bold text-rose-400 mono mt-0.5">{{ metricValue('labor_hours', 's0', 1, 2) }} 人时/日</div>
+                                        </td>
+                                        <td>
+                                            <div>智能柜分流但步巡负荷增加</div>
+                                            <div class="font-bold text-amber-400 mono mt-0.5">{{ metricValue('labor_hours', 's1', 1, 2) }} 人时/日</div>
+                                            <div class="text-[10px] text-amber-300">{{ improvementS1Text('labor_hours') }}</div>
+                                        </td>
+                                        <td>
+                                            <div>无人车定点交付，专注高品质入户</div>
+                                            <div class="font-bold text-emerald-400 mono mt-0.5">{{ metricValue('labor_hours', 's2', 1, 2) }} 人时/日</div>
+                                            <div class="text-[10px] text-emerald-300">{{ improvementText('labor_hours') }}</div>
+                                        </td>
+                                        <td class="font-semibold text-emerald-400">
+                                            工时压降 56.1%，消除超时用工，实现体面劳动
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td class="font-bold text-slate-200">5. 履约时效与满意度</td>
-                                        <td>日终存在未完成件，晚到率高，投诉隐患大</td>
-                                        <td>S2 以 150m 覆盖率、P95 距离和时效满意度双重评价达标</td>
-                                        <td class="font-bold text-cyan-300">日终未完成件降至 0</td>
+                                        <td>
+                                            <div class="font-bold text-slate-200">5. 履约时效与满意度</div>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 mono">
+                                                <span>S04 未完成件</span>
+                                                <span class="badge-cred badge-cred-c" :title="credibilityTag('S04').desc">[C 模型]</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>日终严重违约，完成率仅 43.4%</div>
+                                            <div class="font-bold text-rose-400 mono mt-0.5">未完成 {{ metricValue('unfinished_packages', 's0', 1, 0) }} 件</div>
+                                        </td>
+                                        <td>
+                                            <div>全流程可履约，时效基本达标</div>
+                                            <div class="font-bold text-amber-400 mono mt-0.5">未完成 0 件</div>
+                                            <div class="text-[10px] text-amber-300">达成率 100%</div>
+                                        </td>
+                                        <td>
+                                            <div>强同步协同，150m 覆盖率 100%</div>
+                                            <div class="font-bold text-emerald-400 mono mt-0.5">未完成 0 件</div>
+                                            <div class="text-[10px] text-emerald-300">达成率 100%</div>
+                                        </td>
+                                        <td class="font-semibold text-cyan-300">
+                                            日终未完成件降至 0，100% 达成当日履约目标
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td class="font-bold text-slate-200">6. 经济成本与碳足迹</td>
-                                        <td>S0 年现金 OPEX {{ metricValue('annual_cost', 'baseline', 10000, 1) }} 万元</td>
-                                        <td>S2 年现金 OPEX {{ metricValue('annual_cost', 'optimized', 10000, 1) }} 万元</td>
-                                        <td class="font-bold text-emerald-400">{{ improvementText('annual_cost') }}</td>
+                                        <td>
+                                            <div class="font-bold text-slate-200">6. 经济成本与回报</div>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 mono">
+                                                <span>C02 OPEX / C06</span>
+                                                <span class="badge-cred badge-cred-a" :title="credibilityTag('C02').desc">[A 实测]</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>高额超时薪酬与罚金损耗</div>
+                                            <div class="font-bold text-rose-400 mono mt-0.5">{{ metricValue('annual_cost', 's0', 10000, 1) }} 万元/年</div>
+                                        </td>
+                                        <td>
+                                            <div>静态回收期 0.07 年</div>
+                                            <div class="font-bold text-amber-400 mono mt-0.5">{{ metricValue('annual_cost', 's1', 10000, 1) }} 万元/年</div>
+                                            <div class="text-[10px] text-amber-300">{{ improvementS1Text('annual_cost') }}</div>
+                                        </td>
+                                        <td>
+                                            <div>静态回收期 0.39 年，年省 117 万</div>
+                                            <div class="font-bold text-emerald-400 mono mt-0.5">{{ metricValue('annual_cost', 's2', 10000, 1) }} 万元/年</div>
+                                            <div class="text-[10px] text-emerald-300">{{ improvementText('annual_cost') }}</div>
+                                        </td>
+                                        <td class="font-semibold text-emerald-400">
+                                            年现金 OPEX 节约 47.7%，0.39 年收回智能化投资
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="font-bold text-slate-200">7. 绿色低碳与能耗</div>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 mono">
+                                                <span>G02 碳排 / G04</span>
+                                                <span class="badge-cred badge-cred-a" :title="credibilityTag('G02').desc">[A 实测]</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>高碳燃油车且仅完成 43% 件量</div>
+                                            <div class="font-bold text-rose-400 mono mt-0.5">{{ metricValue('annual_carbon', 's0', 1, 0) }} kg/年</div>
+                                            <div class="text-[10px] text-slate-400">0.0159 kg/件</div>
+                                        </td>
+                                        <td>
+                                            <div>全量履约燃油车+智能柜电网碳</div>
+                                            <div class="font-bold text-amber-400 mono mt-0.5">{{ metricValue('annual_carbon', 's1', 1, 0) }} kg/年</div>
+                                            <div class="text-[10px] text-amber-300">0.0093 kg/件</div>
+                                        </td>
+                                        <td>
+                                            <div>电动无人车低碳清洁运力替代</div>
+                                            <div class="font-bold text-emerald-400 mono mt-0.5">{{ metricValue('annual_carbon', 's2', 1, 0) }} kg/年</div>
+                                            <div class="text-[10px] text-emerald-300">{{ improvementText('annual_carbon') }}</div>
+                                        </td>
+                                        <td class="font-semibold text-cyan-300">
+                                            较 S1 减碳 13.1%，单件碳排下降 49.1%，绿色低碳
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1824,6 +1972,135 @@
                             </div>
 
                             <!-- 关联学术级验证图谱 -->
+                            <!-- M5 专属第5章贝叶斯层次概率分位数与学术图谱面板 -->
+                            <div v-if="m.code === 'M5'" class="space-y-4">
+                                <!-- 表 5-2 贝叶斯分位数基准表 -->
+                                <div class="glass-panel p-4 rounded-xl space-y-3 border border-slate-800">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                                            <span>🎯</span> 第5章 表 5-2 五大社区日需求情景估计与分位数分布基准 (Monte Carlo R=10000)
+                                        </span>
+                                        <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-cyan-300 mono border border-slate-700">Poisson-Gamma 负二项超松弛模型</span>
+                                    </div>
+                                    <div class="overflow-x-auto rounded-lg border border-slate-800">
+                                        <table class="industrial-table text-xs">
+                                            <thead>
+                                                <tr>
+                                                    <th>社区编号与名称</th>
+                                                    <th>住户规模</th>
+                                                    <th class="text-sky-300">常态日 P50 (件)</th>
+                                                    <th class="text-sky-300">常态日 P80 (件)</th>
+                                                    <th class="text-sky-300">常态日 P90 (件)</th>
+                                                    <th class="text-amber-300">大促日 P50 (件)</th>
+                                                    <th class="text-rose-400">大促日 P80 (件)</th>
+                                                    <th class="text-purple-400">大促日 P90 (件)</th>
+                                                    <th>大促/常态倍数</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-800 mono">
+                                                <tr>
+                                                    <td class="font-bold text-slate-200">C01 梅园社区</td>
+                                                    <td>272 户</td>
+                                                    <td class="text-white">157</td>
+                                                    <td class="text-cyan-400">202</td>
+                                                    <td class="text-indigo-400">232</td>
+                                                    <td class="text-amber-400">276</td>
+                                                    <td class="text-rose-400 font-bold">355</td>
+                                                    <td class="text-purple-400">408</td>
+                                                    <td class="text-emerald-400 font-bold">1.76x</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="font-bold text-slate-200">C02 博兴小区别墅</td>
+                                                    <td>420 户</td>
+                                                    <td class="text-white">251</td>
+                                                    <td class="text-cyan-400">322</td>
+                                                    <td class="text-indigo-400">365</td>
+                                                    <td class="text-amber-400">440</td>
+                                                    <td class="text-rose-400 font-bold">567</td>
+                                                    <td class="text-purple-400">650</td>
+                                                    <td class="text-emerald-400 font-bold">1.75x</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="font-bold text-slate-200">C03 鹿鸣苑小区</td>
+                                                    <td>433 户</td>
+                                                    <td class="text-white">243</td>
+                                                    <td class="text-cyan-400">313</td>
+                                                    <td class="text-indigo-400">356</td>
+                                                    <td class="text-amber-400">421</td>
+                                                    <td class="text-rose-400 font-bold">541</td>
+                                                    <td class="text-purple-400">623</td>
+                                                    <td class="text-emerald-400 font-bold">1.73x</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="font-bold text-slate-200">C04 亦城茗苑</td>
+                                                    <td>2141 户</td>
+                                                    <td class="text-white">1,238</td>
+                                                    <td class="text-cyan-400">1,582</td>
+                                                    <td class="text-indigo-400">1,789</td>
+                                                    <td class="text-amber-400">2,166</td>
+                                                    <td class="text-rose-400 font-bold">2,790</td>
+                                                    <td class="text-purple-400">3,205</td>
+                                                    <td class="text-emerald-400 font-bold">1.75x</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="font-bold text-slate-200">C05 卡尔生活馆</td>
+                                                    <td>1050 户</td>
+                                                    <td class="text-white">606</td>
+                                                    <td class="text-cyan-400">770</td>
+                                                    <td class="text-indigo-400">865</td>
+                                                    <td class="text-amber-400">1,066</td>
+                                                    <td class="text-rose-400 font-bold">1,357</td>
+                                                    <td class="text-purple-400">1,555</td>
+                                                    <td class="text-emerald-400 font-bold">1.76x</td>
+                                                </tr>
+                                                <tr class="bg-slate-950/60 font-bold">
+                                                    <td class="text-cyan-300">ALL 全域合计</td>
+                                                    <td>4316 户</td>
+                                                    <td class="text-white">2,495</td>
+                                                    <td class="text-cyan-400">3,189</td>
+                                                    <td class="text-indigo-400">3,607</td>
+                                                    <td class="text-amber-400">4,369</td>
+                                                    <td class="text-rose-400">5,610</td>
+                                                    <td class="text-purple-400">6,441</td>
+                                                    <td class="text-emerald-400">1.75x</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="text-[11px] text-slate-400 leading-relaxed">
+                                        💡 <b>核心结论</b>：(1) 住户规模与常态日需求高度线性驱动（$R^2=0.999$）；(2) 大促促销倍数稳定放大 1.73~1.76 倍；(3) <b>P80 分位数</b>（较 P50 提高约 28.5%）被第6章选址定容 MIP 选为<b>防爆柜安全容量红线</b>。
+                                    </div>
+                                </div>
+
+                                <!-- 第5章 学术实证图谱网格 (图5-1 至 图5-5) -->
+                                <div class="glass-panel p-4 rounded-xl space-y-3 border border-slate-800">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                                            <span>🔬</span> 关联学术级实证图谱 (Publication-Grade Figures · 第5章 5 组独立图谱):
+                                        </span>
+                                        <span class="text-xs text-slate-400 mono">Nature/SCI 标准 · 300 DPI</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        <div v-for="fig in demandFigures" :key="fig.id"
+                                             class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 hover:border-cyan-600 cursor-pointer space-y-2 transition flex flex-col justify-between"
+                                             @click="openImagePreview(fig)">
+                                            <div class="space-y-1.5">
+                                                <div class="flex justify-between items-center text-xs font-bold text-slate-200">
+                                                    <span class="truncate">{{ fig.title }}</span>
+                                                    <span class="text-cyan-400 text-[10px] shrink-0 ml-1">↗</span>
+                                                </div>
+                                                <img :src="fig.png" :alt="fig.title" class="w-full h-28 object-cover rounded border border-slate-800" />
+                                                <div class="text-[11px] text-slate-400 line-clamp-2">{{ fig.summary }}</div>
+                                            </div>
+                                            <div class="pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-cyan-400 mono">
+                                                <span>{{ fig.badge }}</span>
+                                                <span class="text-slate-500">点击大图预览</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div v-if="m.code === 'M2' || m.code === 'M2/M3'" class="glass-panel p-4 rounded-xl space-y-3 border border-slate-800">
                                 <div class="flex justify-between items-center">
                                     <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
@@ -1871,6 +2148,106 @@
                                 </div>
                             </div>
 
+                            <!-- M2-ISA 专属两阶段算法流程架构与仿真曲线面板 -->
+                            <div v-if="m.code === 'M2-ISA'" class="space-y-4">
+                                <!-- 两阶段算法执行流程与工程机理 -->
+                                <div class="glass-panel p-4 rounded-xl space-y-3 border border-slate-800">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                                            <span>⚡</span> 第七章 两阶段容量聚类与改进模拟退火协同算法 (Capacitated K-Means + ISA) 执行架构
+                                        </span>
+                                        <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-cyan-300 mono border border-slate-700">两阶段协同架构</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-2">
+                                            <div class="font-bold text-amber-300 flex items-center gap-1">
+                                                <span>1️⃣</span> 阶段一：带容量约束的空间均衡聚类 (Capacitated K-Means)
+                                            </div>
+                                            <p class="text-slate-300 leading-relaxed text-[11px]">
+                                                针对社区各末端楼栋与自提柜点，以时空距离矩阵为基准，施加无人配送车单车物理装载上限 $\text{CAP} = 400$ 件硬约束，将全域需求点划分为空间紧凑、负荷均衡的微网格执行簇，消除单车超载与交叉跨区配送。
+                                            </p>
+                                            <div class="text-[10px] text-slate-400 mono bg-slate-950 p-1.5 rounded">
+                                                约束：$\sum_{i \in C_k} q_i \le 400 \quad (\forall k \in K)$；空间紧凑度：$\min \sum_{k} \sum_{i \in C_k} d(i, \mu_k)^2$
+                                            </div>
+                                        </div>
+                                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-2">
+                                            <div class="font-bold text-cyan-300 flex items-center gap-1">
+                                                <span>2️⃣</span> 阶段二：改进模拟退火算法 (ISA) 全局协同路径寻优
+                                            </div>
+                                            <p class="text-slate-300 leading-relaxed text-[11px]">
+                                                针对每个聚类子网格，构建带硬时间窗 $[a_i, b_i]$ 与动态交通阻抗 $\eta(t)$ 的改进退火模型。自适应 Metropolis 准则接受劣解跳出局部最优，结合自适应降温调度与退火记忆池，毫秒级收敛至 Pareto 近优解。
+                                            </p>
+                                            <div class="text-[10px] text-slate-400 mono bg-slate-950 p-1.5 rounded">
+                                                状态转移概率：$P = \exp(-\Delta E / T)$；降温调度：$T_{k+1} = \alpha T_k \; (\alpha = 0.95)$
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 复合扰动算子与超参数标定表 -->
+                                    <div class="overflow-x-auto rounded-lg border border-slate-800 mt-2">
+                                        <table class="industrial-table text-xs">
+                                            <thead>
+                                                <tr>
+                                                    <th>算子 / 超参数</th>
+                                                    <th>工程标定值</th>
+                                                    <th>算子作用机理与搜索行为</th>
+                                                    <th>工程依据与控制目标</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-800">
+                                                <tr>
+                                                    <td class="font-bold text-cyan-300 mono">2-Opt 算子 (55%)</td>
+                                                    <td class="mono text-amber-300">选择概率 0.55</td>
+                                                    <td>随机反转路径中的连续子序列，消除路径自交叉线段</td>
+                                                    <td>快速改善平面几何拓扑，主导大范围路径平滑</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="font-bold text-cyan-300 mono">Swap 算子 (30%)</td>
+                                                    <td class="mono text-amber-300">选择概率 0.30</td>
+                                                    <td>随机对调两个服务节点的时序访问位置</td>
+                                                    <td>调整局部先后顺序，突破局部极值陷阱</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="font-bold text-cyan-300 mono">Or-Opt 算子 (15%)</td>
+                                                    <td class="mono text-amber-300">选择概率 0.15</td>
+                                                    <td>切除长度为 2-3 的连续节点链并重插入最佳位置</td>
+                                                    <td>保持高亲和度节点块连续性，精细微调</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="font-bold text-cyan-300 mono">动态交通阻抗 $\eta(t)$</td>
+                                                    <td class="mono text-amber-300">早晚高峰 0.85-0.90 / 平峰 1.0</td>
+                                                    <td>折减基准航速 $v_0 = 12.0\,\text{km/h}$，真实反映拥堵延误</td>
+                                                    <td>满足真实道路时变车速硬约束</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="font-bold text-cyan-300 mono">退火调度 $(T_0, \alpha, \varepsilon)$</td>
+                                                    <td class="mono text-amber-300">$T_0=1000^\circ\text{C}, \alpha=0.95, \varepsilon=0.005$</td>
+                                                    <td>马尔可夫链长 $L_k=80$，几何级数平滑降温</td>
+                                                    <td>Van Laarhoven & Aarts 准则，保障全局收敛性</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- 退火温度降温与加权目标成本收敛曲线 -->
+                                <div class="glass-panel p-4 rounded-xl space-y-3 border border-slate-800">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                            <span>📈</span> ISA 算法退火降温与加权时间目标收敛历程 (Annealing & Objective Convergence)
+                                        </span>
+                                        <span class="text-xs text-cyan-400 font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                                            50 轮迭代快速收敛 · 优化率 43.5%
+                                        </span>
+                                    </div>
+                                    <div id="chart-isa-convergence" class="w-full h-64"></div>
+                                    <div class="text-[11px] text-slate-400 flex justify-between border-t border-slate-800 pt-2">
+                                        <span>青色实线：路径加权总配送时长目标 $Z$ (min)，自 1845.0 min 收敛至 1042.5 min</span>
+                                        <span class="text-amber-400 font-mono">橙色虚线：退火温度 $T$ 从 $1000.0^\circ\text{C}$ 降至 $76.9^\circ\text{C}$</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- 当前社区实时求解输出 (关联实际数据) -->
                             <div class="glass-panel p-4 rounded-xl space-y-3">
                                 <div class="flex justify-between items-center">
@@ -1889,7 +2266,7 @@
                                     <template v-else-if="m.code === 'M6' && planResult && planResult.layout">
                                         <div v-for="(l, idx) in planResult.layout.solver_logs" :key="idx" class="log-line">{{ l }}</div>
                                     </template>
-                                    <template v-else-if="(m.code === 'M2' || m.code === 'M2/M3') && planResult && planResult.routing">
+                                    <template v-else-if="(m.code === 'M2' || m.code === 'M2/M3' || m.code === 'M2-ISA') && planResult && planResult.routing">
                                         <div v-for="(l, idx) in planResult.routing.solver_logs" :key="idx" class="log-line">{{ l }}</div>
                                     </template>
                                     <template v-else-if="m.code === 'M8' && simulationResult">
@@ -1907,46 +2284,144 @@
                     <!-- 学术级运筹模型验证图集 (FIGS 专属看板) -->
                     <div v-if="solverModalTab === 'FIGS'" class="space-y-6">
                         <div class="glass-panel p-4 rounded-xl space-y-2 border-l-4 border-l-cyan-600">
-                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                <span>🖼️</span> 学术级运筹模型多维验证与参数灵敏度图集 (Nature/SCI 规范)
-                            </h3>
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <span>🖼️</span> 学术级运筹模型多维验证与参数灵敏度图集 (Nature/SCI 规范 · 全套 9 组图谱)
+                                </h3>
+                                <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-cyan-300 mono border border-slate-700">
+                                    300 DPI 矢量级实证图谱 · 双格式导出
+                                </span>
+                            </div>
                             <p class="text-xs text-slate-300 leading-relaxed">
-                                基于参赛方案第6-7章真实数学模型与求解数据，严格依照顶级学术绘图规范及答辩评审标准绘制。
+                                基于参赛方案第4章“末端配送网络优化”、第5章“需求概率生成推演”与第6-7章“两阶段协同网络优化”真实数学模型与求解数据，严格依照顶级学术绘图规范及答辩评审标准绘制。
                                 全量采用 Okabe-Ito 色盲友好调色板、形状冗余编码、清晰坐标轴与标注、以及 300 DPI PNG + 矢量 SVG 双格式导出。
                             </p>
                         </div>
 
-                        <div class="grid grid-cols-1 gap-6">
-                            <div v-for="fig in academicFigures" :key="fig.id" class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
-                                    <div>
-                                        <h4 class="text-sm font-bold text-cyan-300 flex items-center gap-2">
-                                            <span>{{ fig.title }}</span>
-                                            <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">{{ fig.badge }}</span>
-                                        </h4>
-                                        <div class="text-xs text-slate-400 font-mono mt-0.5">{{ fig.subtitle }}</div>
+                        <!-- 分组一：第4章 末端配送网络三阶段协同优化模型实证图谱 (图 4-1 至 图 4-4) -->
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-2 pb-1 border-b border-slate-800">
+                                <span class="text-xs font-bold text-emerald-300 uppercase tracking-wider">一、第4章 末端配送网络三阶段协同优化模型实证图谱 (4 组)</span>
+                                <span class="text-xs text-slate-500 mono">Hierarchical Facility Location-Allocation (HFLAP)</span>
+                            </div>
+                            <div class="grid grid-cols-1 gap-6">
+                                <div v-for="fig in networkFigures" :key="fig.id" class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                                        <div>
+                                            <h4 class="text-sm font-bold text-cyan-300 flex items-center gap-2">
+                                                <span>{{ fig.title }}</span>
+                                                <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">{{ fig.badge }}</span>
+                                            </h4>
+                                            <div class="text-xs text-slate-400 font-mono mt-0.5">{{ fig.subtitle }}</div>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <button @click="openImagePreview(fig)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1">
+                                                <span>🔍</span> 放大预览
+                                            </button>
+                                            <a :href="fig.svg" target="_blank" class="px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                                                <span>↗</span> 打开矢量 SVG
+                                            </a>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <button @click="openImagePreview(fig)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1">
-                                            <span>🔍</span> 放大预览
-                                        </button>
-                                        <a :href="fig.svg" target="_blank" class="px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 rounded-lg text-xs font-medium transition flex items-center gap-1">
-                                            <span>↗</span> 打开矢量 SVG
-                                        </a>
+
+                                    <div class="cursor-pointer bg-slate-950 p-2 rounded-xl border border-slate-800 flex items-center justify-center"
+                                         @click="openImagePreview(fig)">
+                                        <img :src="fig.png" :alt="fig.title" class="max-h-96 w-auto object-contain rounded-lg shadow-md hover:scale-[1.01] transition-transform" />
+                                    </div>
+
+                                    <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
+                                        <p class="leading-relaxed"><b class="text-cyan-400">学术分析与数理机理：</b>{{ fig.summary }}</p>
+                                        <div class="flex flex-wrap gap-1.5 pt-1 border-t border-slate-800">
+                                            <span v-for="tag in fig.tags" :key="tag" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-xs mono">
+                                                # {{ tag }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div class="cursor-pointer bg-slate-950 p-2 rounded-xl border border-slate-800 flex items-center justify-center"
-                                     @click="openImagePreview(fig)">
-                                    <img :src="fig.png" :alt="fig.title" class="max-h-96 w-auto object-contain rounded-lg shadow-md hover:scale-[1.01] transition-transform" />
+                        <!-- 分组二：第5章 多尺度需求概率估计与情景模拟图谱 (图 5-1 至 图 5-5) -->
+                        <div class="space-y-4 pt-4">
+                            <div class="flex items-center gap-2 pb-1 border-b border-slate-800">
+                                <span class="text-xs font-bold text-cyan-300 uppercase tracking-wider">二、第5章 多尺度需求概率估计与情景模拟实证图谱 (5 组)</span>
+                                <span class="text-xs text-slate-500 mono">Demand Forecasting & Scenario Simulation</span>
+                            </div>
+                            <div class="grid grid-cols-1 gap-6">
+                                <div v-for="fig in demandFigures" :key="fig.id" class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                                        <div>
+                                            <h4 class="text-sm font-bold text-cyan-300 flex items-center gap-2">
+                                                <span>{{ fig.title }}</span>
+                                                <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">{{ fig.badge }}</span>
+                                            </h4>
+                                            <div class="text-xs text-slate-400 font-mono mt-0.5">{{ fig.subtitle }}</div>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <button @click="openImagePreview(fig)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1">
+                                                <span>🔍</span> 放大预览
+                                            </button>
+                                            <a :href="fig.svg" target="_blank" class="px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                                                <span>↗</span> 打开矢量 SVG
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="cursor-pointer bg-slate-950 p-2 rounded-xl border border-slate-800 flex items-center justify-center"
+                                         @click="openImagePreview(fig)">
+                                        <img :src="fig.png" :alt="fig.title" class="max-h-96 w-auto object-contain rounded-lg shadow-md hover:scale-[1.01] transition-transform" />
+                                    </div>
+
+                                    <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
+                                        <p class="leading-relaxed"><b class="text-cyan-400">学术分析与数理机理：</b>{{ fig.summary }}</p>
+                                        <div class="flex flex-wrap gap-1.5 pt-1 border-t border-slate-800">
+                                            <span v-for="tag in fig.tags" :key="tag" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-xs mono">
+                                                # {{ tag }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
-                                    <p class="leading-relaxed"><b class="text-cyan-400">学术分析与机理说明：</b>{{ fig.summary }}</p>
-                                    <div class="flex flex-wrap gap-1.5 pt-1 border-t border-slate-800">
-                                        <span v-for="tag in fig.tags" :key="tag" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-xs mono">
-                                            # {{ tag }}
-                                        </span>
+                        <!-- 分组三：第6-7章 两阶段协同网络优化模型实证图谱 (图 1 至 图 4) -->
+                        <div class="space-y-4 pt-4">
+                            <div class="flex items-center gap-2 pb-1 border-b border-slate-800">
+                                <span class="text-xs font-bold text-amber-300 uppercase tracking-wider">三、第6-7章 两阶段协同网络优化模型实证图谱 (4 组)</span>
+                                <span class="text-xs text-slate-500 mono">2E-MDVRPTW-DC & Facility Sizing</span>
+                            </div>
+                            <div class="grid grid-cols-1 gap-6">
+                                <div v-for="fig in academicFigures" :key="fig.id" class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                                        <div>
+                                            <h4 class="text-sm font-bold text-cyan-300 flex items-center gap-2">
+                                                <span>{{ fig.title }}</span>
+                                                <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">{{ fig.badge }}</span>
+                                            </h4>
+                                            <div class="text-xs text-slate-400 font-mono mt-0.5">{{ fig.subtitle }}</div>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <button @click="openImagePreview(fig)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1">
+                                                <span>🔍</span> 放大预览
+                                            </button>
+                                            <a :href="fig.svg" target="_blank" class="px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                                                <span>↗</span> 打开矢量 SVG
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="cursor-pointer bg-slate-950 p-2 rounded-xl border border-slate-800 flex items-center justify-center"
+                                         @click="openImagePreview(fig)">
+                                        <img :src="fig.png" :alt="fig.title" class="max-h-96 w-auto object-contain rounded-lg shadow-md hover:scale-[1.01] transition-transform" />
+                                    </div>
+
+                                    <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
+                                        <p class="leading-relaxed"><b class="text-cyan-400">学术分析与机理说明：</b>{{ fig.summary }}</p>
+                                        <div class="flex flex-wrap gap-1.5 pt-1 border-t border-slate-800">
+                                            <span v-for="tag in fig.tags" :key="tag" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-xs mono">
+                                                # {{ tag }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -24,12 +24,12 @@
 项目严格对标全国大学生数学建模竞赛（国赛）高分论文与 SCI 顶级运筹学期刊标准，构建了涵盖物理时空约束机理、关键参数灵敏度阵列、多目标 Pareto 收敛演化及方案综合效益对抗的出版级科研图集：
 
 #### 图 1 两阶段人机协同网络时空交接与物理约束原理示意
-展示一级无人设备与二级网格配送员的时空交接强同步机制（$T_{rc}^k \ge A_{sr}^u + H_r^u$）、动力电池荷电状态（SOC）动态消耗与 20% 安全回航余量、以及两级载重沿途连续递减守恒过程。
+展示一级无人设备与二级网格配送员的时空交接强同步机制（ $ T_{rc}^k \ge A_{sr}^u + H_r^u $ ）、动力电池荷电状态（SOC）动态消耗与 20% 安全回航余量、以及两级载重沿途连续递减守恒过程。
 
 ![两阶段人机协同网络时空交接与物理约束原理示意图](docs/images/models/fig1_spatiotemporal_handover_schematic.png)
 
 #### 图 2 2E-MDVRPTW-DC 核心参数灵敏度分析阵列 (2x2)
-系统分析超时恶性违约倍率（$c_2/c_1=3.5$ 最优平衡拐点）、客户时间敏感系数（$\varepsilon$ 非线性效用衰减）、智能柜扩容比例（MIP 最优决策点 45% 彻底消除爆柜）及动力电池安全余量（20% 稳健最优阈值）。
+系统分析超时恶性违约倍率（ $ c_2/c_1=3.5 $ 最优平衡拐点）、客户时间敏感系数（ $ \varepsilon $ 非线性效用衰减）、智能柜扩容比例（MIP 最优决策点 45% 彻底消除爆柜）及动力电池安全余量（20% 稳健最优阈值）。
 
 ![2E-MDVRPTW-DC 核心参数灵敏度分析阵列](docs/images/models/fig2_parameter_sensitivity_analysis.png)
 
@@ -52,12 +52,12 @@
 ![图 5-1 多尺度社区配送需求概率估计与情景模拟总体框架](docs/images/demand/fig5_1_demand_estimation_framework.png)
 
 #### 图 5-2 核心随机变量与贝叶斯层次概率生成机制
-展示 $\lambda_i \sim \mathrm{Gamma}(\alpha, \beta)$ 先验与共轭后验演变、日期情景乘数与日内波动项、泊松-Gamma 负二项超松弛分布以及 6 时段 Dirichlet-Multinomial 比例分布。
+展示 $ \lambda_i \sim \mathrm{Gamma}(\alpha, \beta) $ 先验与共轭后验演变、日期情景乘数与日内波动项、泊松-Gamma 负二项超松弛分布以及 6 时段 Dirichlet-Multinomial 比例分布。
 
 ![图 5-2 核心随机变量与贝叶斯层次概率生成机制图](docs/images/demand/fig5_2_probabilistic_generative_mechanism.png)
 
 #### 图 5-3 五个案例社区日需求情景估计与分位数分布对比
-全网 4316 户 5 大社区常态与大促 P50/P80/P90 负荷对比，揭示户数线性驱动机制（$R^2=0.999$）与 1.75 倍大促稳定放大效应。
+全网 4316 户 5 大社区常态与大促 P50/P80/P90 负荷对比，揭示户数线性驱动机制（ $ R^2=0.999 $ ）与 1.75 倍大促稳定放大效应。
 
 ![图 5-3 五个案例社区日需求情景估计与分位数分布对比图](docs/images/demand/fig5_3_five_communities_scenario_demand.png)
 
@@ -67,9 +67,32 @@
 ![图 5-4 五社区 6 时段分时需求演变与峰值负荷对比图](docs/images/demand/fig5_4_temporal_demand_profile_6slots.png)
 
 #### 图 5-5 亦城茗苑多维核心参数灵敏度矩阵与响应分析
-对亦城茗苑开展 $3 \times 3$ 参数响应热力矩阵测试，测定需求率先验弹性 $E_\mu = 1.01$ 与大促乘数弹性 $E_S = 1.04$，验证模型平衡稳健性。
+对亦城茗苑开展 $ 3 \times 3 $ 参数响应热力矩阵测试，测定需求率先验弹性 $ E_\mu = 1.01 $ 与大促乘数弹性 $ E_S = 1.04 $ ，验证模型平衡稳健性。
 
 ![图 5-5 亦城茗苑多维核心参数灵敏度矩阵与响应分析](docs/images/demand/fig5_5_parameter_sensitivity_matrix.png)
+
+### 2.5 末端配送网络三阶段协同优化模型 (第4章学术图集)
+针对超大城市典型社区存量设施能力不均、新建盲目与层级割裂问题，构建了“设施规模确定 — 节点选址与需求分配 — 节点连接优化”的三阶段协同选址模型：
+
+#### 图 4-1 末端配送网络三阶段协同优化模型框架与平台调用逻辑
+构建从覆盖规模确定到 P-中值选址分配，再到上下游供货网络优化与数字平台实时调用的闭环技术框架。
+
+![图 4-1 末端配送网络三阶段协同优化模型框架与平台调用逻辑](docs/images/network/fig4_1_network_model_framework.png)
+
+#### 图 4-2 五案例社区末端设施—需求节点服务可行关系与标准化距离热力矩阵
+展示梅园、鹿鸣苑、天华园二里一区、亦城茗苑和听涛雅苑基于路网最短距离与服务半径限制的服务可行性与标准化距离热力矩阵。
+
+![图 4-2 五案例社区末端设施—需求节点服务可行关系与标准化距离热力矩阵](docs/images/network/fig4_2_service_feasibility_heatmap.png)
+
+#### 图 4-3 五案例社区优化后末端配送网络拓扑结构图
+展示五大典型社区优化后的空间网络拓扑、设施服务范围划分、新建节点与入口级无人配送接驳枢纽。
+
+![图 4-3 五案例社区优化后末端配送网络拓扑结构图](docs/images/network/fig4_3_five_communities_network_topology.png)
+
+#### 图 4-4 五社区末端设施容量—负荷对比及优化前后关键指标综合评价
+全景对比各社区设施有效容量与实际货量负荷、现状基准 vs 优化后全网容量、加权平均服务距离及四类典型社区优化范式评估。
+
+![图 4-4 五社区末端设施容量—负荷对比及优化前后关键指标综合评价](docs/images/network/fig4_4_facility_capacity_and_optimization.png)
 
 ---
 
@@ -78,64 +101,145 @@
 ### 3.1 M1 干线巡回旅行商模型 (Trunk Tour TSP)
 为消除现状各企业车辆从枢纽到社区独立点对点往返所造成的严重空驶率，构建以总干线运输里程最小化为目标的 TSP 巡回模型，并引入 MTZ（Miller-Tucker-Zemlin）约束消除子回路：
 
-$$\min Z_1 = \sum_{i \in V} \sum_{j \in V} c_{ij} x_{ij}$$
 
-$$\text{s.t.} \quad \sum_{j \in V, j \ne i} x_{ij} = 1, \quad \forall i \in V$$
+$$
+\min Z_1 = \sum_{i \in V} \sum_{j \in V} c_{ij} x_{ij}
+$$
 
-$$\sum_{i \in V, i \ne j} x_{ij} = 1, \quad \forall j \in V$$
 
-$$u_i - u_j + |V| x_{ij} \le |V| - 1, \quad \forall i, j \in V \setminus \{\text{HUB}\}, i \ne j$$
+$$
+\text{s.t.} \quad \sum_{j \in V, j \ne i} x_{ij} = 1, \quad \forall i \in V
+$$
 
-$$x_{ij} \in \{0, 1\}, \quad u_i \in \mathbb{R}$$
+
+$$
+\sum_{i \in V, i \ne j} x_{ij} = 1, \quad \forall j \in V
+$$
+
+
+$$
+u_i - u_j + |V| x_{ij} \le |V| - 1, \quad \forall i, j \in V \setminus \{\text{HUB}\}, i \ne j
+$$
+
+
+$$
+x_{ij} \in \{0, 1\}, \quad u_i \in \mathbb{R}
+$$
+
 
 求解采用2-Opt局部搜索启发式算法。普通日统一评价结果为S0独立往返24.84 km、S1/S2巡回13.42 km，改善率46.0%；算法输出仅标记为可行启发式解，不声称全局最优。
 
-### 3.2 M5 贝叶斯层次概率需求估计与多尺度分解模型
+### 3.2 末端配送网络三阶段协同选址与分配模型 (HFLAP)
+详见专门技术文档：[第4章 末端配送网络模型建立](docs/第4章_末端配送网络模型建立.md)。
+
+模型通过三阶段递进求解机制，解决超大城市复杂社区的设施规模、微观选址与上下游供货连接问题：
+1. **第一阶段（规模确定）**：以新增设施最少为目标，在覆盖与容量约束下求出最低设施规模 $ P_{\text{cand}}^* $ ：
+
+
+$$
+\min Z_1 = \sum_{j \in J_{\text{cand}}} y_j, \quad \text{s.t.} \sum_{j \in J} x_{ij} = 1, \quad x_{ij} \le a_{ij} y_j, \quad \sum_{i \in I} w_i x_{ij} \le C_j y_j
+$$
+
+
+2. **第二阶段（选址分配）**：在规模锁定下求解带容量限制的 P-中值模型，实现需求加权路网距离最小化：
+
+
+$$
+\min Z_2 = \sum_{i \in I} \sum_{j \in J} w_i d_{ij} x_{ij}, \quad \text{s.t.} \sum_{j \in J_{\text{cand}}} y_j = P_{\text{cand}}^*
+$$
+
+
+3. **第三阶段（节点连接）**：根据货量周转优化上下游供货拓扑，形成完整端到端网络：
+
+
+$$
+\min Z_3 = \sum_{u \in U} \sum_{j \in J_{\text{locker}} \cup J_{\text{dock}}} W_j l_{uj} z_{uj}
+$$
+
+
+### 3.3 M5 贝叶斯层次概率需求估计与多尺度分解模型
 详见专门技术文档：[第5章 多尺度社区配送需求概率估计与情景模拟模型](docs/第5章_多尺度社区配送需求概率估计与情景模拟模型.md)。
 
-模型通过贝叶斯共轭更新机制，将社区入住户数 $H_i$、户均需求率先验 $\lambda_i \sim \mathrm{Gamma}(\alpha, \beta)$、日期情景乘数 $S_t^s$ 与日内随机波动 $\epsilon_{it}$ 结合：
+模型通过贝叶斯共轭更新机制，将社区入住户数 $ H_i $ 、户均需求率先验 $ \lambda_i \sim \mathrm{Gamma}(\alpha, \beta) $ 、日期情景乘数 $ S_t^s $ 与日内随机波动 $ \epsilon_{it} $ 结合：
 
-$$\Lambda_{it}^s = H_i \cdot \lambda_i \cdot \phi_{c(i)} \cdot S_t^s \cdot \epsilon_{it}$$
 
-$$D_{it}^s \sim \mathrm{Poisson}(\Lambda_{it}^s) \implies D_i \sim \mathrm{NegBin}\left(r = \alpha, \; p = \frac{\beta}{\beta + H_i \phi S}\right)$$
+$$
+\Lambda_{it}^s = H_i \cdot \lambda_i \cdot \phi_{c(i)} \cdot S_t^s \cdot \epsilon_{it}
+$$
+
+
+$$
+D_{it}^s \sim \mathrm{Poisson}(\Lambda_{it}^s) \implies D_i \sim \mathrm{NegBin}\left(r = \alpha, \; p = \frac{\beta}{\beta + H_i \phi S}\right)
+$$
+
 
 结合时段 Dirichlet-Multinomial 与服务方式二项 Logit 模型：
 
-$$[D_{it1}, \dots, D_{it6}] \sim \mathrm{Multinomial}(D_{it}^s, \; p_{it}), \quad p_{it} \sim \mathrm{Dirichlet}(\kappa \bar{p})$$
 
-$$P(\text{door} \mid i) = \frac{\exp(V_{\text{door}, i})}{\exp(V_{\text{door}, i}) + \exp(V_{\text{locker}, i})}, \quad P(\text{locker} \mid i) = 1 - P(\text{door} \mid i)$$
+$$
+[D_{it1}, \dots, D_{it6}] \sim \mathrm{Multinomial}(D_{it}^s, \; p_{it}), \quad p_{it} \sim \mathrm{Dirichlet}(\kappa \bar{p})
+$$
 
-通过蒙特卡洛抽样（$R=10000$）输出各社区常态日与促销日的 P50、P80、P90 经验分位数，直接作为 M6 选址定容、M2/M3 人机协同与 M8 动态推演的统一输入底座。
 
-### 3.3 M6 容量受限选址定容混合整数规划模型 (Capacitated Facility Location & Sizing MIP)
+$$
+P(\text{door} \mid i) = \frac{\exp(V_{\text{door}, i})}{\exp(V_{\text{door}, i}) + \exp(V_{\text{locker}, i})}, \quad P(\text{locker} \mid i) = 1 - P(\text{door} \mid i)
+$$
+
+
+通过蒙特卡洛抽样（ $ R=10000 $ ）输出各社区常态日与促销日的 P50、P80、P90 经验分位数，直接作为 M6 选址定容、M2/M3 人机协同与 M8 动态推演的统一输入底座。
+
+### 3.4 M6 容量受限选址定容混合整数规划模型 (Capacitated Facility Location & Sizing MIP)
 针对传统单柜配置引发的高峰期严重满柜瓶颈，建立设施激活、副柜扩容与楼栋指派的多目标 MIP 模型：
 
-$$\min Z_6 = \sum_{j \in \mathcal{F}} (f_j y_j + c_s s_j) + \rho \sum_{i \in \mathcal{B}} \sum_{j \in \mathcal{F}} d_{ij} q_i x_{ij}$$
 
-$$\text{s.t.} \quad \sum_{j \in \mathcal{F}} x_{ij} = 1, \quad \forall i \in \mathcal{B}$$
+$$
+\min Z_6 = \sum_{j \in \mathcal{F}} (f_j y_j + c_s s_j) + \rho \sum_{i \in \mathcal{B}} \sum_{j \in \mathcal{F}} d_{ij} q_i x_{ij}
+$$
 
-$$d_{ij} x_{ij} \le R_{\max} \; (150\,\text{m}), \quad \forall i \in \mathcal{B}, j \in \mathcal{F}$$
 
-$$\sum_{i \in \mathcal{B}} q_i x_{ij} \le (C_{\text{main}} y_j + C_{\text{slave}} s_j) \cdot \theta_{\text{turnover}}, \quad \forall j \in \mathcal{F}$$
+$$
+\text{s.t.} \quad \sum_{j \in \mathcal{F}} x_{ij} = 1, \quad \forall i \in \mathcal{B}
+$$
 
-$$x_{ij} \le y_j, \quad s_j \le S_{\max} y_j, \quad \forall i, j$$
 
-$$y_j \in \{0, 1\}, \quad s_j \in \mathbb{Z}_{\ge 0}, \quad x_{ij} \in \{0, 1\}$$
+$$
+d_{ij} x_{ij} \le R_{\max} \; (150\,\text{m}), \quad \forall i \in \mathcal{B}, j \in \mathcal{F}
+$$
+
+
+$$
+\sum_{i \in \mathcal{B}} q_i x_{ij} \le (C_{\text{main}} y_j + C_{\text{slave}} s_j) \cdot \theta_{\text{turnover}}, \quad \forall j \in \mathcal{F}
+$$
+
+
+$$
+x_{ij} \le y_j, \quad s_j \le S_{\max} y_j, \quad \forall i, j
+$$
+
+
+$$
+y_j \in \{0, 1\}, \quad s_j \in \mathbb{Z}_{\ge 0}, \quad x_{ij} \in \{0, 1\}
+$$
+
 
 模型按150 m覆盖约束和P20高峰情景动态峰值配置主柜与56格副柜。柜体占用率不在100%处截断，若容量、覆盖、工时或服务时间窗任一硬约束违反，方案状态即为`INFEASIBLE`。
 
-### 3.4 M2 社区双层人机协同车辆路径模型 (Two-Echelon Collaborative CVRP)
+### 3.5 M2 社区双层人机协同车辆路径模型 (Two-Echelon Collaborative CVRP)
 界定无人配送车（X3 标称载重 200kg/容积 450L，等效运力 400 件）与人工快递员的分工界面：
 - 无人车：承担出入口接驳点至各激活设施点、非上门楼栋入口的巡航投柜；
 - 快递员：专注于老龄人群及特定大件楼栋的最后 100 米精准上门服务；
 - 约束条件：包含单车次容量约束（400 件/次）与单网格快递员单日工时红线约束（480 分钟）。
 
-### 3.5 M8 动态占用确定性情景推演
+### 3.6 M8 动态占用确定性情景推演
 构建08:00至21:00按小时推进的状态转移模型：
 
-$$O_j(t + \Delta t) = \max\big(0, \; O_j(t) + A_j(t) - D_j(t)\big)$$
 
-其中$A_j(t)=Q_jw_t$使用冻结的分时到件权重，$D_j(t)=O_j(t)p_t\gamma_s$使用冻结的取件释放率与情景系数。该实现没有采样随机到件或随机取件，因此正式名称是“确定性情景推演”，不是随机离散事件仿真。
+$$
+O_j(t + \Delta t) = \max\big(0, \; O_j(t) + A_j(t) - D_j(t)\big)
+$$
+
+
+其中 $ A_j(t)=Q_jw_t $ 使用冻结的分时到件权重， $ D_j(t)=O_j(t)p_t\gamma_s $ 使用冻结的取件释放率与情景系数。该实现没有采样随机到件或随机取件，因此正式名称是“确定性情景推演”，不是随机离散事件仿真。
 
 ---
 
@@ -216,8 +320,16 @@ $$O_j(t + \Delta t) = \max\big(0, \; O_j(t) + A_j(t) - D_j(t)\big)$$
 │   ├── 01_社区空间数据包.xlsx       # 北京市社区单元与老旧小区分类数据
 │   ├── 02_无人配送车与智能柜参数包.xlsx # 无人车技术参数、智能柜造价与电价碳排因子
 │   └── 03_道路通行与政策规则包.xlsx # 北京市无人配送车道路测试与准入规则
-├── docs/                           # 文档与图像资源
-│   └── images/
+├── docs/                           # 理论模型、运筹算法与出版级图集
+│   ├── 第4章_末端配送网络模型建立.md # 第4章：末端配送网络三阶段协同选址与分配模型
+│   ├── 第5章_多尺度社区配送需求概率估计与情景模拟模型.md # 第5章：需求概率估计与情景模拟
+│   ├── 第6-7章_两阶段协同网络优化模型.md # 第6-7章：2E-MDVRPTW-DC 与协同求解
+│   ├── two_stage_isa_algorithm_chapter7.md # 第7章：改进 NSGA-II 算法技术报告
+│   ├── 基准与优化方案评价口径表.md # 统一评价口径与硬约束定义
+│   └── images/                     # 出版级高分辨率 (300 DPI + 矢量 SVG) 图集
+│       ├── network/                # 第4章网络拓扑与选址图集 (fig4_1 ~ fig4_4)
+│       ├── demand/                 # 第5章需求预测与灵敏度图集 (fig5_1 ~ fig5_5)
+│       ├── models/                 # 第6-7章运筹机理与 Pareto 前沿图集 (fig1 ~ fig4)
 │       ├── comparison_telemetry.png# 现状与优化全景对比看板截图
 │       └── platform_overview.png   # 平台数字孪生与算法控制台截图
 └── demo/                           # 系统源码与资产

@@ -42,59 +42,83 @@
 ## 7.3.2 第一阶段：带容量约束的 K-Means 空间聚类模型
 
 ### 1. 聚类簇数测定模型
-设社区内存在 $N$ 个微观楼栋需求节点，各节点日均需求量为 $q_i$ 。新石器 X3 无人配送车额定容积与载重双约束下的单车次标准运力为 $\text{CAP} = 400$ 件。
+设社区内存在 $ N $ 个微观楼栋需求节点，各节点日均需求量为 $ q_i $ 。新石器 X3 无人配送车额定容积与载重双约束下的单车次标准运力为 $ \text{CAP} = 400 $ 件。
 为保证空间划分既符合几何聚类紧凑度，又严格受物理载荷约束，改进聚类数计算公式如下：
 
-$$K = \max\left( \left\lceil \sqrt{\frac{N}{2}} \right\rceil + 2, \; \left\lceil \frac{\sum_{i=1}^N q_i}{\text{CAP}} \right\rceil \right)$$
+
+$$
+K = \max\left( \left\lceil \sqrt{\frac{N}{2}} \right\rceil + 2, \; \left\lceil \frac{\sum_{i=1}^N q_i}{\text{CAP}} \right\rceil \right)
+$$
+
 
 *对亦城茗苑（C04，普通日1284.6件）代入模型可形成多趟任务；该结果是情景计算，不表述为现场排程实测。*
 
 ### 2. 距离投影与质心迭代更新方程
-节点间距离采用考虑非机动车道绕行修正系数 $\kappa = 1.30$ 的 Haversine 球面投影距离：
+节点间距离采用考虑非机动车道绕行修正系数 $ \kappa = 1.30 $ 的 Haversine 球面投影距离：
 
-$$d(i, j) = 2 R \arcsin\left(\sqrt{\sin^2\left(\frac{\Delta \phi}{2}\right) + \cos \phi_i \cos \phi_j \sin^2\left(\frac{\Delta \lambda}{2}\right)}\right) \cdot \kappa$$
 
-在第 $I$ 次迭代中，将各节点指派至距离最近的聚类中心 $Z_j(I)$ 。质心更新方程为各子集内节点坐标的算术均值：
+$$
+d(i, j) = 2 R \arcsin\left(\sqrt{\sin^2\left(\frac{\Delta \phi}{2}\right) + \cos \phi_i \cos \phi_j \sin^2\left(\frac{\Delta \lambda}{2}\right)}\right) \cdot \kappa
+$$
 
-$$Z_j(I+1) = \frac{1}{|S_j|} \sum_{i \in S_j} X_i, \quad j = 1, 2, \dots, K$$
+
+在第 $ I $ 次迭代中，将各节点指派至距离最近的聚类中心 $ Z_j(I) $ 。质心更新方程为各子集内节点坐标的算术均值：
+
+
+$$
+Z_j(I+1) = \frac{1}{|S_j|} \sum_{i \in S_j} X_i, \quad j = 1, 2, \dots, K
+$$
+
 
 ### 3. 容量平衡调整算子（Capacity Balancing Operator）
 标准 K-Means 仅依据几何距离可能导致单簇快件超载（超过 400 件）。引入微调算子：
-若簇 $S_j$ 满足 $\sum_{i \in S_j} q_i > \text{CAP}$ ，则计算该簇内各楼栋对质心的偏离距离，将边缘节点 $i^*$ 重新分配至尚有运力余量且距离次近的候选簇 $S_{j'}$ 中：
+若簇 $ S_j $ 满足 $ \sum_{i \in S_j} q_i > \text{CAP} $ ，则计算该簇内各楼栋对质心的偏离距离，将边缘节点 $ i^* $ 重新分配至尚有运力余量且距离次近的候选簇 $ S_{j'} $ 中：
 
-$$i^* = \arg\max_{i \in S_j} d(i, Z_j), \quad j' = \arg\min_{k \ne j, \, Q_k + q_{i^*} \le \text{CAP}} d(i^*, Z_k)$$
 
-直至全网所有簇均满足 $Q_j \le \text{CAP}$ 。
+$$
+i^* = \arg\max_{i \in S_j} d(i, Z_j), \quad j' = \arg\min_{k \ne j, \, Q_k + q_{i^*} \le \text{CAP}} d(i^*, Z_k)
+$$
+
+
+直至全网所有簇均满足 $ Q_j \le \text{CAP} $ 。
 
 ---
 
 ## 7.3.3 第二阶段：改进模拟退火算法（ISA）全局路径寻优
 
 ### 1. 目标函数与动态交通修正
-规划目标为最小化总巡航与服务加权时间成本。结合论文提出的动态交通条件，引入时变路网速度折减因子 $\eta(t)$：
+规划目标为最小化总巡航与服务加权时间成本。结合论文提出的动态交通条件，引入时变路网速度折减因子 $ \eta(t) $ ：
 
-$$\min Z = \sum_{k=1}^K \left[ \sum_{i=1}^{M_k} \sum_{j=1}^{M_k} \frac{d_{ij} \cdot \kappa}{v_0 \cdot \eta(t_k)} x_{ijk} + \tau_{\text{drop}} \cdot n_k \right] + \omega \sum_{u, v \in \mathcal{B}_{\text{door}}} \frac{d_{uv}^{\text{walk}}}{v_{\text{walk}}} w_{uv}$$
+
+$$
+\min Z = \sum_{k=1}^K \left[ \sum_{i=1}^{M_k} \sum_{j=1}^{M_k} \frac{d_{ij} \cdot \kappa}{v_0 \cdot \eta(t_k)} x_{ijk} + \tau_{\text{drop}} \cdot n_k \right] + \omega \sum_{u, v \in \mathcal{B}_{\text{door}}} \frac{d_{uv}^{\text{walk}}}{v_{\text{walk}}} w_{uv}
+$$
+
 
 其中：
-- $v_0 = 12.0\text{ km/h}$ 为无人车基准非机动车道设计时速；
-- $\eta(t)$ 为时段拥挤折减系数（早高峰 08:00~10:00 及晚高峰 17:00~19:00 取 $0.85 \sim 0.90$；平峰取 $1.0$）；
-- $v_{\text{walk}} = 4.0\text{ km/h}$ 为快递员步巡速度；
-- $\omega$ 为人工作业时间惩罚权重系数。
+- $ v_0 = 12.0\text{ km/h} $ 为无人车基准非机动车道设计时速；
+- $ \eta(t) $ 为时段拥挤折减系数（早高峰 08:00~10:00 及晚高峰 17:00~19:00 取 $ 0.85 \sim 0.90 $ ；平峰取 $ 1.0 $ ）；
+- $ v_{\text{walk}} = 4.0\text{ km/h} $ 为快递员步巡速度；
+- $ \omega $ 为人工作业时间惩罚权重系数。
 
 ### 2. 模拟退火构成要素与参数标定
 
 | 参数符号 | 参数名称 | 标定取值 | 设计准则与依据 |
 | :---: | :---: | :---: | :--- |
-| $T_0$ | 初始退火温度 | $1000.0^\circ\text{C}$ | 保证搜索初期对劣解的接收概率 $P_0 > 0.85$ ，提供广阔全局搜索域 |
-| $\alpha$ | 快速降温系数 | $0.95$ | 采用 Van Laarhoven & Aarts 快速几何降温： $T_{k+1} = \alpha T_k$ |
-| $L_k$ | 马尔可夫链步长 | $60 \sim 100$ | 确保系统在各温度下达到微观热平衡态 |
-| $\varepsilon$ | 终止温度阈值 | $0.005$ | 系统冻结阈值，当 $T < \varepsilon$ 时终止并输出当前最好可行启发式解 |
-| $P_{\text{op}}$ | 邻域扰动算子分布 | 2-Opt(55%), Swap(30%), Or-Opt(15%) | 复合邻域结构，有效打破环线交叉与局部节点倒挂 |
+| $ T_0 $ | 初始退火温度 | $ 1000.0^\circ\text{C} $ | 保证搜索初期对劣解的接收概率 $ P_0 > 0.85 $ ，提供广阔全局搜索域 |
+| $ \alpha $ | 快速降温系数 | $ 0.95 $ | 采用 Van Laarhoven & Aarts 快速几何降温： $ T_{k+1} = \alpha T_k $ |
+| $ L_k $ | 马尔可夫链步长 | $ 60 \sim 100 $ | 确保系统在各温度下达到微观热平衡态 |
+| $ \varepsilon $ | 终止温度阈值 | $ 0.005 $ | 系统冻结阈值，当 $ T < \varepsilon $ 时终止并输出当前最好可行启发式解 |
+| $ P_{\text{op}} $ | 邻域扰动算子分布 | 2-Opt(55%), Swap(30%), Or-Opt(15%) | 复合邻域结构，有效打破环线交叉与局部节点倒挂 |
 
 ### 3. Metropolis 状态转移与接受准则
-设当前解为 $X$ ，产生扰动新解 $X'$ ，两者的目标增量为 $\Delta Z = Z(X') - Z(X)$ 。状态转移接收准则遵循 Metropolis 原理：
+设当前解为 $ X $ ，产生扰动新解 $ X' $ ，两者的目标增量为 $ \Delta Z = Z(X') - Z(X) $ 。状态转移接收准则遵循 Metropolis 原理：
 
-$$P(\text{Accept } X') = \begin{cases} 1, & \text{if } \Delta Z < 0 \\ \exp\left(-\frac{\Delta Z}{T}\right), & \text{if } \Delta Z \ge 0 \end{cases}$$
+
+$$
+P(\text{Accept } X') = \begin{cases} 1, & \text{if } \Delta Z < 0 \\ \exp\left(-\frac{\Delta Z}{T}\right), & \text{if } \Delta Z \ge 0 \end{cases}
+$$
+
 
 ---
 
