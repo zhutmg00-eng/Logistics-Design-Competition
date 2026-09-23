@@ -45,7 +45,7 @@ class AICopilot:
         layout_status = layout_data.get("solver_metrics", {}).get("status", "UNKNOWN")
 
         report = f"""
-### 📊 AI 智能诊断评估报告：{cname} ({cid})
+### 社区运行诊断评估报告：{cname} ({cid})
 
 #### 一、 空间微观特征与服务需求画像
 - **社区规模**：总户数 **{households}** 户，预估日均进站快件 **{daily_pkgs}** 件（大促峰值可达 **{daily_pkgs*2}** 件）。

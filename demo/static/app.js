@@ -22,14 +22,13 @@ const app = createApp({
         const guideStepIndex = ref(0);
 
         const moduleNav = [
-            { code: 'comparison', shortLabel: '总览', icon: '◫' },
-            { code: 'digital-twin', shortLabel: '数字孪生', icon: '◎' },
-            { code: 'forecast', shortLabel: '需求预测', icon: '⌁' },
-            { code: 'layout', shortLabel: '选址定容', icon: '▦' },
-            { code: 'routing', shortLabel: '人车协同', icon: '⇄' },
-            { code: 'simulation', shortLabel: '仿真对抗', icon: '◷' },
-            { code: 'copilot', shortLabel: 'AI调度', icon: '✦' },
-            { code: 'sandbox', shortLabel: '自定义推演', icon: '◇' }
+            { code: 'comparison', shortLabel: '总览' },
+            { code: 'digital-twin', shortLabel: '数字孪生' },
+            { code: 'forecast', shortLabel: '需求预测' },
+            { code: 'layout', shortLabel: '选址定容' },
+            { code: 'routing', shortLabel: '人车协同' },
+            { code: 'simulation', shortLabel: '仿真对抗' },
+            { code: 'copilot', shortLabel: '应急调度' }
         ];
 
         const guideSteps = [
@@ -66,17 +65,11 @@ const app = createApp({
             {
                 code: '06', community: 'C04', title: '仿真对抗与异常应急', duration: '03:40–04:35', tab: 'simulation', scheme: 's2', scenario: 'P20',
                 narration: '切到大促峰值与极端扰动，说明系统如何评估满柜、晚高峰和异常场景下的运行韧性。',
-                tips: ['展示饱和度曲线、甘特图和社区逐项结果。', '进入 AI 调度页依次触发暴单、暴雪和无人车故障，展示应急决策输出。'],
+                tips: ['展示饱和度曲线、甘特图和社区逐项结果。', '进入应急调度页依次触发暴单、暴雪和无人车故障，展示应急决策输出。'],
                 result: '把静态规划升级为动态运行推演，形成“预测—规划—仿真—应急修复”的完整闭环。'
             },
             {
-                code: '07', community: 'C04', title: '自定义社区推演', duration: '04:35–05:25', tab: 'sandbox', scheme: 's2', scenario: 'N',
-                narration: '进入参数实验室，以 C04 亦城茗苑为例，调整户数、上门比例和人均件量强度，展示即时预算与全模型重算。',
-                tips: ['拖动滑块时先讲实时预测变化，再点击一键重算。', '重算完成后查看 M5、M6、M2 的求解耗时和真实日志。'],
-                result: '说明系统可突破预设社区样本，向任意北京社区扩展，并能保留完整求解链路。'
-            },
-            {
-                code: '08', community: 'C04', title: '算法模型看板', duration: '05:25–06:10', tab: 'sandbox', solverTab: 'M2-ISA',
+                code: '07', community: 'C04', title: '算法模型看板', duration: '04:35–05:20', tab: 'comparison', solverTab: 'M2-ISA',
                 narration: '最后打开算法看板，依次说明 M1、M2/M3、M2-ISA、M5、M6、M8 的数学定义、变量、约束和学术图谱。',
                 tips: ['从 M1 到 M2-ISA 展示同一套业务问题的模型链路。', '重点展示目标函数、硬约束与真实收敛轨迹，不再使用随机演示曲线。'],
                 result: '让 PPT 视频既有产品操作，也有学术方法支撑，能够与报告章节一一对应。'
@@ -218,12 +211,12 @@ const app = createApp({
         const showToast = (message, type = 'info', duration = 3000) => {
             const id = Date.now() + Math.random();
             const iconMap = {
-                success: '✅',
-                error: '❌',
-                warning: '⚠️',
-                info: 'ℹ️'
+                success: '',
+                error: '',
+                warning: '',
+                info: 'ℹ'
             };
-            const toast = { id, message, type, icon: iconMap[type] || 'ℹ️' };
+            const toast = { id, message, type, icon: iconMap[type] || 'ℹ' };
             toasts.value.push(toast);
             setTimeout(() => {
                 toasts.value = toasts.value.filter(t => t.id !== id);
@@ -326,11 +319,11 @@ const app = createApp({
                 const community = overview.value?.communities?.find(item => item.id === step.community);
                 selectedCommunityId.value = step.community;
                 if (community) {
-                    customHouseholds.value = community.households;
-                    if (step.community === 'C01' || step.community === 'C03') customDoorRatio.value = 1.0;
-                    else if (step.community === 'C02') customDoorRatio.value = 0.52;
-                    else if (step.community === 'C04') customDoorRatio.value = 0.25;
-                    else if (step.community === 'C05') customDoorRatio.value = 0.24;
+                    selectedHouseholds.value = community.households;
+                    if (step.community === 'C01' || step.community === 'C03') selectedDoorRatio.value = 1.0;
+                    else if (step.community === 'C02') selectedDoorRatio.value = 0.52;
+                    else if (step.community === 'C04') selectedDoorRatio.value = 0.25;
+                    else if (step.community === 'C05') selectedDoorRatio.value = 0.24;
                 }
                 planNeedsReload = true;
             }
@@ -373,15 +366,6 @@ const app = createApp({
         const showSolverModal = ref(false);
         const solverModalTab = ref('M6');
         const mathModelsList = ref([]);
-
-        // 高德开放平台 API Key 与实时搜索状态
-        const amapConfig = ref({ configured: false, masked_key: '加载中...' });
-        const showAmapModal = ref(false);
-        const amapKeyInput = ref('');
-        const amapKeyMsg = ref('');
-        const amapSearchKeyword = ref('海淀远大园');
-        const amapExploring = ref(false);
-        const amapExploreResult = ref(null);
 
         // 学术级高可信模型验证图集 (Publication-Grade Academic Modeling Figures)
         const academicFigures = ref([
@@ -580,16 +564,16 @@ const app = createApp({
         };
 
         // 地图底图主题与向量图层控制
-        const currentTileTheme = ref('amap-dark');
-        const tileStatusText = ref('高德暗黑矢量底图 [在线]');
+        const currentTileTheme = ref('amap-std');
+        const tileStatusText = ref('标准路网底图 [在线]');
         const showRoads = ref(true);
         const showPolygons = ref(true);
         const showRings = ref(true);
 
-        // 自定义沙盒参数
-        const customHouseholds = ref(2141);
-        const customDoorRatio = ref(0.25);
-        const customIntensity = ref(0.6);
+        // 社区计算参数（由社区选择自动维护）
+        const selectedHouseholds = ref(2141);
+        const selectedDoorRatio = ref(0.25);
+        const selectedIntensity = ref(0.6);
 
         // Leaflet 地图、图层与图表引用
         let map = null;
@@ -618,10 +602,10 @@ const app = createApp({
             if (mode === 'optimized') mode = 's2';
             schemeMode.value = mode;
             const names = {
-                's0': '🔴 S0 现状基准方案 (As-Is)',
-                's1': '🟡 S1 网络设施优化方案 (Facility Opt)',
-                's2': '🟢 S2 人机协同推荐方案 (To-Be)',
-                'diff': '⚡ 双方案同屏叠图对比'
+                's0': ' S0 现状基准方案 (As-Is)',
+                's1': ' S1 网络设施优化方案 (Facility Opt)',
+                's2': ' S2 人机协同推荐方案 (To-Be)',
+                'diff': ' 双方案同屏叠图对比'
             };
             if (!options.silent) showToast(`已切换至: ${names[mode] || mode}`, 'info');
             renderMapLayers();
@@ -657,20 +641,18 @@ const app = createApp({
                 if (event.key !== 'Escape') return;
                 if (showGuide.value) showGuide.value = false;
                 else if (showImageModal.value) closeImagePreview();
-                else if (showAmapModal.value) showAmapModal.value = false;
                 else if (showSolverModal.value) showSolverModal.value = false;
             });
             initMap();
-            await fetchAmapConfig();
             await fetchMathModels();
             await fetchOverview();
             const initialCommunity = overview.value?.communities?.find(item => item.id === selectedCommunityId.value);
             if (initialCommunity) {
-                customHouseholds.value = initialCommunity.households;
-                if (selectedCommunityId.value === 'C01' || selectedCommunityId.value === 'C03') customDoorRatio.value = 1.0;
-                else if (selectedCommunityId.value === 'C02') customDoorRatio.value = 0.52;
-                else if (selectedCommunityId.value === 'C04') customDoorRatio.value = 0.25;
-                else if (selectedCommunityId.value === 'C05') customDoorRatio.value = 0.24;
+                selectedHouseholds.value = initialCommunity.households;
+                if (selectedCommunityId.value === 'C01' || selectedCommunityId.value === 'C03') selectedDoorRatio.value = 1.0;
+                else if (selectedCommunityId.value === 'C02') selectedDoorRatio.value = 0.52;
+                else if (selectedCommunityId.value === 'C04') selectedDoorRatio.value = 0.25;
+                else if (selectedCommunityId.value === 'C05') selectedDoorRatio.value = 0.24;
             }
             await loadCommunityPlan(selectedCommunityId.value);
             await fetchSimulation();
@@ -785,7 +767,7 @@ const app = createApp({
             );
 
             // 默认挂载高德暗黑底图
-            currentTileLayer = tileLayers['amap-dark'];
+            currentTileLayer = tileLayers['amap-std'];
             currentTileLayer.addTo(map);
 
             // 监听瓦片加载与异常（无网络/外网受限时自动平滑过渡）
@@ -793,8 +775,8 @@ const app = createApp({
                 tileStatusText.value = '底图瓦片受限 · 已激活高精矢量底图兜底';
             });
             currentTileLayer.on('load', () => {
-                if (currentTileTheme.value === 'amap-dark') {
-                    tileStatusText.value = '高德暗黑矢量底图 [在线]';
+                if (currentTileTheme.value === 'amap-std') {
+                    tileStatusText.value = '标准路网底图 [在线]';
                 }
             });
         };
@@ -875,184 +857,6 @@ const app = createApp({
             }
         };
 
-        // 高德开放平台 API 交互与全要素社区探索
-        const fetchAmapConfig = async () => {
-            try {
-                const res = await fetch('/api/amap/config');
-                amapConfig.value = await res.json();
-            } catch (e) {
-                console.error('Fetch Amap config failed:', e);
-            }
-        };
-
-        const saveAmapKey = async () => {
-            if (!amapKeyInput.value.trim()) {
-                amapKeyMsg.value = '请输入有效的Key';
-                return;
-            }
-            try {
-                const res = await fetch('/api/amap/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: amapKeyInput.value.trim() })
-                });
-                const data = await res.json();
-                amapConfig.value = {
-                    configured: data.configured,
-                    masked_key: data.masked_key
-                };
-                if (data.test_result && data.test_result.valid) {
-                    amapKeyMsg.value = '✅ 验证成功！已接入高德开放平台Web服务';
-                    setTimeout(() => {
-                        showAmapModal.value = false;
-                        amapKeyMsg.value = '';
-                    }, 1200);
-                } else {
-                    amapKeyMsg.value = '⚠️ 保存成功，高德测试提示: ' + (data.test_result ? data.test_result.info : '无法验证');
-                }
-            } catch (e) {
-                amapKeyMsg.value = '❌ 保存失败: ' + e;
-            }
-        };
-
-        const searchAndExploreCommunity = async () => {
-            if (!amapSearchKeyword.value.trim()) return;
-            amapExploring.value = true;
-            try {
-                const res = await fetch('/api/amap/explore', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        community_name: amapSearchKeyword.value.trim(),
-                        households: customHouseholds.value || 1200,
-                        door_ratio: customDoorRatio.value || 0.35,
-                        intensity: customIntensity.value || 0.6
-                    })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    amapExploreResult.value = data;
-                    selectedCommunityId.value = `AMAP-${data.community_name}`;
-                    planResult.value = {
-                        community_id: `AMAP-${data.community_name}`,
-                        community_name: data.community_name,
-                        forecast: data.forecast,
-                        layout: data.layout,
-                        routing: data.routing,
-                        buildings: data.buildings,
-                        ai_report: data.ai_report,
-                        weather: data.weather
-                    };
-                    renderAmapExploredMap(data);
-                    nextTick(() => {
-                        updateCharts();
-                        renderMath();
-                    });
-                    showToast(`已成功接入并规划实景社区: ${data.community_name}`, 'success');
-                } else {
-                    showToast(data.info || '高德解析失败，请检查Key', 'error');
-                }
-            } catch (e) {
-                showToast('高德探索失败: ' + e, 'error');
-            } finally {
-                amapExploring.value = false;
-            }
-        };
-
-        const renderAmapExploredMap = (data) => {
-            if (!map) return;
-            mapLayers.forEach(l => map.removeLayer(l));
-            mapLayers = [];
-
-            const center = [data.geo.lat, data.geo.lng];
-            
-            // 绘制小区中心辐射圆
-            const centerCircle = L.circle(center, {
-                radius: 180,
-                color: '#06b6d4',
-                weight: 2,
-                fillColor: '#06b6d4',
-                fillOpacity: 0.1,
-                dashArray: '5, 5'
-            }).addTo(map);
-            mapLayers.push(centerCircle);
-
-            const centerMarker = L.circleMarker(center, {
-                radius: 10,
-                color: '#06b6d4',
-                fillColor: '#38bdf8',
-                fillOpacity: 0.9,
-                weight: 3
-            }).addTo(map);
-            centerMarker.bindPopup(`<b>【高德实时定位】${data.community_name}</b><br>${data.geo.formatted_address}<br>周边已扫描物流设施: ${data.nearby_pois_count} 处`);
-            mapLayers.push(centerMarker);
-
-            // 绘制楼栋
-            if (data.buildings) {
-                data.buildings.forEach(b => {
-                    const bMarker = L.circleMarker([b.lat, b.lng], {
-                        radius: 6,
-                        color: '#60a5fa',
-                        fillColor: '#3b82f6',
-                        fillOpacity: 0.85,
-                        weight: 2
-                    }).addTo(map);
-                    bMarker.bindPopup(`<b>${b.name}</b><br>户数: ${b.households} 户<br>预测件量: ${b.daily_pkgs} 件 (上门${b.door_pkgs} / 自提${b.locker_pkgs})`);
-                    mapLayers.push(bMarker);
-                });
-            }
-
-            // 绘制智能柜设施
-            if (data.layout && data.layout.facilities) {
-                data.layout.facilities.forEach(f => {
-                    const fMarker = L.circleMarker([f.lat, f.lng], {
-                        radius: 8,
-                        color: f.slave_units > 0 ? '#10b981' : '#a855f7',
-                        fillColor: f.slave_units > 0 ? '#34d399' : '#c084fc',
-                        fillOpacity: 0.95,
-                        weight: 3
-                    }).addTo(map);
-                    fMarker.bindPopup(`<b>${f.name}</b><br>配置: 主柜${f.main_lockers} + 副柜${f.slave_units}组 (${f.total_slots}格)<br>有效容量: ${f.effective_capacity}件 | 负荷: ${f.assigned_demand}件<br>状态: ${f.is_full_risk ? '❌有爆柜风险' : '✅容量安全'}`);
-                    mapLayers.push(fMarker);
-
-                    const ring = L.circle([f.lat, f.lng], {
-                        radius: 100,
-                        color: '#10b981',
-                        weight: 1,
-                        fillColor: '#10b981',
-                        fillOpacity: 0.08,
-                        dashArray: '3, 3'
-                    }).addTo(map);
-                    mapLayers.push(ring);
-                });
-            }
-
-            // 绘制无人车路线
-            if (data.routing && data.routing.unmanned_vehicle_path && data.routing.unmanned_vehicle_path.length > 1) {
-                const uvCoords = data.routing.unmanned_vehicle_path.map(pt => [pt.lat, pt.lng]);
-                const uvLine = L.polyline(uvCoords, {
-                    color: '#38bdf8',
-                    weight: 4,
-                    opacity: 0.9
-                }).addTo(map);
-                mapLayers.push(uvLine);
-            }
-
-            // 绘制快递员上门路线
-            if (data.routing && data.routing.courier_path && data.routing.courier_path.length > 1) {
-                const cCoords = data.routing.courier_path.map(pt => [pt.lat, pt.lng]);
-                const cLine = L.polyline(cCoords, {
-                    color: '#f97316',
-                    weight: 2,
-                    opacity: 0.8,
-                    dashArray: '4, 4'
-                }).addTo(map);
-                mapLayers.push(cLine);
-            }
-
-            map.setView(center, 16);
-        };
-
         const fetchMathModels = async () => {
             try {
                 const res = await fetch('/api/solver/models');
@@ -1091,9 +895,9 @@ const app = createApp({
                     signal: planAbortController.signal,
                     body: JSON.stringify({
                         community_id: cid,
-                        custom_households: customHouseholds.value,
-                        custom_door_ratio: customDoorRatio.value,
-                        custom_intensity: customIntensity.value,
+                        custom_households: selectedHouseholds.value,
+                        custom_door_ratio: selectedDoorRatio.value,
+                        custom_intensity: selectedIntensity.value,
                         is_peak_day: isPeakDay.value
                     })
                 });
@@ -1151,26 +955,16 @@ const app = createApp({
             if (overview.value) {
                 const c = overview.value.communities.find(item => item.id === cid);
                 if (c) {
-                    customHouseholds.value = c.households;
+                    selectedHouseholds.value = c.households;
                     // 设置默认上门比例
-                    if (cid === 'C01' || cid === 'C03') customDoorRatio.value = 1.0;
-                    else if (cid === 'C02') customDoorRatio.value = 0.52;
-                    else if (cid === 'C04') customDoorRatio.value = 0.25;
-                    else if (cid === 'C05') customDoorRatio.value = 0.24;
+                    if (cid === 'C01' || cid === 'C03') selectedDoorRatio.value = 1.0;
+                    else if (cid === 'C02') selectedDoorRatio.value = 0.52;
+                    else if (cid === 'C04') selectedDoorRatio.value = 0.25;
+                    else if (cid === 'C05') selectedDoorRatio.value = 0.24;
                 }
             }
             loadCommunityPlan(cid);
             showToast(`已切换至社区: ${cid}`, 'info');
-        };
-
-        const onTweakParams = async () => {
-            const data = await loadCommunityPlan(selectedCommunityId.value);
-            if (!data) return;
-            if (String(data?.solver_console?.pipeline_status || '').includes('INFEASIBLE') || Number(data?.solver_console?.hard_constraint_violations || 0) > 0) {
-                showToast('重算完成，但存在硬约束未通过，请查看约束明细', 'warning', 5200);
-            } else {
-                showToast('规划参数已重算，方案通过硬约束校验', 'success', 4200);
-            }
         };
 
         const triggerCrisis = async (type) => {
@@ -1213,7 +1007,7 @@ const app = createApp({
 
                         // 绘制社区真实物理多边形边界
                         const poly = L.polygon(c.polygon, {
-                            color: isCurrent ? '#06b6d4' : '#0284c7',
+                            color: isCurrent ? '#226f8c' : '#0284c7',
                             weight: isCurrent ? 3.5 : 1.8,
                             opacity: isCurrent ? 0.95 : 0.55,
                             fillColor: isCurrent ? '#0891b2' : '#0369a1',
@@ -1270,7 +1064,7 @@ const app = createApp({
                     if (edge.from_coord && edge.to_coord) {
                         const isPassable = (edge.unmanned_passable !== false);
                         const roadLine = L.polyline([edge.from_coord, edge.to_coord], {
-                            color: isPassable ? '#38bdf8' : '#64748b',
+                            color: isPassable ? '#2d7f9e' : '#64748b',
                             weight: isPassable ? 2.5 : 1.5,
                             opacity: isPassable ? 0.70 : 0.40,
                             dashArray: isPassable ? null : '3, 3'
@@ -1295,7 +1089,7 @@ const app = createApp({
                         const nodeDot = L.circleMarker([node.lat, node.lng], {
                             radius: 2,
                             color: '#0284c7',
-                            fillColor: '#38bdf8',
+                            fillColor: '#2d7f9e',
                             fillOpacity: 0.6,
                             weight: 1
                         }).addTo(map);
@@ -1311,8 +1105,8 @@ const app = createApp({
                 const hub = overview.value.hub;
                 const hubMarker = L.circleMarker([hub.lat, hub.lng], {
                     radius: 10,
-                    color: '#f59e0b',
-                    fillColor: '#fbbf24',
+                    color: '#b7791f',
+                    fillColor: '#c58a2a',
                     fillOpacity: 0.95,
                     weight: 3
                 }).addTo(map);
@@ -1330,9 +1124,9 @@ const app = createApp({
                 // HUB 辐射光环
                 const hubRing = L.circle([hub.lat, hub.lng], {
                     radius: 350,
-                    color: '#f59e0b',
+                    color: '#b7791f',
                     weight: 1,
-                    fillColor: '#f59e0b',
+                    fillColor: '#b7791f',
                     fillOpacity: 0.04,
                     dashArray: '5, 5'
                 }).addTo(map);
@@ -1352,7 +1146,7 @@ const app = createApp({
                     if (latlngs.length < 2) return;
 
                     const bLine = L.polyline(latlngs, {
-                        color: '#ef4444',
+                        color: '#b84b4b',
                         weight: schemeMode.value === 'diff' ? 2.5 : 3.2,
                         opacity: schemeMode.value === 'diff' ? 0.75 : 0.90,
                         dashArray: '6, 5'
@@ -1360,7 +1154,7 @@ const app = createApp({
 
                     bLine.bindPopup(
                         `<div class="text-xs space-y-1">
-                            <div class="font-bold text-rose-400">【🔴 现状独立往返干线: HUB ⇄ ${route.community_id}】</div>
+                            <div class="font-bold text-rose-400">【 现状独立往返干线: HUB ⇄ ${route.community_id}】</div>
                             <div>往返里程: <span class="mono font-bold text-rose-300">${route.dist_km || route.distance_km || 0} km</span></div>
                             <div>单程往返耗时: <span class="mono text-slate-300">${route.time_min || route.drive_time_min || 0} min</span></div>
                             <div class="text-slate-400 text-[10px]">5条车辆点对点往返，全网总长 ${metricValue('trunk_distance', 'baseline', 1, 2)} km</div>
@@ -1378,14 +1172,14 @@ const app = createApp({
                     const latlngs = tour.map(pt => Array.isArray(pt) ? pt : (pt && pt.lat !== undefined ? [pt.lat, pt.lng] : null)).filter(Boolean);
                     if (latlngs.length > 1) {
                         const trunkLine = L.polyline(latlngs, {
-                            color: '#06b6d4',
+                            color: '#226f8c',
                             weight: 4.5,
                             opacity: 0.95
                         }).addTo(map);
 
                         trunkLine.bindPopup(
                             `<div class="text-xs space-y-1">
-                                <div class="font-bold text-cyan-400">【🟢 M1 亦庄干线巡回 TSP 闭环】</div>
+                                <div class="font-bold text-cyan-400">【 M1 亦庄干线巡回 TSP 闭环】</div>
                                 <div>巡回总里程: <span class="mono font-bold text-white">${overview.value.trunk_routing.tour_dist_km} km</span></div>
                                 <div>相比独立往返: <span class="text-emerald-400 font-bold">${improvementText('trunk_distance')} (${savingValue('trunk_distance', 1, 2)} km)</span></div>
                                 <div>无人车巡回耗时: <span class="mono text-slate-200">${overview.value.trunk_routing.travel_time_min} min</span></div>
@@ -1405,7 +1199,7 @@ const app = createApp({
                     const bMarker = L.circleMarker([b.lat, b.lng], {
                         radius: 5 + Math.min(8, b.daily_pkgs / 40),
                         color: '#60a5fa',
-                        fillColor: '#3b82f6',
+                        fillColor: '#3d7196',
                         fillOpacity: 0.85,
                         weight: 2
                     }).addTo(map);
@@ -1437,8 +1231,8 @@ const app = createApp({
                         icon: L.divIcon({
                             className: 'facility-burst-marker',
                             html: isBurst
-                                ? `<div class="w-8 h-8 rounded-full bg-rose-600 border-2 border-rose-300 shadow-lg shadow-rose-600/70 flex items-center justify-center text-sm animate-bounce cursor-pointer">💥</div>`
-                                : `<div class="w-7 h-7 rounded-full bg-slate-700 border border-slate-400 flex items-center justify-center text-xs">📦</div>`,
+                                ? `<div class="w-8 h-8 rounded-full bg-rose-600 border-2 border-rose-300 shadow-lg shadow-rose-600/70 flex items-center justify-center text-sm animate-bounce cursor-pointer"></div>`
+                                : `<div class="w-7 h-7 rounded-full bg-slate-700 border border-slate-400 flex items-center justify-center text-xs"></div>`,
                             iconSize: [32, 32],
                             iconAnchor: [16, 16]
                         })
@@ -1446,9 +1240,9 @@ const app = createApp({
 
                     fMarker.bindPopup(
                         `<div class="text-xs space-y-1">
-                            <div class="font-bold text-rose-400 text-sm">【🔴 现状单柜设施: ${f.name}】</div>
+                            <div class="font-bold text-rose-400 text-sm">【 现状单柜设施: ${f.name}】</div>
                             <div class="${isBurst ? 'text-rose-400 font-bold' : 'text-slate-300'}">
-                                ${isBurst ? '⚠️ 严重超载爆柜！包裹大量外溢' : '常规负荷状态'}
+                                ${isBurst ? ' 严重超载爆柜！包裹大量外溢' : '常规负荷状态'}
                             </div>
                             <div>有效容量: <span class="mono font-bold text-white">${f.effective_capacity ?? 0} 件</span></div>
                             <div>指派自提需求: <span class="mono font-bold text-white">${f.assigned_demand ?? 0} 件</span></div>
@@ -1466,7 +1260,7 @@ const app = createApp({
                     const fMarker = L.marker([f.lat, f.lng], {
                         icon: L.divIcon({
                             className: 'facility-shield-marker',
-                            html: `<div class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-emerald-300 shadow-lg shadow-emerald-500/50 flex items-center justify-center text-sm cursor-pointer">🛡️</div>`,
+                            html: `<div class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-emerald-300 shadow-lg shadow-emerald-500/50 flex items-center justify-center text-sm cursor-pointer"></div>`,
                             iconSize: [32, 32],
                             iconAnchor: [16, 16]
                         })
@@ -1474,8 +1268,8 @@ const app = createApp({
 
                     fMarker.bindPopup(
                         `<div class="text-xs space-y-1">
-                            <div class="font-bold text-emerald-400 text-sm">【🟢 优化智能柜: ${f.name}】</div>
-                            <div class="${f.is_full_risk ? 'text-rose-300' : 'text-emerald-300'} font-bold">${f.is_full_risk ? '⚠️ 容量约束未通过' : '✅ 当前情景容量约束通过'}</div>
+                            <div class="font-bold text-emerald-400 text-sm">【 优化智能柜: ${f.name}】</div>
+                            <div class="${f.is_full_risk ? 'text-rose-300' : 'text-emerald-300'} font-bold">${f.is_full_risk ? ' 容量约束未通过' : ' 当前情景容量约束通过'}</div>
                             <div>MIP定容配置: 主柜 ${f.main_lockers} 组 + 扩容副柜 <span class="text-emerald-300 font-bold">${f.slave_units}</span> 组</div>
                             <div>总格口数: <span class="mono font-bold text-white">${f.total_slots}</span> 格</div>
                             <div>日有效承载: <span class="mono font-bold text-cyan-300">${f.effective_capacity}</span> 件</div>
@@ -1488,9 +1282,9 @@ const app = createApp({
                     if (showRings.value) {
                         const circle = L.circle([f.lat, f.lng], {
                             radius: 150,
-                            color: '#10b981',
+                            color: '#2e8b63',
                             weight: 1.5,
-                            fillColor: '#10b981',
+                            fillColor: '#2e8b63',
                             fillOpacity: 0.08,
                             dashArray: '4, 4'
                         }).addTo(map);
@@ -1498,7 +1292,7 @@ const app = createApp({
                     }
                 });
             } else {
-                // ⚡ 双方案同屏对比模式 (Diff)
+                //  双方案同屏对比模式 (Diff)
                 const optFacs = p.optimized_plan?.facilities || p.layout?.facilities || [];
                 const baseFacs = p.baseline_plan?.facilities || [];
                 const baseById = new Map(baseFacs.map(item => [item.facility_id || item.id, item]));
@@ -1513,10 +1307,10 @@ const app = createApp({
                         ? `<div class="relative w-9 h-9 flex items-center justify-center cursor-pointer">
                              <span class="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping"></span>
                              <div class="relative w-8 h-8 rounded-full bg-slate-900 border-2 border-emerald-400 flex items-center justify-center text-xs font-bold shadow-lg">
-                                <span>⚡</span>
+                                <span></span>
                              </div>
                            </div>`
-                        : `<div class="w-8 h-8 rounded-full bg-emerald-700/90 border-2 border-emerald-300 flex items-center justify-center text-xs">🛡️</div>`;
+                        : `<div class="w-8 h-8 rounded-full bg-emerald-700/90 border-2 border-emerald-300 flex items-center justify-center text-xs"></div>`;
 
                     const fMarker = L.marker([f.lat, f.lng], {
                         icon: L.divIcon({
@@ -1535,14 +1329,14 @@ const app = createApp({
                             </div>
                             <div class="bg-rose-950/50 p-2 rounded border border-rose-800/70 space-y-0.5">
                                 <div class="text-rose-400 font-bold flex items-center justify-between">
-                                    <span>🔴 现状方案 (As-Is):</span>
+                                    <span> 现状方案 (As-Is):</span>
                                     <span class="text-[10px] px-1 rounded ${isBurst ? 'bg-rose-800 text-white' : 'bg-slate-800'}">${isBurst ? '爆柜风险' : '正常'}</span>
                                 </div>
                                 <div class="text-slate-300">容量状态: <b class="text-rose-400">${baseSat}</b></div>
                             </div>
                             <div class="bg-emerald-950/50 p-2 rounded border border-emerald-800/70 space-y-0.5">
                                 <div class="text-emerald-400 font-bold flex items-center justify-between">
-                                    <span>🟢 优化方案 (To-Be):</span>
+                                    <span> 优化方案 (To-Be):</span>
                                     <span class="text-[10px] px-1 rounded bg-emerald-800 text-white font-bold">健康受控</span>
                                 </div>
                                 <div class="text-slate-300">副柜 <b class="text-emerald-300">+${f.slave_units}</b> 组 (${f.effective_capacity}件) · 饱和度: <b class="text-emerald-300">${optSat}%</b></div>
@@ -1557,9 +1351,9 @@ const app = createApp({
                     if (showRings.value) {
                         const circle = L.circle([f.lat, f.lng], {
                             radius: 150,
-                            color: '#06b6d4',
+                            color: '#226f8c',
                             weight: 1.5,
-                            fillColor: '#06b6d4',
+                            fillColor: '#226f8c',
                             fillOpacity: 0.08,
                             dashArray: '3, 3'
                         }).addTo(map);
@@ -1577,7 +1371,7 @@ const app = createApp({
                 if (basePath && basePath.length > 1) {
                     const baseCoords = basePath.map(pt => [pt.lat, pt.lng]);
                     const baseLine = L.polyline(baseCoords, {
-                        color: '#f43f5e',
+                        color: '#b64b58',
                         weight: 3.2,
                         opacity: schemeMode.value === 'diff' ? 0.70 : 0.88,
                         dashArray: '7, 5'
@@ -1585,7 +1379,7 @@ const app = createApp({
 
                     baseLine.bindPopup(
                         `<div class="text-xs space-y-1">
-                            <div class="font-bold text-rose-400">【🔴 现状快递员全量步巡路线 (As-Is)】</div>
+                            <div class="font-bold text-rose-400">【 现状快递员全量步巡路线 (As-Is)】</div>
                             <div>步巡总里程: <span class="mono font-bold text-rose-400">${p.baseline_plan?.courier_walk_dist_km ?? '—'} km</span></div>
                             <div>人工总工时: <span class="mono font-bold text-rose-400">${p.baseline_plan?.courier_total_hours ?? '—'} h</span></div>
                             <div class="text-slate-300 text-[10px]">纯人工覆盖全部楼栋自提与上门，疲劳过载</div>
@@ -1600,14 +1394,14 @@ const app = createApp({
                 if (p.routing && p.routing.unmanned_vehicle_path && p.routing.unmanned_vehicle_path.length > 1) {
                     const uvCoords = p.routing.unmanned_vehicle_path.map(pt => [pt.lat, pt.lng]);
                     const uvLine = L.polyline(uvCoords, {
-                        color: '#38bdf8',
+                        color: '#2d7f9e',
                         weight: 4.5,
                         opacity: 0.95
                     }).addTo(map);
 
                     uvLine.bindPopup(
                         `<div class="text-xs space-y-1">
-                            <div class="font-bold text-sky-400">【🟢 优化 M2 无人车社区巡航路线】</div>
+                            <div class="font-bold text-sky-400">【 优化 M2 无人车社区巡航路线】</div>
                             <div>巡航里程: <span class="mono font-bold text-white">${p.routing.unmanned_vehicle_dist_km} km</span></div>
                             <div>巡航耗时: <span class="mono text-slate-200">${p.routing.unmanned_vehicle_time_min} min</span></div>
                             <div>服务点数: ${p.routing.unmanned_vehicle_path.length} 处</div>
@@ -1621,7 +1415,7 @@ const app = createApp({
                 if (p.routing && p.routing.courier_path && p.routing.courier_path.length > 1) {
                     const cCoords = p.routing.courier_path.map(pt => [pt.lat, pt.lng]);
                     const cLine = L.polyline(cCoords, {
-                        color: '#f97316',
+                        color: '#bf6b34',
                         weight: 2.5,
                         opacity: 0.88,
                         dashArray: '5, 5'
@@ -1629,7 +1423,7 @@ const app = createApp({
 
                     cLine.bindPopup(
                         `<div class="text-xs space-y-1">
-                            <div class="font-bold text-orange-400">【🟢 优化后快递员精准上门步巡】</div>
+                            <div class="font-bold text-orange-400">【 优化后快递员精准上门步巡】</div>
                             <div>步巡里程: <span class="mono font-bold text-emerald-400">${p.routing.courier_walk_dist_km} km</span> <span class="text-emerald-400 text-[10px]">改善 ${p.community_comparison?.walk_saving_pct ?? '—'}%</span></div>
                             <div>上门工时: <span class="mono font-bold text-emerald-400">${p.routing.courier_total_hours} h</span> <span class="text-emerald-400 text-[10px]">改善 ${p.community_comparison?.hours_saving_pct ?? '—'}%</span></div>
                             <div class="text-slate-300 text-[10px]">人机接驳协同，专注高品质入户服务</div>
@@ -1701,14 +1495,14 @@ const app = createApp({
                 chartArrivals.setOption({
                     backgroundColor: 'transparent',
                     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-                    legend: { data: ['总件量', '送货上门', '自提柜'], textStyle: { color: '#94a3b8' }, top: 0 },
+                    legend: { data: ['总件量', '送货上门', '自提柜'], textStyle: { color: '#687680' }, top: 0 },
                     grid: { top: 35, left: 45, right: 15, bottom: 25 },
-                    xAxis: { type: 'category', data: periods, axisLabel: { color: '#94a3b8', fontSize: 11 }, axisLine: { lineStyle: { color: '#334155' } } },
-                    yAxis: { type: 'value', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                    xAxis: { type: 'category', data: periods, axisLabel: { color: '#687680', fontSize: 11 }, axisLine: { lineStyle: { color: '#c9d3d8' } } },
+                    yAxis: { type: 'value', axisLabel: { color: '#687680' }, splitLine: { lineStyle: { color: '#e4e9ec' } } },
                     series: [
-                        { name: '总件量', type: 'line', smooth: true, data: totals, itemStyle: { color: '#38bdf8' }, lineStyle: { width: 3 } },
-                        { name: '送货上门', type: 'bar', stack: 'mode', data: doors, itemStyle: { color: '#f97316' } },
-                        { name: '自提柜', type: 'bar', stack: 'mode', data: lockers, itemStyle: { color: '#10b981' } }
+                        { name: '总件量', type: 'line', smooth: true, data: totals, itemStyle: { color: '#2d7f9e' }, lineStyle: { width: 3 } },
+                        { name: '送货上门', type: 'bar', stack: 'mode', data: doors, itemStyle: { color: '#bf6b34' } },
+                        { name: '自提柜', type: 'bar', stack: 'mode', data: lockers, itemStyle: { color: '#2e8b63' } }
                     ]
                 });
             }
@@ -1725,7 +1519,7 @@ const app = createApp({
 
             chartTspConvergence.setOption({
                 backgroundColor: 'transparent',
-                tooltip: { 
+                tooltip: {
                     trigger: 'axis',
                     formatter: (params) => {
                         const idx = params[0].dataIndex;
@@ -1734,14 +1528,14 @@ const app = createApp({
                     }
                 },
                 grid: { top: 30, left: 45, right: 20, bottom: 25 },
-                xAxis: { type: 'category', data: labels, axisLabel: { color: '#94a3b8', fontSize: 10 }, axisLine: { lineStyle: { color: '#334155' } } },
-                yAxis: { type: 'value', name: 'km', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                xAxis: { type: 'category', data: labels, axisLabel: { color: '#687680', fontSize: 10 }, axisLine: { lineStyle: { color: '#c9d3d8' } } },
+                yAxis: { type: 'value', name: 'km', axisLabel: { color: '#687680' }, splitLine: { lineStyle: { color: '#e4e9ec' } } },
                 series: [{
                     name: '巡回里程',
                     type: 'line',
                     smooth: true,
                     data: dists,
-                    itemStyle: { color: '#06b6d4' },
+                    itemStyle: { color: '#226f8c' },
                     areaStyle: { color: 'rgba(6, 182, 212, 0.15)' },
                     lineStyle: { width: 3 }
                 }]
@@ -1760,7 +1554,7 @@ const app = createApp({
 
             chartMipConvergence.setOption({
                 backgroundColor: 'transparent',
-                tooltip: { 
+                tooltip: {
                     trigger: 'axis',
                     formatter: (params) => {
                         const idx = params[0].dataIndex;
@@ -1768,13 +1562,13 @@ const app = createApp({
                         return `<b>B&B Tree Search Node ${c.node}</b><br/>上界 (Incumbent): ¥${c.upper_bound}<br/>下界 (LP Relax): ¥${c.lower_bound}<br/>Optimality GAP: <span class="text-emerald-400 font-bold">${c.gap_pct}%</span>`;
                     }
                 },
-                legend: { data: ['上界 (整数可行解)', '下界 (松弛界限)'], textStyle: { color: '#94a3b8', fontSize: 10 }, top: 0 },
+                legend: { data: ['上界 (整数可行解)', '下界 (松弛界限)'], textStyle: { color: '#687680', fontSize: 10 }, top: 0 },
                 grid: { top: 35, left: 55, right: 20, bottom: 25 },
-                xAxis: { type: 'category', data: nodes, axisLabel: { color: '#94a3b8', fontSize: 10 }, axisLine: { lineStyle: { color: '#334155' } } },
-                yAxis: { type: 'value', name: '元', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                xAxis: { type: 'category', data: nodes, axisLabel: { color: '#687680', fontSize: 10 }, axisLine: { lineStyle: { color: '#c9d3d8' } } },
+                yAxis: { type: 'value', name: '元', axisLabel: { color: '#687680' }, splitLine: { lineStyle: { color: '#e4e9ec' } } },
                 series: [
-                    { name: '上界 (整数可行解)', type: 'line', data: ubs, itemStyle: { color: '#f59e0b' }, lineStyle: { width: 2 } },
-                    { name: '下界 (松弛界限)', type: 'line', data: lbs, itemStyle: { color: '#10b981' }, lineStyle: { width: 2, type: 'dashed' } }
+                    { name: '上界 (整数可行解)', type: 'line', data: ubs, itemStyle: { color: '#b7791f' }, lineStyle: { width: 2 } },
+                    { name: '下界 (松弛界限)', type: 'line', data: lbs, itemStyle: { color: '#2e8b63' }, lineStyle: { width: 2, type: 'dashed' } }
                 ]
             });
         };
@@ -1797,25 +1591,25 @@ const app = createApp({
                 chartSaturation.setOption({
                     backgroundColor: 'transparent',
                     tooltip: { trigger: 'axis' },
-                    legend: { data: ['未扩容基准(严重满柜)', 'MIP优化扩容(安全承载)'], textStyle: { color: '#94a3b8' }, top: 0 },
+                    legend: { data: ['未扩容基准(严重满柜)', 'MIP优化扩容(安全承载)'], textStyle: { color: '#687680' }, top: 0 },
                     grid: { top: 35, left: 45, right: 25, bottom: 25 },
-                    xAxis: { type: 'category', data: sim.timeline.hours, axisLabel: { color: '#94a3b8' }, axisLine: { lineStyle: { color: '#334155' } } },
-                    yAxis: { type: 'value', max: 150, axisLabel: { formatter: '{value}%', color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                    xAxis: { type: 'category', data: sim.timeline.hours, axisLabel: { color: '#687680' }, axisLine: { lineStyle: { color: '#c9d3d8' } } },
+                    yAxis: { type: 'value', max: 150, axisLabel: { formatter: '{value}%', color: '#687680' }, splitLine: { lineStyle: { color: '#e4e9ec' } } },
                     series: [
                         {
                             name: '未扩容基准(严重满柜)',
                             type: 'line',
                             data: sim.timeline.locker_occupancy_baseline,
-                            itemStyle: { color: '#ef4444' },
+                            itemStyle: { color: '#b84b4b' },
                             lineStyle: { width: 3, type: 'dashed' },
-                            markLine: { data: [{ yAxis: 100, name: '满柜红线', lineStyle: { color: '#ef4444', width: 2 } }] }
+                            markLine: { data: [{ yAxis: 100, name: '满柜红线', lineStyle: { color: '#b84b4b', width: 2 } }] }
                         },
                         {
                             name: 'MIP优化扩容(安全承载)',
                             type: 'line',
                             smooth: true,
                             data: sim.timeline.locker_occupancy_optimized,
-                            itemStyle: { color: '#10b981' },
+                            itemStyle: { color: '#2e8b63' },
                             areaStyle: { color: 'rgba(16, 185, 129, 0.15)' },
                             lineStyle: { width: 3 }
                         }
@@ -1832,7 +1626,7 @@ const app = createApp({
                 const maxTrunk = Math.max(...rows.map(s => s.trunk_km || 0), 1);
                 chartRadar.setOption({
                     backgroundColor: 'transparent',
-                    legend: { data: ['现状(纯人工)', '优化后人工', '人机协同(推荐)'], textStyle: { color: '#94a3b8' }, bottom: 0 },
+                    legend: { data: ['现状(纯人工)', '优化后人工', '人机协同(推荐)'], textStyle: { color: '#687680' }, bottom: 0 },
                     radar: {
                         center: ['50%', '44%'],
                         radius: '60%',
@@ -1843,10 +1637,10 @@ const app = createApp({
                             { name: '经济效益', max: 100 },
                             { name: '便民覆盖', max: 100 }
                         ],
-                        axisName: { color: '#94a3b8', fontSize: 10 },
+                        axisName: { color: '#687680', fontSize: 10 },
                         splitArea: { show: false },
-                        splitLine: { lineStyle: { color: '#1e293b' } },
-                        axisLine: { lineStyle: { color: '#334155' } }
+                        splitLine: { lineStyle: { color: '#e4e9ec' } },
+                        axisLine: { lineStyle: { color: '#c9d3d8' } }
                     },
                     series: [{
                         type: 'radar',
@@ -1859,7 +1653,7 @@ const app = createApp({
                                 s.bottleneck === 'FEASIBLE' ? 100 : 0
                             ],
                             name: ['现状(纯人工)', '优化后人工', '人机协同(推荐)'][index],
-                            itemStyle: { color: ['#64748b', '#f59e0b', '#06b6d4'][index] }
+                            itemStyle: { color: ['#64748b', '#b7791f', '#226f8c'][index] }
                         }))
                     }]
                 });
@@ -1874,16 +1668,16 @@ const app = createApp({
                 chartCost.setOption({
                     backgroundColor: 'transparent',
                     tooltip: { trigger: 'axis' },
-                    legend: { data: ['年运营总成本 (万元)', '年碳排放 (kg CO₂)'], textStyle: { color: '#94a3b8' }, top: 0 },
+                    legend: { data: ['年运营总成本 (万元)', '年碳排放 (kg CO₂)'], textStyle: { color: '#687680' }, top: 0 },
                     grid: { top: 35, left: 45, right: 45, bottom: 25 },
-                    xAxis: { type: 'category', data: names, axisLabel: { color: '#94a3b8', fontSize: 11 }, axisLine: { lineStyle: { color: '#334155' } } },
+                    xAxis: { type: 'category', data: names, axisLabel: { color: '#687680', fontSize: 11 }, axisLine: { lineStyle: { color: '#c9d3d8' } } },
                     yAxis: [
-                        { type: 'value', name: '万元', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
-                        { type: 'value', name: 'kg', axisLabel: { color: '#94a3b8' }, splitLine: { show: false } }
+                        { type: 'value', name: '万元', axisLabel: { color: '#687680' }, splitLine: { lineStyle: { color: '#e4e9ec' } } },
+                        { type: 'value', name: 'kg', axisLabel: { color: '#687680' }, splitLine: { show: false } }
                     ],
                     series: [
-                        { name: '年运营总成本 (万元)', type: 'bar', data: costs, itemStyle: { color: '#f59e0b' }, barWidth: 26 },
-                        { name: '年碳排放 (kg CO₂)', type: 'line', yAxisIndex: 1, data: carbons, itemStyle: { color: '#f59e0b' }, lineStyle: { width: 3 } }
+                        { name: '年运营总成本 (万元)', type: 'bar', data: costs, itemStyle: { color: '#b7791f' }, barWidth: 26 },
+                        { name: '年碳排放 (kg CO₂)', type: 'line', yAxisIndex: 1, data: carbons, itemStyle: { color: '#b7791f' }, lineStyle: { width: 3 } }
                     ]
                 });
             }
@@ -1904,7 +1698,7 @@ const app = createApp({
                         name: t.label,
                         value: [yIndex, startMin, endMin, endMin - startMin, t.community, t.type],
                         itemStyle: {
-                            color: t.type === 'UV_TRIP' ? '#06b6d4' : '#f59e0b'
+                            color: t.type === 'UV_TRIP' ? '#226f8c' : '#b7791f'
                         }
                     };
                 });
@@ -1929,19 +1723,19 @@ const app = createApp({
                         max: 780,
                         interval: 120,
                         axisLabel: {
-                            color: '#94a3b8',
+                            color: '#687680',
                             formatter: (val) => {
                                 const totalM = val + 480;
                                 return `${Math.floor(totalM/60).toString().padStart(2, '0')}:${(totalM%60).toString().padStart(2, '0')}`;
                             }
                         },
-                        splitLine: { lineStyle: { color: '#1e293b' } }
+                        splitLine: { lineStyle: { color: '#e4e9ec' } }
                     },
                     yAxis: {
                         type: 'category',
                         data: entities,
                         axisLabel: { color: '#cbd5e1', fontSize: 10 },
-                        splitLine: { show: true, lineStyle: { color: '#1e293b' } }
+                        splitLine: { show: true, lineStyle: { color: '#e4e9ec' } }
                     },
                     series: [{
                         type: 'custom',
@@ -1984,7 +1778,7 @@ const app = createApp({
 
                 chartCompSaturation.setOption({
                     backgroundColor: 'transparent',
-                    tooltip: { 
+                    tooltip: {
                         trigger: 'axis',
                         formatter: (params) => {
                             let tip = `<b>${params[0].axisValue} 动态饱和度对比</b><br/>`;
@@ -1994,34 +1788,34 @@ const app = createApp({
                             return tip;
                         }
                     },
-                    legend: { data: ['🔴 S0现有柜体占用 (未扩容)', '🟢 S1/S2优化定容占用 (安全承载)'], textStyle: { color: '#94a3b8', fontSize: 11 }, top: 0 },
+                    legend: { data: [' S0现有柜体占用 (未扩容)', ' S1/S2优化定容占用 (安全承载)'], textStyle: { color: '#687680', fontSize: 11 }, top: 0 },
                     grid: { top: 35, left: 45, right: 25, bottom: 25 },
-                    xAxis: { type: 'category', data: hours, axisLabel: { color: '#94a3b8', fontSize: 11 }, axisLine: { lineStyle: { color: '#334155' } } },
-                    yAxis: { 
-                        type: 'value', 
+                    xAxis: { type: 'category', data: hours, axisLabel: { color: '#687680', fontSize: 11 }, axisLine: { lineStyle: { color: '#c9d3d8' } } },
+                    yAxis: {
+                        type: 'value',
                         max: saturationMax,
-                        axisLabel: { formatter: '{value}%', color: '#94a3b8' }, 
-                        splitLine: { lineStyle: { color: '#1e293b' } } 
+                        axisLabel: { formatter: '{value}%', color: '#687680' },
+                        splitLine: { lineStyle: { color: '#e4e9ec' } }
                     },
                     series: [
                         {
-                            name: '🔴 S0现有柜体占用 (未扩容)',
+                            name: ' S0现有柜体占用 (未扩容)',
                             type: 'line',
                             data: baseSat,
-                            itemStyle: { color: '#ef4444' },
+                            itemStyle: { color: '#b84b4b' },
                             lineStyle: { width: 3, type: 'dashed' },
                             markLine: {
                                 symbol: 'none',
-                                label: { formatter: '100% 满柜红线', color: '#ef4444', position: 'insideEndTop' },
-                                data: [{ yAxis: 100, lineStyle: { color: '#ef4444', width: 2, type: 'solid' } }]
+                                label: { formatter: '100% 满柜红线', color: '#b84b4b', position: 'insideEndTop' },
+                                data: [{ yAxis: 100, lineStyle: { color: '#b84b4b', width: 2, type: 'solid' } }]
                             }
                         },
                         {
-                            name: '🟢 S1/S2优化定容占用 (安全承载)',
+                            name: ' S1/S2优化定容占用 (安全承载)',
                             type: 'line',
                             smooth: true,
                             data: optSat,
-                            itemStyle: { color: '#10b981' },
+                            itemStyle: { color: '#2e8b63' },
                             areaStyle: { color: 'rgba(16, 185, 129, 0.18)' },
                             lineStyle: { width: 3 }
                         }
@@ -2048,8 +1842,8 @@ const app = createApp({
                 chartCompRadar.setOption({
                     backgroundColor: 'transparent',
                     legend: {
-                        data: ['🔴 S0 现状基准 (As-Is)', '🟡 S1 网络设施优化', '🟢 S2 人机协同推荐 (To-Be)'],
-                        textStyle: { color: '#94a3b8', fontSize: 10 },
+                        data: [' S0 现状基准 (As-Is)', ' S1 网络设施优化', ' S2 人机协同推荐 (To-Be)'],
+                        textStyle: { color: '#687680', fontSize: 10 },
                         bottom: 0
                     },
                     radar: {
@@ -2063,18 +1857,18 @@ const app = createApp({
                             { name: '容灾安全', max: 100 },
                             { name: '便民覆盖', max: 100 }
                         ],
-                        axisName: { color: '#94a3b8', fontSize: 10 },
+                        axisName: { color: '#687680', fontSize: 10 },
                         splitArea: { show: false },
-                        splitLine: { lineStyle: { color: '#1e293b' } },
-                        axisLine: { lineStyle: { color: '#334155' } }
+                        splitLine: { lineStyle: { color: '#e4e9ec' } },
+                        axisLine: { lineStyle: { color: '#c9d3d8' } }
                     },
                     series: [{
                         type: 'radar',
                         data: [
                             {
                                 value: [50, 45, 100, 50, s0FeasibleScore, s0Coverage],
-                                name: '🔴 S0 现状基准 (As-Is)',
-                                itemStyle: { color: '#f43f5e' },
+                                name: ' S0 现状基准 (As-Is)',
+                                itemStyle: { color: '#b64b58' },
                                 lineStyle: { type: 'dashed', width: 2 }
                             },
                             {
@@ -2086,8 +1880,8 @@ const app = createApp({
                                     s1FeasibleScore,
                                     s1Coverage
                                 ],
-                                name: '🟡 S1 网络设施优化',
-                                itemStyle: { color: '#f59e0b' },
+                                name: ' S1 网络设施优化',
+                                itemStyle: { color: '#b7791f' },
                                 lineStyle: { width: 2 }
                             },
                             {
@@ -2099,8 +1893,8 @@ const app = createApp({
                                     s2FeasibleScore,
                                     s2Coverage
                                 ],
-                                name: '🟢 S2 人机协同推荐 (To-Be)',
-                                itemStyle: { color: '#06b6d4' },
+                                name: ' S2 人机协同推荐 (To-Be)',
+                                itemStyle: { color: '#226f8c' },
                                 areaStyle: { color: 'rgba(6, 182, 212, 0.28)' },
                                 lineStyle: { width: 2.5 }
                             }
@@ -2125,37 +1919,37 @@ const app = createApp({
                 chartCompCost.setOption({
                     backgroundColor: 'transparent',
                     tooltip: { trigger: 'axis' },
-                    legend: { data: ['年运营成本 (万元)', '年运营碳排 (kg CO₂e)'], textStyle: { color: '#94a3b8', fontSize: 10 }, top: 0 },
+                    legend: { data: ['年运营成本 (万元)', '年运营碳排 (kg CO₂e)'], textStyle: { color: '#687680', fontSize: 10 }, top: 0 },
                     grid: { top: 35, left: 45, right: 45, bottom: 25 },
                     xAxis: {
                         type: 'category',
-                        data: ['🔴 S0 现状', '🟡 S1 设施优化', '🟢 S2 人机协同'],
-                        axisLabel: { color: '#94a3b8', fontSize: 10 },
-                        axisLine: { lineStyle: { color: '#334155' } }
+                        data: [' S0 现状', ' S1 设施优化', ' S2 人机协同'],
+                        axisLabel: { color: '#687680', fontSize: 10 },
+                        axisLine: { lineStyle: { color: '#c9d3d8' } }
                     },
                     yAxis: [
-                        { type: 'value', name: '万元', axisLabel: { color: '#94a3b8', fontSize: 10 }, splitLine: { lineStyle: { color: '#1e293b' } } },
-                        { type: 'value', name: 'kg', axisLabel: { color: '#94a3b8', fontSize: 10 }, splitLine: { show: false } }
+                        { type: 'value', name: '万元', axisLabel: { color: '#687680', fontSize: 10 }, splitLine: { lineStyle: { color: '#e4e9ec' } } },
+                        { type: 'value', name: 'kg', axisLabel: { color: '#687680', fontSize: 10 }, splitLine: { show: false } }
                     ],
                     series: [
-                        { 
-                            name: '年运营成本 (万元)', 
-                            type: 'bar', 
+                        {
+                            name: '年运营成本 (万元)',
+                            type: 'bar',
                             data: costData,
-                            itemStyle: { 
-                                color: (params) => ['#ef4444', '#f59e0b', '#10b981'][params.dataIndex]
-                            }, 
+                            itemStyle: {
+                                color: (params) => ['#b84b4b', '#b7791f', '#2e8b63'][params.dataIndex]
+                            },
                             barWidth: 26,
                             label: { show: true, position: 'top', color: '#fff', fontSize: 10, formatter: '{c} 万' }
                         },
-                        { 
+                        {
                             name: '年运营碳排 (kg CO₂e)',
-                            type: 'line', 
-                            yAxisIndex: 1, 
+                            type: 'line',
+                            yAxisIndex: 1,
                             data: carbonData,
-                            itemStyle: { color: '#38bdf8' }, 
+                            itemStyle: { color: '#2d7f9e' },
                             lineStyle: { width: 3 },
-                            label: { show: true, position: 'top', color: '#38bdf8', fontSize: 9, formatter: '{c} kg' }
+                            label: { show: true, position: 'top', color: '#2d7f9e', fontSize: 9, formatter: '{c} kg' }
                         }
                     ]
                 });
@@ -2179,7 +1973,7 @@ const app = createApp({
                         top: 'middle',
                         style: {
                             text: '暂无后端真实收敛轨迹',
-                            fill: '#94a3b8',
+                            fill: '#687680',
                             fontSize: 12
                         }
                     }]
@@ -2194,19 +1988,19 @@ const app = createApp({
             chartIsaConvergence.setOption({
                 backgroundColor: 'transparent',
                 tooltip: { trigger: 'axis' },
-                legend: { data: ['子路径加权距离目标 Z (km)', '退火温度 T (°C)'], textStyle: { color: '#94a3b8', fontSize: 10 }, top: 0 },
+                legend: { data: ['子路径加权距离目标 Z (km)', '退火温度 T (°C)'], textStyle: { color: '#687680', fontSize: 10 }, top: 0 },
                 grid: { top: 35, left: 55, right: 55, bottom: 25 },
-                xAxis: { type: 'category', data: iterations, axisLabel: { color: '#94a3b8', fontSize: 10 }, axisLine: { lineStyle: { color: '#334155' } } },
+                xAxis: { type: 'category', data: iterations, axisLabel: { color: '#687680', fontSize: 10 }, axisLine: { lineStyle: { color: '#c9d3d8' } } },
                 yAxis: [
-                    { type: 'value', name: '路径目标', min: 'dataMin', max: 'dataMax', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
-                    { type: 'value', name: '温度 T (°C)', min: 0, max: 'dataMax', axisLabel: { color: '#f59e0b' }, splitLine: { show: false } }
+                    { type: 'value', name: '路径目标', min: 'dataMin', max: 'dataMax', axisLabel: { color: '#687680' }, splitLine: { lineStyle: { color: '#e4e9ec' } } },
+                    { type: 'value', name: '温度 T (°C)', min: 0, max: 'dataMax', axisLabel: { color: '#b7791f' }, splitLine: { show: false } }
                 ],
                 series: [
                     {
                         name: '子路径加权距离目标 Z (km)',
                         type: 'line',
                         data: costs,
-                        itemStyle: { color: '#06b6d4' },
+                        itemStyle: { color: '#226f8c' },
                         lineStyle: { width: 3 },
                         smooth: true,
                         symbolSize: 5
@@ -2216,7 +2010,7 @@ const app = createApp({
                         type: 'line',
                         yAxisIndex: 1,
                         data: temperatures,
-                        itemStyle: { color: '#f59e0b' },
+                        itemStyle: { color: '#b7791f' },
                         lineStyle: { width: 2, type: 'dashed' },
                         smooth: true,
                         symbolSize: 4
@@ -2346,26 +2140,12 @@ const app = createApp({
             toggleRings,
             fitAllOverview,
             fitCurrentCommunity,
-            customHouseholds,
-            customDoorRatio,
-            customIntensity,
             onSelectCommunity,
-            onTweakParams,
             triggerCrisis,
             resizeCharts,
             renderMath,
             updateAllActiveCharts,
             updateIsaChart,
-            // 高德相关
-            amapConfig,
-            showAmapModal,
-            amapKeyInput,
-            amapKeyMsg,
-            amapSearchKeyword,
-            amapExploring,
-            amapExploreResult,
-            saveAmapKey,
-            searchAndExploreCommunity,
             // 学术级图谱相关
             academicFigures,
             demandFigures,

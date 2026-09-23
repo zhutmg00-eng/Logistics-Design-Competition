@@ -160,7 +160,7 @@ body {
 
 .cyber-gis-grid {
     background-color: #080c16;
-    background-image: 
+    background-image:
         linear-gradient(rgba(14, 165, 233, 0.05) 1px, transparent 1px),
         linear-gradient(90deg, rgba(14, 165, 233, 0.05) 1px, transparent 1px),
         linear-gradient(rgba(14, 165, 233, 0.015) 1px, transparent 1px),
@@ -1377,4 +1377,599 @@ select:focus-visible {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+
+/* =========================================================================
+   OPS Light Control Room Theme
+   A restrained civic-operations palette: neutral paper, petrol ink, copper
+   accents, crisp borders and no neon/glass/cyber decoration.
+   ========================================================================= */
+
+body.theme-ops {
+    --ops-ink: #17232d;
+    --ops-muted: #60707b;
+    --ops-faint: #84919a;
+    --ops-line: #d6e0e4;
+    --ops-line-strong: #bccbd1;
+    --ops-surface: #ffffff;
+    --ops-surface-alt: #f4f7f8;
+    --ops-surface-strong: #e9f0f3;
+    --ops-accent: #1f617c;
+    --ops-accent-hover: #174b61;
+    --ops-accent-soft: #e7f0f4;
+    --ops-copper: #a86631;
+    --ops-copper-soft: #fbf3e9;
+    --ops-green: #2f7758;
+    --ops-green-soft: #edf7f2;
+    --ops-red: #a94747;
+    --ops-red-soft: #fcf0f0;
+    color: var(--ops-ink);
+    background: #e9eef0 !important;
+}
+
+body.theme-ops .app-header {
+    border-bottom: 1px solid var(--ops-line) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+body.theme-ops .nav-logo {
+    border-color: #8fb3c2 !important;
+    border-radius: 7px !important;
+    background: var(--ops-accent) !important;
+    box-shadow: none !important;
+}
+
+body.theme-ops .nav-title,
+body.theme-ops .app-header h1,
+body.theme-ops h1,
+body.theme-ops h2,
+body.theme-ops h3,
+body.theme-ops h4,
+body.theme-ops .text-white,
+body.theme-ops .text-slate-100,
+body.theme-ops .text-slate-200 {
+    color: var(--ops-ink) !important;
+}
+
+body.theme-ops .nav-sub,
+body.theme-ops .brand-subtitle,
+body.theme-ops .text-slate-300 {
+    color: #45545f !important;
+}
+
+body.theme-ops .text-slate-400 {
+    color: var(--ops-muted) !important;
+}
+
+body.theme-ops .text-slate-500 {
+    color: var(--ops-faint) !important;
+}
+
+body.theme-ops [class*="bg-slate-950"],
+body.theme-ops [class*="bg-slate-900"],
+body.theme-ops [class*="bg-slate-800"] {
+    background-color: var(--ops-surface-alt) !important;
+}
+
+body.theme-ops [class*="border-slate-"] {
+    border-color: var(--ops-line) !important;
+}
+
+body.theme-ops .glass-panel,
+body.theme-ops .glass-panel-glow {
+    border: 1px solid var(--ops-line) !important;
+    background: var(--ops-surface) !important;
+    box-shadow: 0 1px 2px rgba(23, 35, 45, 0.04) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+body.theme-ops .glass-panel:hover {
+    border-color: var(--ops-line-strong) !important;
+}
+
+body.theme-ops .desktop-module-nav {
+    border-color: var(--ops-line) !important;
+    border-radius: 8px !important;
+    background: #eef3f5 !important;
+}
+
+body.theme-ops .desktop-module-nav button {
+    color: #53636e !important;
+    font-weight: 650;
+    letter-spacing: 0.01em;
+}
+
+body.theme-ops .desktop-module-nav button:hover {
+    color: var(--ops-accent) !important;
+    background: #e2ebef !important;
+}
+
+body.theme-ops .desktop-module-nav button[class*="bg-cyan-700"],
+body.theme-ops [class*="bg-cyan-700"] {
+    color: #fff !important;
+    background-color: var(--ops-accent) !important;
+    border-color: var(--ops-accent) !important;
+    box-shadow: none !important;
+}
+
+body.theme-ops [class*="bg-cyan-800"],
+body.theme-ops [class*="bg-cyan-900"],
+body.theme-ops [class*="bg-cyan-950"] {
+    background-color: var(--ops-accent-soft) !important;
+}
+
+body.theme-ops [class*="text-cyan-"],
+body.theme-ops a[class*="text-cyan-"] {
+    color: var(--ops-accent) !important;
+}
+
+body.theme-ops [class*="border-cyan-"] {
+    border-color: #9ebecb !important;
+}
+
+body.theme-ops [class*="text-emerald-"] {
+    color: var(--ops-green) !important;
+}
+
+body.theme-ops [class*="bg-emerald-"] {
+    background-color: var(--ops-green-soft) !important;
+}
+
+body.theme-ops [class*="border-emerald-"] {
+    border-color: #b9dccb !important;
+}
+
+body.theme-ops [class*="text-amber-"],
+body.theme-ops [class*="text-orange-"] {
+    color: var(--ops-copper) !important;
+}
+
+body.theme-ops [class*="bg-amber-"],
+body.theme-ops [class*="bg-orange-"] {
+    background-color: var(--ops-copper-soft) !important;
+}
+
+body.theme-ops [class*="border-amber-"],
+body.theme-ops [class*="border-orange-"] {
+    border-color: #e4c8a8 !important;
+}
+
+body.theme-ops [class*="text-rose-"],
+body.theme-ops [class*="text-red-"] {
+    color: var(--ops-red) !important;
+}
+
+body.theme-ops [class*="bg-rose-"],
+body.theme-ops [class*="bg-red-"] {
+    background-color: var(--ops-red-soft) !important;
+}
+
+body.theme-ops [class*="border-rose-"],
+body.theme-ops [class*="border-red-"] {
+    border-color: #e5bebe !important;
+}
+
+body.theme-ops .rounded-xl,
+body.theme-ops .rounded-2xl {
+    border-radius: 9px !important;
+}
+
+body.theme-ops .rounded-lg {
+    border-radius: 7px !important;
+}
+
+body.theme-ops .shadow-sm,
+body.theme-ops .shadow-md,
+body.theme-ops .shadow-xl,
+body.theme-ops .shadow-2xl {
+    box-shadow: 0 2px 7px rgba(23, 35, 45, 0.08) !important;
+}
+
+body.theme-ops .secondary-command-bar,
+body.theme-ops .mobile-module-nav,
+body.theme-ops .mobile-pane-toolbar {
+    border-color: var(--ops-line) !important;
+    background: var(--ops-surface) !important;
+}
+
+body.theme-ops .secondary-command-bar {
+    border-bottom: 1px solid var(--ops-line) !important;
+}
+
+body.theme-ops .command-scheme,
+body.theme-ops .command-scenario > div {
+    border-color: var(--ops-line) !important;
+    background: var(--ops-surface-alt) !important;
+}
+
+body.theme-ops .command-community button,
+body.theme-ops .command-scheme button,
+body.theme-ops .command-scenario button,
+body.theme-ops .scenario-btn {
+    border: 1px solid transparent;
+    box-shadow: none !important;
+}
+
+body.theme-ops .command-community button:not([class*="bg-cyan-700"]),
+body.theme-ops .command-scheme button:not([class*="bg-rose-700"]):not([class*="bg-amber-700"]):not([class*="bg-emerald-700"]):not([class*="bg-cyan-800"]),
+body.theme-ops .command-scenario button {
+    background: #edf2f4 !important;
+}
+
+body.theme-ops .content-panel {
+    background: #f2f5f6 !important;
+}
+
+body.theme-ops .mobile-module-button {
+    border-color: var(--ops-line) !important;
+    background: var(--ops-surface-alt) !important;
+    color: #52636f !important;
+}
+
+body.theme-ops .mobile-module-button.is-active {
+    border-color: var(--ops-accent) !important;
+    background: var(--ops-accent) !important;
+    color: #fff !important;
+}
+
+body.theme-ops #map-container,
+body.theme-ops .leaflet-container {
+    background: #e8eef0 !important;
+}
+
+body.theme-ops .cyber-gis-grid {
+    background-color: #e8eef0;
+    background-image:
+        linear-gradient(rgba(31, 97, 124, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(31, 97, 124, 0.055) 1px, transparent 1px);
+    background-size: 64px 64px;
+}
+
+body.theme-ops .map-panel {
+    border-right-color: var(--ops-line) !important;
+}
+
+body.theme-ops .map-panel .glass-panel {
+    background: rgba(255, 255, 255, 0.94) !important;
+}
+
+body.theme-ops .leaflet-popup-content-wrapper {
+    border-color: var(--ops-line) !important;
+    background: #fff !important;
+    color: var(--ops-ink) !important;
+    box-shadow: 0 10px 24px rgba(23, 35, 45, 0.15) !important;
+}
+
+body.theme-ops .leaflet-popup-tip {
+    background: #fff !important;
+}
+
+body.theme-ops .leaflet-bar a,
+body.theme-ops .leaflet-control-attribution {
+    border-color: var(--ops-line) !important;
+    background: #fff !important;
+    color: var(--ops-ink) !important;
+}
+
+body.theme-ops .industrial-table th {
+    background: #edf2f4 !important;
+    color: #53636e !important;
+    border-color: var(--ops-line) !important;
+}
+
+body.theme-ops .industrial-table td,
+body.theme-ops .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+body.theme-ops .divide-y > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--ops-line) !important;
+}
+
+body.theme-ops .industrial-table tbody tr:nth-child(even) {
+    background: #f8fafb !important;
+}
+
+body.theme-ops .solver-terminal {
+    border-color: #ccd7dc !important;
+    background: #f4f7f8 !important;
+    color: #35444e !important;
+    box-shadow: none !important;
+}
+
+body.theme-ops .solver-terminal .log-info { color: var(--ops-accent) !important; }
+body.theme-ops .solver-terminal .log-conv { color: #6f6596 !important; }
+body.theme-ops .solver-terminal .log-status { color: var(--ops-copper) !important; }
+body.theme-ops .solver-terminal .log-success { color: var(--ops-green) !important; }
+
+body.theme-ops .math-card {
+    border-color: #c9dbe2 !important;
+    background: #f6f9fa !important;
+}
+
+body.theme-ops .plan-status-banner,
+body.theme-ops .constraint-details-panel {
+    box-shadow: none !important;
+    background: #fff !important;
+}
+
+body.theme-ops .plan-status-danger {
+    background: linear-gradient(90deg, #fdf2f2, #ffffff) !important;
+}
+
+body.theme-ops .plan-status-success {
+    background: linear-gradient(90deg, #f0f8f4, #ffffff) !important;
+}
+
+body.theme-ops .plan-status-warning {
+    background: linear-gradient(90deg, #fcf6ec, #ffffff) !important;
+}
+
+body.theme-ops .constraint-item {
+    border-color: var(--ops-line) !important;
+    background: #f8fafb !important;
+}
+
+body.theme-ops .toast-item {
+    border-width: 1px !important;
+    background: #fff !important;
+    color: var(--ops-ink) !important;
+    box-shadow: 0 8px 22px rgba(23, 35, 45, 0.13) !important;
+}
+
+body.theme-ops .toast-success { border-color: #9dcab5 !important; }
+body.theme-ops .toast-warning { border-color: #e2c59c !important; }
+body.theme-ops .toast-error { border-color: #dfb2b2 !important; }
+body.theme-ops .toast-info { border-color: #9ebecb !important; }
+
+body.theme-ops .pulse-dot {
+    background: var(--ops-green) !important;
+    animation: none !important;
+}
+
+body.theme-ops > #app > .fixed.inset-0 {
+    background: rgba(24, 38, 47, 0.38) !important;
+    backdrop-filter: blur(3px) !important;
+}
+
+body.theme-ops .guide-overlay {
+    background: rgba(24, 38, 47, 0.38) !important;
+    backdrop-filter: blur(3px) !important;
+}
+
+body.theme-ops .guide-dialog {
+    border-color: var(--ops-line) !important;
+    background: #fff !important;
+    box-shadow: 0 24px 64px rgba(23, 35, 45, 0.22) !important;
+}
+
+body.theme-ops .guide-header {
+    border-bottom-color: var(--ops-line) !important;
+    background: #f4f7f8 !important;
+}
+
+body.theme-ops .guide-step-list,
+body.theme-ops .guide-detail {
+    background: #fff !important;
+}
+
+body.theme-ops .guide-step-list button.is-active {
+    border-color: #9ebecb !important;
+    background: var(--ops-accent-soft) !important;
+    color: var(--ops-accent) !important;
+}
+
+body.theme-ops .guide-fab {
+    border-color: var(--ops-accent) !important;
+    background: var(--ops-accent) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 22px rgba(23, 35, 45, 0.18) !important;
+    backdrop-filter: none !important;
+}
+
+body.theme-ops button:not([class*="bg-cyan-700"]):not([class*="bg-emerald-700"]):not([class*="bg-rose-700"]):not([class*="bg-amber-700"]) {
+    border-color: var(--ops-line);
+}
+
+body.theme-ops button:hover {
+    border-color: #aebfc6;
+}
+
+body.theme-ops input,
+body.theme-ops select {
+    border-color: var(--ops-line-strong) !important;
+    background: #fff !important;
+    color: var(--ops-ink) !important;
+}
+
+body.theme-ops select option {
+    background: #fff;
+    color: var(--ops-ink);
+}
+
+body.theme-ops .glow-cyan,
+body.theme-ops .glow-emerald,
+body.theme-ops .glow-amber {
+    text-shadow: none !important;
+}
+
+body.theme-ops .community-badge-marker {
+    border-color: #fff !important;
+    background: var(--ops-accent) !important;
+    box-shadow: 0 2px 8px rgba(23, 35, 45, 0.2) !important;
+}
+
+body.theme-ops .community-badge-active {
+    background: var(--ops-copper) !important;
+}
+
+body.theme-ops .facility-burst-marker {
+    border-color: #fff !important;
+    background: var(--ops-red) !important;
+}
+
+body.theme-ops .facility-shield-marker {
+    border-color: #fff !important;
+    background: var(--ops-green) !important;
+}
+
+
+/* Solid, restrained active controls in the light theme */
+body.theme-ops [class*="bg-rose-700"],
+body.theme-ops [class*="bg-rose-800"] {
+    color: #fff !important;
+    background-color: #9f4747 !important;
+    border-color: #9f4747 !important;
+}
+
+body.theme-ops [class*="bg-amber-700"],
+body.theme-ops [class*="bg-amber-800"] {
+    color: #fff !important;
+    background-color: #a86631 !important;
+    border-color: #a86631 !important;
+}
+
+body.theme-ops [class*="bg-emerald-700"] {
+    color: #fff !important;
+    background-color: #2f7758 !important;
+    border-color: #2f7758 !important;
+}
+
+body.theme-ops .command-scheme button[class*="bg-cyan-800"] {
+    color: #fff !important;
+    background-color: #245f73 !important;
+    border-color: #245f73 !important;
+}
+
+body.theme-ops .command-scenario button[class*="bg-slate-700"] {
+    color: #fff !important;
+    background-color: #263943 !important;
+    border-color: #263943 !important;
+}
+
+
+body.theme-ops .mobile-pane-toolbar button {
+    color: #52636f !important;
+    background: #edf2f4 !important;
+}
+
+body.theme-ops .mobile-pane-toolbar button.is-active {
+    color: #fff !important;
+    background: var(--ops-accent) !important;
+    border-color: var(--ops-accent) !important;
+}
+
+@media (max-width: 767px) {
+    body.theme-ops .global-controls .solver-board-button {
+        width: auto !important;
+        min-width: 54px;
+        padding: 8px !important;
+    }
+
+    body.theme-ops .global-controls .solver-board-button > .solver-board-label {
+        display: inline !important;
+        font-size: 0 !important;
+    }
+
+    body.theme-ops .global-controls .solver-board-button > .solver-board-label::after {
+        content: '算法';
+        font-size: 12px;
+    }
+}
+
+
+@media (max-width: 767px) {
+    body.theme-ops .guide-fab {
+        width: auto !important;
+        min-width: 62px;
+        height: 42px;
+        padding: 0 12px !important;
+    }
+
+    body.theme-ops .guide-fab span:last-child {
+        display: inline !important;
+        font-size: 0;
+    }
+
+    body.theme-ops .guide-fab span:last-child::after {
+        content: '演示';
+        font-size: 11px;
+    }
+}
+
+
+body.theme-ops .comparison-card {
+    border-color: var(--ops-line) !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(23, 35, 45, 0.04) !important;
+}
+
+body.theme-ops .comparison-card:hover {
+    border-color: var(--ops-line-strong) !important;
+}
+
+body.theme-ops .comparison-card-danger {
+    border-color: #e5bebe !important;
+    background: #fcf0f0 !important;
+}
+
+body.theme-ops .content-panel .text-xs {
+    font-size: 0.8rem;
+    line-height: 1.62;
+}
+
+body.theme-ops .content-panel .text-\[10px\] {
+    font-size: 0.72rem;
+    line-height: 1.5;
+}
+
+body.theme-ops .content-panel .text-sm {
+    font-size: 0.9rem;
+}
+
+
+body.theme-ops .ai-report strong {
+    color: var(--ops-ink) !important;
+    font-weight: 750;
+}
+
+body.theme-ops .ai-report {
+    color: #3f4e58 !important;
+    background: #f7f9fa !important;
+    border-color: var(--ops-line) !important;
+}
+
+
+body.theme-ops .guide-detail {
+    color: var(--ops-ink) !important;
+}
+
+body.theme-ops .guide-narration {
+    color: #52636f !important;
+}
+
+body.theme-ops .guide-block {
+    border-color: var(--ops-line) !important;
+    background: #f6f9fa !important;
+    color: var(--ops-ink) !important;
+}
+
+body.theme-ops .guide-block strong {
+    color: var(--ops-ink) !important;
+}
+
+body.theme-ops .guide-block ul,
+body.theme-ops .guide-output p {
+    color: #52636f !important;
+}
+
+body.theme-ops .guide-output {
+    border-color: #c8ded2 !important;
+    background: #f0f8f4 !important;
+}
+
+body.theme-ops .guide-close {
+    color: var(--ops-ink) !important;
+    background: #edf2f4 !important;
 }
