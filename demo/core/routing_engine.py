@@ -504,6 +504,7 @@ class RoutingEngine:
         composite_courier_path = [main_depot]
         loading_plan = []
         constraint_checks = []
+        isa_convergence_curves = []
 
         departure_hours = ["08:45", "10:30", "13:30", "15:30", "17:30", "18:30"]
 
@@ -523,6 +524,8 @@ class RoutingEngine:
                 trip_points, fixed_start=True, dynamic_hour=int(dep_time.split(":")[0]),
                 seed=community_seed + trip_idx,
             )
+            if trip_sa.get("convergence_curve"):
+                isa_convergence_curves.append(trip_sa["convergence_curve"])
             trip_uv_dist = trip_sa["best_dist_km"]
             total_uv_dist_km += trip_uv_dist
 
@@ -710,6 +713,20 @@ class RoutingEngine:
         solver_logs.append(f"[BENCHMARK] Baseline Manual Walk: {baseline_courier_walk_km:.2f} km -> Reduced to {total_courier_walk_km:.2f} km (Savings={(baseline_courier_walk_km-total_courier_walk_km)/baseline_courier_walk_km*100:.1f}%).")
         solver_logs.append(f"[2E-MDVRPTW-DC] Handover Sync: {'VALID' if handover_sync_all_valid else 'VIOLATED'} | Battery Reserve: {battery_reserve_pct}% (>=20% limit) | Satisfaction: {avg_satisfaction_pct}% | Penalty Cost: ¥{penalty_cost_total}.")
 
+        isa_convergence_curve = []
+        max_curve_len = max((len(curve) for curve in isa_convergence_curves), default=0)
+        for idx in range(max_curve_len):
+            points = [curve[idx] for curve in isa_convergence_curves if idx < len(curve)]
+            if not points:
+                continue
+            isa_convergence_curve.append({
+                "iter": points[0].get("iter", idx),
+                "tour_dist_km": round(sum(float(point.get("tour_dist_km", 0)) for point in points) / len(points), 3),
+                "cost": round(sum(float(point.get("cost", point.get("tour_dist_km", 0))) for point in points) / len(points), 3),
+                "temperature": round(sum(float(point.get("temperature", 0)) for point in points) / len(points), 3),
+                "label": f"{len(points)} 个子路径平均轨迹"
+            })
+
         violation_count = sum(
             1 for item in constraint_checks
             if item.get("status") in {"OVERLOAD_VIOLATION", "OVERTIME_WARNING", "VIOLATED", "SYNC_VIOLATION", "BATTERY_RESERVE_VIOLATION"}
@@ -751,6 +768,7 @@ class RoutingEngine:
             "courier_path": composite_courier_path,
             "baseline_courier_path": baseline_courier_path,
             "constraint_checks": constraint_checks,
+            "isa_convergence_curve": isa_convergence_curve,
             # 2E-MDVRPTW-DC 双目标与协同评价指标
             "satisfaction_score": avg_satisfaction_pct,
             "penalty_cost": penalty_cost_total,

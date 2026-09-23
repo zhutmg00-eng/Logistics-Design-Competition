@@ -209,7 +209,9 @@ def calculate_plan(req: CalculationRequest):
     routing = routing_engine.solve_community_m2(cid, buildings_forecast, active_facilities)
 
     # 4. AI 智能诊断建议
-    ai_report = ai_copilot.generate_community_diagnosis(summary["info"], forecast, layout, routing)
+    ai_community_info = dict(summary["info"])
+    ai_community_info["households"] = households
+    ai_report = ai_copilot.generate_community_diagnosis(ai_community_info, forecast, layout, routing)
 
     # 5. 求解控制台综合遥测指标汇总
     t_fc = forecast["solver_metrics"]["solve_time_ms"]

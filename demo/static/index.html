@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="面向超大城市末端共同配送的预测、选址、路径、仿真与应急协同一体化决策平台。">
+    <meta name="theme-color" content="#080d16">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <title>超大城市末端配送协同决策中枢 | 第九届北京市大学生物流设计大赛</title>
     <!-- Tailwind CSS (Local Offline Priority) -->
     <script src="/static/libs/tailwind.cdn.js"></script>
@@ -35,13 +38,14 @@
     <script src="/static/libs/katex/katex.min.js"></script>
     <script src="/static/libs/katex/auto-render.min.js"></script>
     <!-- Custom Industrial Styles (Pure Local Fonts & Industrial Dark) -->
-    <link rel="stylesheet" href="/static/style.css?v=20260921-3">
+    <link rel="stylesheet" href="/static/style.css?v=20260923-10">
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
-    <div id="app" class="flex flex-col flex-1 h-screen overflow-hidden relative">
+<body class="app-body bg-slate-950 text-slate-100 flex flex-col antialiased">
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+    <div id="app" class="app-shell flex flex-col flex-1 overflow-hidden relative">
         
         <!-- Global Lightweight Toast Notification System -->
-        <div class="toast-container">
+        <div class="toast-container" role="status" aria-live="polite" aria-atomic="true">
             <div v-for="t in toasts" :key="t.id" :class="'toast-item toast-' + t.type">
                 <span>{{ t.icon }}</span>
                 <span>{{ t.message }}</span>
@@ -69,7 +73,7 @@
             </div>
 
             <!-- Tab Navigation Switcher (Structured by Functional Layers) -->
-            <nav class="hidden lg:flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+            <nav class="desktop-module-nav hidden lg:flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs" aria-label="核心功能导航">
                 <button @click="activeTab = 'comparison'" :class="activeTab === 'comparison' ? 'bg-cyan-700 text-white font-bold shadow-sm' : 'text-slate-300 hover:text-white'" class="px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
                     <span>⚖️</span> 全景对比
                 </button>
@@ -85,28 +89,40 @@
             <!-- Global Controls -->
             <div class="global-controls flex items-center space-x-2 text-xs flex-shrink-0">
                 <!-- 宽屏/分屏视图模式切换开关 -->
-                <button @click="toggleViewMode" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition"
+                <button @click="toggleViewMode" class="view-mode-toggle flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition" aria-label="切换宽屏与左右分屏视图"
                     :class="viewMode === 'wide' ? 'bg-slate-800 border-cyan-600 text-cyan-300' : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'">
                     <span>{{ viewMode === 'wide' ? '🗺️ 左右分屏' : '📊 宽屏全景' }}</span>
                 </button>
 
                 <!-- 运筹算法看板弹窗按钮 -->
-                <button @click="showSolverModal = true" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-cyan-300 font-semibold hover:bg-slate-700 transition text-xs">
-                    <span>📐</span> 算法看板
+                <button @click="showSolverModal = true" class="solver-board-button flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-cyan-300 font-semibold hover:bg-slate-700 transition text-xs" aria-label="打开运筹算法看板">
+                    <span>📐</span><span class="solver-board-label">算法看板</span>
                 </button>
 
                 <!-- 高德 Key 状态按钮 -->
-                <button @click="showAmapModal = true" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition"
+                <button @click="showAmapModal = true" class="amap-key-button flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition" aria-label="配置高德 Web 服务 Key"
                     :class="amapConfig && amapConfig.configured ? 'bg-emerald-950/60 border-emerald-700 text-emerald-300 hover:bg-emerald-900/60' : 'bg-amber-950/60 border-amber-700 text-amber-300 hover:bg-amber-900/60'">
                     <span>🔑</span> <span class="mono">{{ amapConfig && amapConfig.configured ? '高德在线' : '绑定Key' }}</span>
                 </button>
             </div>
         </header>
 
+        <!-- Compact Module Navigation (Tablet / Mobile) -->
+        <nav class="mobile-module-nav lg:hidden" aria-label="移动端核心功能导航">
+            <button v-for="item in moduleNav" :key="item.code"
+                @click="setActiveTab(item.code)"
+                :class="activeTab === item.code ? 'is-active' : ''"
+                class="mobile-module-button"
+                :aria-current="activeTab === item.code ? 'page' : undefined">
+                <span class="mobile-module-icon" aria-hidden="true">{{ item.icon }}</span>
+                <span>{{ item.shortLabel }}</span>
+            </button>
+        </nav>
+
         <!-- Secondary Command Strip (Unified Command Bar) -->
         <div class="secondary-command-bar h-11 bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between z-20 flex-shrink-0 text-xs">
             <!-- Left: Community Selector -->
-            <div class="flex items-center space-x-2">
+            <div class="command-community flex items-center space-x-2">
                 <span class="text-slate-400 font-semibold flex items-center gap-1"><span>🏘️</span> 社区:</span>
                 <div class="flex space-x-1">
                     <button @click="onSelectCommunity('ALL')"
@@ -124,7 +140,7 @@
             </div>
 
             <!-- Center: Scheme Mode Switcher (S0 / S1 / S2 / Diff) -->
-            <div class="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <div class="command-scheme flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
                 <span class="text-xs font-semibold text-slate-400 px-1.5 hidden sm:inline">方案模式:</span>
                 <button @click="setSchemeMode('s0')" 
                     :class="(schemeMode === 's0' || schemeMode === 'baseline') ? 'bg-rose-700 text-white font-bold shadow-sm' : 'text-rose-300 hover:text-white'"
@@ -149,7 +165,7 @@
             </div>
 
             <!-- Right: Multi-Scenario Switcher (N / P15 / P20) & Live Telemetry -->
-            <div class="flex items-center space-x-2 text-xs">
+            <div class="command-scenario flex items-center space-x-2 text-xs">
                 <div class="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
                     <span class="text-xs font-semibold text-slate-400 px-1 hidden md:inline">情景:</span>
                     <button @click="setScenario('N')" 
@@ -168,7 +184,7 @@
                         P20 大促峰值
                     </button>
                 </div>
-                <div class="hidden xl:flex items-center space-x-2 text-xs mono text-slate-300">
+                <div class="command-telemetry hidden xl:flex items-center space-x-2 text-xs mono text-slate-300">
                     <span>干线: <b class="text-cyan-400">{{ improvementText('trunk_distance') }}</b></span>
                     <span class="text-slate-600">|</span>
                     <span>工时: <b class="text-emerald-400">{{ improvementText('labor_hours') }}</b></span>
@@ -178,11 +194,17 @@
             </div>
         </div>
 
+        <div class="mobile-pane-toolbar lg:hidden" role="group" aria-label="移动端地图与结果切换">
+            <button @click="mobilePane = 'content'" :class="mobilePane === 'content' ? 'is-active' : ''">结果面板</button>
+            <button @click="mobilePane = 'map'" :class="mobilePane === 'map' ? 'is-active' : ''">地图视图</button>
+            <span class="mobile-pane-status" :class="'is-' + planStatusMeta.tone">{{ planStatusMeta.shortLabel }}</span>
+        </div>
+
         <!-- Main Body Layout -->
-        <main class="flex-1 flex overflow-hidden relative">
+        <main id="main-content" class="app-main flex-1 flex overflow-hidden relative">
             
             <!-- Left Panel: Interactive Leaflet WebGIS Map -->
-            <div v-show="viewMode === 'split'" class="map-panel w-1/2 h-full flex flex-col border-r border-slate-800 relative transition-all duration-300">
+            <div v-show="viewMode === 'split'" :class="{ 'mobile-hidden': mobilePane !== 'map' }" class="map-panel w-1/2 h-full flex flex-col border-r border-slate-800 relative transition-all duration-300">
                 
                 <!-- Compact Map Tool Palette (Top-Right) -->
                 <div class="absolute top-3 right-3 z-[1000] flex items-center space-x-1.5">
@@ -243,7 +265,51 @@
             </div>
 
             <!-- Right Panel: Data, Algorithms & Telemetry -->
-            <div :class="viewMode === 'wide' ? 'w-full max-w-[1760px] mx-auto px-6 py-5' : 'w-1/2 p-5'" class="content-panel h-full flex flex-col bg-slate-900/80 overflow-y-auto space-y-5 transition-all duration-300">
+            <div :class="[viewMode === 'wide' ? 'w-full max-w-[1760px] mx-auto px-6 py-5' : 'w-1/2 p-5', mobilePane === 'map' ? 'mobile-hidden' : '']" class="content-panel h-full flex flex-col bg-slate-900/80 overflow-y-auto space-y-5 transition-all duration-300">
+
+                <div v-if="apiError" class="global-error-banner" role="alert">
+                    <span>{{ apiError }}</span>
+                    <button @click="apiError = ''">关闭</button>
+                </div>
+                <div v-if="planResult && planResult.solver_console" class="plan-status-banner" :class="'plan-status-' + planStatusMeta.tone" role="status">
+                    <div class="plan-status-copy">
+                        <span class="plan-status-orb" aria-hidden="true"></span>
+                        <div>
+                            <strong>{{ planStatusMeta.title }}</strong>
+                            <p>{{ planStatusMeta.description }}</p>
+                        </div>
+                    </div>
+                    <div class="plan-status-actions">
+                        <span class="plan-status-metric">{{ planStatusMeta.metric }}</span>
+                        <button @click="showConstraintDetails = !showConstraintDetails" :aria-expanded="showConstraintDetails">
+                            {{ showConstraintDetails ? '收起约束明细' : '查看约束明细' }}
+                        </button>
+                    </div>
+                </div>
+                <div v-if="showConstraintDetails && planResult && planResult.solver_console" class="constraint-details-panel">
+                    <div class="constraint-details-head">
+                        <div>
+                            <strong>硬约束校验明细</strong>
+                            <span>仅显示不通过或需关注的约束；通过项仍参与流水线状态计算。</span>
+                        </div>
+                        <span>{{ failedConstraintChecks.length }} / {{ constraintChecks.length }} 项需关注</span>
+                    </div>
+                    <div v-if="failedConstraintChecks.length" class="constraint-list">
+                        <article v-for="check in failedConstraintChecks" :key="check.constraint" class="constraint-item">
+                            <div>
+                                <strong>{{ check.constraint }}</strong>
+                                <span>{{ check.type || '约束' }}</span>
+                            </div>
+                            <div class="constraint-values mono">
+                                <span>LHS {{ formatConstraintValue(check.lhs_load ?? check.lhs_assigned ?? check.value) }}</span>
+                                <span>{{ check.type || '<=' }} RHS {{ formatConstraintValue(check.rhs_capacity) }}</span>
+                                <span>Slack {{ formatConstraintValue(check.slack) }}</span>
+                            </div>
+                            <span class="constraint-status is-danger">{{ check.status }}</span>
+                        </article>
+                    </div>
+                    <div v-else class="constraint-empty">当前方案未检测到需要注意的硬约束。</div>
+                </div>
                 
                 <!-- ==================== TAB 0: ⚖️ 全景对比 (现状 vs 优化) ==================== -->
                 <div v-if="activeTab === 'comparison'" class="space-y-4 animate-fadeIn">
@@ -942,7 +1008,7 @@
                 </div>
 
                 <!-- ==================== TAB 2: 第5章 需求预测 ==================== -->
-                <div v-if="activeTab === 'forecast'" class="space-y-4">
+                <div v-if="activeTab === 'forecast' && planResult" class="space-y-4">
                     <!-- 全域友好提示条 -->
                     <div v-if="selectedCommunityId === 'ALL'" class="bg-cyan-950/40 border border-cyan-700/60 rounded-xl p-3 flex items-center justify-between text-xs text-cyan-300">
                         <span>💡 当前处于全域模式。以下展示代表性样本社区（C04 亦城茗苑）的微观离散预测，您可在上方点击具体社区单独查看。</span>
@@ -1120,7 +1186,7 @@
                 </div>
 
                 <!-- ==================== TAB 3: 第6章 选址与定容优化 ==================== -->
-                <div v-if="activeTab === 'layout'" class="space-y-4">
+                <div v-if="activeTab === 'layout' && planResult" class="space-y-4">
                     <!-- 全域友好提示条 -->
                     <div v-if="selectedCommunityId === 'ALL'" class="bg-cyan-950/40 border border-cyan-700/60 rounded-xl p-3 flex items-center justify-between text-xs text-cyan-300">
                         <span>💡 当前处于全域模式。以下展示代表性样本社区（C04 亦城茗苑）的智能柜选址与定容优化，您可在上方点击具体社区单独查看。</span>
@@ -1302,7 +1368,7 @@
                 </div>
 
                 <!-- ==================== TAB 4: 第7章 人车协同调度 ==================== -->
-                <div v-if="activeTab === 'routing'" class="space-y-4">
+                <div v-if="activeTab === 'routing' && planResult" class="space-y-4">
                     <!-- 全域友好提示条 -->
                     <div v-if="selectedCommunityId === 'ALL'" class="bg-cyan-950/40 border border-cyan-700/60 rounded-xl p-3 flex items-center justify-between text-xs text-cyan-300">
                         <span>💡 当前处于全域模式。以下展示代表性样本社区（C04 亦城茗苑）的人车协同微循环调度，您可在上方点击具体社区单独查看。</span>
@@ -1463,7 +1529,7 @@
                 </div>
 
                 <!-- ==================== TAB 5: 第8章 仿真对抗 ==================== -->
-                <div v-if="activeTab === 'simulation'" class="space-y-4">
+                <div v-if="activeTab === 'simulation' && simulationResult" class="space-y-4">
                     <div class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-cyan-600">
                         <div class="flex justify-between items-center">
                             <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
@@ -1671,7 +1737,7 @@
                 </div>
 
                 <!-- ==================== TAB 6: AI 调度大脑 ==================== -->
-                <div v-if="activeTab === 'copilot'" class="space-y-4">
+                <div v-if="activeTab === 'copilot' && planResult" class="space-y-4">
                     <div class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-cyan-600">
                         <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-2">
                             <span>🤖</span> AI 物流调度大脑与极端场景自适应应急重排
@@ -1724,14 +1790,12 @@
                     <!-- AI 智能学术诊断书 -->
                     <div v-if="planResult && planResult.ai_report" class="glass-panel p-4 rounded-xl space-y-3">
                         <span class="text-xs font-bold text-slate-200">专家级社区数智化升级诊断书 (实时生成)</span>
-                        <div class="text-xs text-slate-300 leading-relaxed whitespace-pre-line bg-slate-950 p-4 rounded-lg border border-slate-800 max-h-80 overflow-y-auto">
-                            {{ planResult.ai_report }}
-                        </div>
+                        <div class="ai-report text-xs text-slate-300 leading-relaxed bg-slate-950 p-4 rounded-lg border border-slate-800 max-h-80 overflow-y-auto" v-html="renderMarkdown(planResult.ai_report)"></div>
                     </div>
                 </div>
 
                 <!-- ==================== TAB 7: 动态沙盒推演 ==================== -->
-                <div v-if="activeTab === 'sandbox'" class="space-y-4">
+                <div v-if="activeTab === 'sandbox' && planResult" class="space-y-4">
                     <div class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-amber-600">
                         <h2 class="text-sm font-bold text-amber-400 flex items-center gap-1.5">
                             <span>🧪</span> 自定义社区参数推演实验室
@@ -1782,7 +1846,7 @@
                                 <span class="text-slate-300">社区总户数</span>
                                 <span class="text-cyan-400 font-bold mono">{{ customHouseholds }} 户</span>
                             </div>
-                            <input type="range" min="100" max="4000" step="50" v-model.number="customHouseholds" @input="onTweakParams" class="w-full accent-cyan-500">
+                            <input type="range" min="100" max="4000" step="50" v-model.number="customHouseholds" @change="onTweakParams" class="w-full accent-cyan-500" aria-label="社区总户数">
                         </div>
 
                         <div class="space-y-1.5">
@@ -1790,7 +1854,7 @@
                                 <span class="text-slate-300">上门配送偏好比例 (老龄化程度)</span>
                                 <span class="text-orange-400 font-bold mono">{{ Math.round(customDoorRatio * 100) }}%</span>
                             </div>
-                            <input type="range" min="0" max="1" step="0.05" v-model.number="customDoorRatio" @input="onTweakParams" class="w-full accent-orange-500">
+                            <input type="range" min="0" max="1" step="0.05" v-model.number="customDoorRatio" @change="onTweakParams" class="w-full accent-orange-500" aria-label="上门配送偏好比例">
                         </div>
 
                         <div class="space-y-1.5">
@@ -1798,7 +1862,7 @@
                                 <span class="text-slate-300">人均日派件强度</span>
                                 <span class="text-emerald-400 font-bold mono">{{ customIntensity }} 件/户·日</span>
                             </div>
-                            <input type="range" min="0.3" max="1.5" step="0.05" v-model.number="customIntensity" @input="onTweakParams" class="w-full accent-emerald-500">
+                            <input type="range" min="0.3" max="1.5" step="0.05" v-model.number="customIntensity" @change="onTweakParams" class="w-full accent-emerald-500" aria-label="人均日派件强度">
                         </div>
 
                         <!-- 推演即时影响预测预览卡片 (解决沙盒割裂问题) -->
@@ -1930,8 +1994,8 @@
                             <!-- 标准 LaTeX 目标函数 -->
                             <div class="math-card space-y-2">
                                 <span class="text-xs font-bold text-white">1. 目标函数 (Objective Function):</span>
-                                <div class="text-cyan-300 text-center text-sm py-2 mono bg-slate-950/60 rounded-lg">
-                                    $${{ m.objective }}$$
+                                <div class="text-cyan-300 text-center text-sm py-2 math-target bg-slate-950/60 rounded-lg">
+                                    \[{{ m.objective }}\]
                                 </div>
                             </div>
 
@@ -1949,7 +2013,7 @@
                                         </thead>
                                         <tbody class="divide-y divide-slate-800">
                                             <tr v-for="v in m.variables" :key="v.symbol">
-                                                <td class="mono font-bold text-cyan-300">${{ v.symbol }}$</td>
+                                                <td class="mono font-bold text-cyan-300"><span class="math-target">{{ mathText(v.symbol) }}</span></td>
                                                 <td class="text-amber-300 mono">{{ v.type }}</td>
                                                 <td>{{ v.meaning }}</td>
                                             </tr>
@@ -1964,8 +2028,8 @@
                                 <div class="space-y-2">
                                     <div v-for="c in m.constraints" :key="c.name" class="bg-slate-800 p-3 rounded-lg text-xs space-y-1">
                                         <div class="font-semibold text-slate-200">{{ c.name }}:</div>
-                                        <div class="text-cyan-300 mono text-center py-1 bg-slate-950 rounded">
-                                            $${{ c.formula }}$$
+                                        <div class="text-cyan-300 math-target text-center py-1 bg-slate-950 rounded">
+                                            \[{{ c.formula }}\]
                                         </div>
                                     </div>
                                 </div>
@@ -2175,7 +2239,7 @@
                                                 <span>2️⃣</span> 阶段二：改进模拟退火算法 (ISA) 全局协同路径寻优
                                             </div>
                                             <p class="text-slate-300 leading-relaxed text-[11px]">
-                                                针对每个聚类子网格，构建带硬时间窗 $[a_i, b_i]$ 与动态交通阻抗 $\eta(t)$ 的改进退火模型。自适应 Metropolis 准则接受劣解跳出局部最优，结合自适应降温调度与退火记忆池，毫秒级收敛至 Pareto 近优解。
+                                                针对每个聚类子网格，构建带硬时间窗 $[a_i, b_i]$ 与动态交通阻抗 <span class="math-target">$\eta(t)$</span> 的改进退火模型。自适应 Metropolis 准则接受劣解跳出局部最优，结合自适应降温调度与退火记忆池，毫秒级收敛至 Pareto 近优解。
                                             </p>
                                             <div class="text-[10px] text-slate-400 mono bg-slate-950 p-1.5 rounded">
                                                 状态转移概率：$P = \exp(-\Delta E / T)$；降温调度：$T_{k+1} = \alpha T_k \; (\alpha = 0.95)$
@@ -2216,13 +2280,13 @@
                                                 <tr>
                                                     <td class="font-bold text-cyan-300 mono">动态交通阻抗 $\eta(t)$</td>
                                                     <td class="mono text-amber-300">早晚高峰 0.85-0.90 / 平峰 1.0</td>
-                                                    <td>折减基准航速 $v_0 = 12.0\,\text{km/h}$，真实反映拥堵延误</td>
+                                                    <td>折减基准航速 <span class="math-target">$v_0 = 12.0\,\text{km/h}$</span>，真实反映拥堵延误</td>
                                                     <td>满足真实道路时变车速硬约束</td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="font-bold text-cyan-300 mono">退火调度 $(T_0, \alpha, \varepsilon)$</td>
-                                                    <td class="mono text-amber-300">$T_0=1000^\circ\text{C}, \alpha=0.95, \varepsilon=0.005$</td>
-                                                    <td>马尔可夫链长 $L_k=80$，几何级数平滑降温</td>
+                                                    <td class="font-bold text-cyan-300 mono">退火调度 <span class="math-target">$(T_0, \alpha, \varepsilon)$</span></td>
+                                                    <td class="mono text-amber-300"><span class="math-target">$T_0=1000^\circ\text{C}, \alpha=0.95, \varepsilon=0.005$</span></td>
+                                                    <td>马尔可夫链长 <span class="math-target">$L_k=80$</span>，几何级数平滑降温</td>
                                                     <td>Van Laarhoven & Aarts 准则，保障全局收敛性</td>
                                                 </tr>
                                             </tbody>
@@ -2234,16 +2298,16 @@
                                 <div class="glass-panel p-4 rounded-xl space-y-3 border border-slate-800">
                                     <div class="flex justify-between items-center">
                                         <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                                            <span>📈</span> ISA 算法退火降温与加权时间目标收敛历程 (Annealing & Objective Convergence)
+                                            <span>📈</span> ISA 算法退火降温与加权距离目标收敛历程 (Annealing & Objective Convergence)
                                         </span>
                                         <span class="text-xs text-cyan-400 font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                                            50 轮迭代快速收敛 · 优化率 43.5%
+                                            {{ planResult?.routing?.isa_convergence_curve?.length || 0 }} 个真实采样点 · 后端求解轨迹
                                         </span>
                                     </div>
                                     <div id="chart-isa-convergence" class="w-full h-64"></div>
                                     <div class="text-[11px] text-slate-400 flex justify-between border-t border-slate-800 pt-2">
-                                        <span>青色实线：路径加权总配送时长目标 $Z$ (min)，自 1845.0 min 收敛至 1042.5 min</span>
-                                        <span class="text-amber-400 font-mono">橙色虚线：退火温度 $T$ 从 $1000.0^\circ\text{C}$ 降至 $76.9^\circ\text{C}$</span>
+                                        <span>青色实线：各子路径加权距离目标平均值 Z (km)，由后端 ISA 求解轨迹聚合</span>
+                                        <span class="text-amber-400 font-mono">橙色虚线：退火温度 T，与当前真实迭代轮次同步</span>
                                     </div>
                                 </div>
                             </div>
@@ -2562,9 +2626,64 @@
             </div>
         </div>
 
+
+        <!-- Built-in Recording Guide -->
+        <button class="guide-fab" @click="showGuide = true" aria-label="打开录屏演示向导">
+            <span aria-hidden="true">◉</span>
+            <span>演示向导</span>
+        </button>
+
+        <div v-if="showGuide" class="guide-overlay" @click.self="showGuide = false" role="dialog" aria-modal="true" aria-label="录屏演示向导">
+            <div class="guide-dialog">
+                <header class="guide-header">
+                    <div>
+                        <span class="guide-kicker">RECORDING PLAYBOOK</span>
+                        <h2>前端录屏演示向导</h2>
+                        <p>按推荐顺序切换功能，右侧给出讲解重点和镜头建议。</p>
+                    </div>
+                    <button class="guide-close" @click="showGuide = false" aria-label="关闭演示向导">✕</button>
+                </header>
+                <div class="guide-layout">
+                    <nav class="guide-step-list" aria-label="演示步骤">
+                        <button v-for="(step, index) in guideSteps" :key="step.code"
+                            @click="guideStepIndex = index"
+                            :class="guideStepIndex === index ? 'is-active' : ''">
+                            <span>{{ step.code }}</span>
+                            <div>
+                                <strong>{{ step.title }}</strong>
+                                <small>{{ step.duration }}</small>
+                            </div>
+                        </button>
+                    </nav>
+                    <section class="guide-detail">
+                        <div class="guide-detail-head">
+                            <span>STEP {{ guideSteps[guideStepIndex].code }}</span>
+                            <span>{{ guideSteps[guideStepIndex].duration }}</span>
+                        </div>
+                        <h3>{{ guideSteps[guideStepIndex].title }}</h3>
+                        <p class="guide-narration">{{ guideSteps[guideStepIndex].narration }}</p>
+                        <div class="guide-block">
+                            <strong>镜头与操作</strong>
+                            <ul>
+                                <li v-for="tip in guideSteps[guideStepIndex].tips" :key="tip">{{ tip }}</li>
+                            </ul>
+                        </div>
+                        <div class="guide-block guide-output">
+                            <strong>结果说明</strong>
+                            <p>{{ guideSteps[guideStepIndex].result }}</p>
+                        </div>
+                        <div class="guide-actions">
+                            <button @click="showGuide = false">留在当前页</button>
+                            <button class="primary" @click="applyGuideStep(guideStepIndex)">应用此步骤并跳转</button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Vue App Script (Local) -->
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=20260923-10"></script>
 </body>
 </html>

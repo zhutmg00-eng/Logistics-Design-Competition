@@ -393,14 +393,14 @@ cd Logistics-Design-Competition
 安装 Python 运行依赖：
 
 ```bash
-pip install -r requirements.txt
+py -3.13 -m pip install -r requirements.txt
 ```
 
 ### 7.3 启动系统
 在项目根目录下执行启动脚本：
 
 ```bash
-python run_server.py
+py -3.13 run_server.py
 ```
 
 终端将输出服务就绪提示：
@@ -415,7 +415,15 @@ python run_server.py
 
 在本地浏览器中访问 `http://127.0.0.1:8000` 即可使用系统全套功能。
 
+### 7.4 前端使用与录屏教程
+
+- [前端使用与录屏教程](docs/frontend/前端使用与录屏教程.md)
+- [6 分钟录屏分镜脚本](docs/frontend/6分钟录屏分镜脚本.md)
+
+页面右下角内置“演示向导”，可按 8 个步骤自动设置社区、方案、情景并切换模块。
+
 ---
+
 
 ## 8. 高德开放平台 Web 服务 Key 配置说明
 

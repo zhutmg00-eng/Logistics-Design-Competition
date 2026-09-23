@@ -1,4 +1,4 @@
-const { createApp, ref, onMounted, watch, nextTick } = Vue;
+const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
 const app = createApp({
     setup() {
@@ -14,6 +14,204 @@ const app = createApp({
         const simScenario = ref('normal'); // 'normal' | 'peak' | 'disruption'
         const crisisResult = ref(null);
         const isPeakDay = ref(false);
+
+        const apiError = ref('');
+        const mobilePane = ref('content');
+        const showConstraintDetails = ref(false);
+        const showGuide = ref(false);
+        const guideStepIndex = ref(0);
+
+        const moduleNav = [
+            { code: 'comparison', shortLabel: '总览', icon: '◫' },
+            { code: 'digital-twin', shortLabel: '数字孪生', icon: '◎' },
+            { code: 'forecast', shortLabel: '需求预测', icon: '⌁' },
+            { code: 'layout', shortLabel: '选址定容', icon: '▦' },
+            { code: 'routing', shortLabel: '人车协同', icon: '⇄' },
+            { code: 'simulation', shortLabel: '仿真对抗', icon: '◷' },
+            { code: 'copilot', shortLabel: 'AI调度', icon: '✦' },
+            { code: 'sandbox', shortLabel: '自定义推演', icon: '◇' }
+        ];
+
+        const guideSteps = [
+            {
+                code: '01', community: 'C01', title: '全局态势与方案对比', duration: '00:00–00:45', tab: 'comparison', scheme: 'diff', scenario: 'N',
+                narration: '从亦庄示范区五个社区的全局网络开始，说明系统如何用 S0 现状基准、S1 设施优化、S2 人机协同对同一场景进行闭环比较。',
+                tips: ['保持左右分屏，先展示地图全域，再移动到右侧六项核心指标。', '依次指出干线里程、步巡里程、人工工时、未完成件量、成本和碳排。'],
+                result: '地图与指标卡联动，能够直接说明优化方案的结构性收益，同时明确当前方案的约束状态。'
+            },
+            {
+                code: '02', community: 'C01', title: '空间数字孪生底座', duration: '00:45–01:25', tab: 'digital-twin', scheme: 'diff', scenario: 'N',
+                narration: '进入数字孪生模块，说明 HUB—社区接驳点—智能柜/楼栋三级网络，以及五社区真实样本边界和内部路网。',
+                tips: ['展示 M1 干线巡回 TSP 指标和五社区特征矩阵。', '在图层控制中切换道路、边界或服务环，强调地图不是静态截图。'],
+                result: '体现项目使用真实空间数据与可交互 GIS 底座，而不是单纯图表拼接。'
+            },
+            {
+                code: '03', community: 'C04', title: '多尺度需求预测', duration: '01:25–02:10', tab: 'forecast', scheme: 's2', scenario: 'P20',
+                narration: '切换到需求预测，说明贝叶斯层次模型、P50/P80/P90 分位数与普通日、大促峰值之间的差异。',
+                tips: ['先展示均值和上门/自提拆分，再切到大促峰值。', '指向 6 时段分时曲线，强调晚高峰压力和容量校核。'],
+                result: '展示 M5 如何把社区规模、上门偏好与时间波动转化为后续选址和路径规划的输入。'
+            },
+            {
+                code: '04', community: 'C04', title: '选址定容与硬约束', duration: '02:10–02:55', tab: 'layout', scheme: 's2', scenario: 'N',
+                narration: '进入 MIP 选址定容模块，说明固定柜与自适应扩容对照，以及 150 米便民红线、容量和覆盖约束。',
+                tips: ['展示现状柜容量与优化后有效性容量。', '展开顶部硬约束明细，区分可行、告警和不可行状态。'],
+                result: '不仅展示最优容量结果，也向评审说明约束是否通过，避免只报收益不报代价。'
+            },
+            {
+                code: '05', community: 'C04', title: '人车协同执行', duration: '02:55–03:40', tab: 'routing', scheme: 's2', scenario: 'N',
+                narration: '进入 M2/M3 人机协同模块，说明无人车承担接驳与社区巡回，配送员聚焦适老上门和特殊服务。',
+                tips: ['展示无人车里程、上门工时、满意度和电池安全余量。', '查看装车班次与容量利用率，特别说明超过 100% 的容量容差提示。'],
+                result: '体现两级路径规划与时空交接约束，连接战略选址和现场执行。'
+            },
+            {
+                code: '06', community: 'C04', title: '仿真对抗与异常应急', duration: '03:40–04:35', tab: 'simulation', scheme: 's2', scenario: 'P20',
+                narration: '切到大促峰值与极端扰动，说明系统如何评估满柜、晚高峰和异常场景下的运行韧性。',
+                tips: ['展示饱和度曲线、甘特图和社区逐项结果。', '进入 AI 调度页依次触发暴单、暴雪和无人车故障，展示应急决策输出。'],
+                result: '把静态规划升级为动态运行推演，形成“预测—规划—仿真—应急修复”的完整闭环。'
+            },
+            {
+                code: '07', community: 'C04', title: '自定义社区推演', duration: '04:35–05:25', tab: 'sandbox', scheme: 's2', scenario: 'N',
+                narration: '进入参数实验室，以 C04 亦城茗苑为例，调整户数、上门比例和人均件量强度，展示即时预算与全模型重算。',
+                tips: ['拖动滑块时先讲实时预测变化，再点击一键重算。', '重算完成后查看 M5、M6、M2 的求解耗时和真实日志。'],
+                result: '说明系统可突破预设社区样本，向任意北京社区扩展，并能保留完整求解链路。'
+            },
+            {
+                code: '08', community: 'C04', title: '算法模型看板', duration: '05:25–06:10', tab: 'sandbox', solverTab: 'M2-ISA',
+                narration: '最后打开算法看板，依次说明 M1、M2/M3、M2-ISA、M5、M6、M8 的数学定义、变量、约束和学术图谱。',
+                tips: ['从 M1 到 M2-ISA 展示同一套业务问题的模型链路。', '重点展示目标函数、硬约束与真实收敛轨迹，不再使用随机演示曲线。'],
+                result: '让 PPT 视频既有产品操作，也有学术方法支撑，能够与报告章节一一对应。'
+            }
+        ];
+
+        const initialHashState = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        const validTabs = new Set(moduleNav.map(item => item.code));
+        const initialTab = initialHashState.get('tab');
+        if (validTabs.has(initialTab)) activeTab.value = initialTab;
+        const initialCommunity = initialHashState.get('community');
+        if (initialCommunity === 'ALL' || ['C01', 'C02', 'C03', 'C04', 'C05'].includes(initialCommunity)) {
+            selectedCommunityId.value = initialCommunity;
+        }
+        const initialScheme = initialHashState.get('scheme');
+        if (['s0', 's1', 's2', 'diff'].includes(initialScheme)) schemeMode.value = initialScheme;
+        const initialScenario = initialHashState.get('scenario');
+        if (['N', 'P15', 'P20'].includes(initialScenario)) {
+            currentScenario.value = initialScenario;
+            isPeakDay.value = initialScenario === 'P20';
+        }
+
+        const violationStatusTokens = new Set([
+            'VIOLATED', 'OVERLOAD_VIOLATION', 'OVERTIME_WARNING', 'INFEASIBLE',
+            'SYNC_VIOLATION', 'BATTERY_RESERVE_VIOLATION'
+        ]);
+
+        const isViolationStatus = (status) => violationStatusTokens.has(String(status || '').toUpperCase());
+        const formatConstraintValue = (value) => {
+            if (value === null || value === undefined || value === '') return '—';
+            const num = Number(value);
+            if (!Number.isFinite(num)) return String(value);
+            return Math.abs(num) >= 1000 ? num.toFixed(0) : num.toFixed(2).replace(/\.?0+$/, '');
+        };
+
+        const constraintChecks = computed(() => ([
+            ...(planResult.value?.layout?.constraint_checks || []),
+            ...(planResult.value?.routing?.constraint_checks || [])
+        ]));
+
+        const failedConstraintChecks = computed(() => constraintChecks.value.filter(item => isViolationStatus(item.status)));
+
+        const pipelineStatus = computed(() => (
+            planResult.value?.solver_console?.pipeline_status
+            || planResult.value?.routing?.solver_metrics?.status
+            || 'CALCULATING'
+        ));
+
+        const hardViolationCount = computed(() => {
+            const count = Number(planResult.value?.solver_console?.hard_constraint_violations);
+            return Number.isFinite(count) ? count : failedConstraintChecks.value.length;
+        });
+
+        const planStatusMeta = computed(() => {
+            if (!planResult.value) {
+                return {
+                    tone: 'warning', shortLabel: '计算中', title: '正在生成规划方案',
+                    description: '系统正在同步 M5 预测、M6 定容与 M2/M3 路径规划结果。',
+                    metric: '等待求解器返回'
+                };
+            }
+            const status = String(pipelineStatus.value || '').toUpperCase();
+            const solver = planResult.value?.solver_console || {};
+            const solveTime = Number(solver.total_solve_time_ms || 0).toFixed(3);
+            const metric = `M5 ${Number(solver.solver_breakdown?.M5_forecast_ms || 0).toFixed(3)} ms · M6 ${Number(solver.solver_breakdown?.M6_layout_mip_ms || 0).toFixed(3)} ms · M2 ${Number(solver.solver_breakdown?.M2_routing_cvrp_ms || 0).toFixed(3)} ms`;
+            if (status.includes('INFEASIBLE') || hardViolationCount.value > 0) {
+                return {
+                    tone: 'danger', shortLabel: '约束告警',
+                    title: `方案存在 ${hardViolationCount.value || failedConstraintChecks.value.length} 项硬约束未通过`,
+                    description: '结果可用于诊断和演示，但不应标记为可直接执行方案；请查看约束明细并修复容量、工时或时序问题。',
+                    metric
+                };
+            }
+            if (status.includes('FEASIBLE')) {
+                return {
+                    tone: 'success', shortLabel: '约束通过',
+                    title: '方案通过硬约束流水线校验',
+                    description: `当前社区为 ${planResult.value.community_name || planResult.value.community_id}，可继续开展方案对比、仿真和汇报。`,
+                    metric
+                };
+            }
+            return {
+                tone: 'warning', shortLabel: '待校验',
+                title: '方案已生成，约束状态待确认',
+                description: '请检查求解器日志和约束明细后，再用于正式方案汇报。',
+                metric
+            };
+        });
+
+        const renderMarkdown = (text = '') => {
+            const escaped = String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            const lines = escaped.split(/\n/);
+            const html = [];
+            let inList = false;
+            const inline = (value) => value.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            const closeList = () => {
+                if (inList) {
+                    html.push('</ul>');
+                    inList = false;
+                }
+            };
+            lines.forEach((rawLine) => {
+                const line = rawLine.trim();
+                if (!line) {
+                    closeList();
+                    return;
+                }
+                const heading = line.match(/^#{2,4}\s+(.+)$/);
+                if (heading) {
+                    closeList();
+                    html.push(`<h4>${inline(heading[1])}</h4>`);
+                    return;
+                }
+                const bullet = line.match(/^[-*]\s+(.+)$/);
+                if (bullet) {
+                    if (!inList) {
+                        html.push('<ul>');
+                        inList = true;
+                    }
+                    html.push(`<li>${inline(bullet[1])}</li>`);
+                    return;
+                }
+                closeList();
+                html.push(`<p>${inline(line)}</p>`);
+            });
+            closeList();
+            return html.join('');
+        };
+
+        const mathText = (symbol) => `$${symbol}$`;
 
         // 轻量级 Toast 提示系统
         const toasts = ref([]);
@@ -98,17 +296,64 @@ const app = createApp({
             return ((Number(metric.baseline) - Number(metric.optimized)) / divisor).toFixed(digits);
         };
 
-        const setScenario = async (scen) => {
+        const setScenario = async (scen, options = {}) => {
             currentScenario.value = scen;
             isPeakDay.value = (scen === 'P20');
             const scenNames = { 'N': '普通日 (1.0x)', 'P15': '中高峰 (1.5x)', 'P20': '大促峰值 (2.0x)' };
-            showToast(`已切换至情景: ${scenNames[scen] || scen}`, 'info');
+            if (!options.silent) showToast(`已切换至情景: ${scenNames[scen] || scen}`, 'info');
             await loadCommunityPlan(selectedCommunityId.value);
             if (scen === 'P20') {
                 await fetchSimulation('peak');
             } else {
                 await fetchSimulation('normal');
             }
+        };
+
+        const setActiveTab = (tab) => {
+            activeTab.value = tab;
+            mobilePane.value = 'content';
+            showConstraintDetails.value = false;
+        };
+
+        const applyGuideStep = async (index) => {
+            const step = guideSteps[index];
+            if (!step) return;
+            guideStepIndex.value = index;
+            setActiveTab(step.tab);
+
+            let planNeedsReload = false;
+            if (step.community && step.community !== selectedCommunityId.value) {
+                const community = overview.value?.communities?.find(item => item.id === step.community);
+                selectedCommunityId.value = step.community;
+                if (community) {
+                    customHouseholds.value = community.households;
+                    if (step.community === 'C01' || step.community === 'C03') customDoorRatio.value = 1.0;
+                    else if (step.community === 'C02') customDoorRatio.value = 0.52;
+                    else if (step.community === 'C04') customDoorRatio.value = 0.25;
+                    else if (step.community === 'C05') customDoorRatio.value = 0.24;
+                }
+                planNeedsReload = true;
+            }
+
+            if (step.scenario && currentScenario.value !== step.scenario) {
+                await setScenario(step.scenario, { silent: true });
+                planNeedsReload = false;
+            } else if (planNeedsReload) {
+                await loadCommunityPlan(selectedCommunityId.value);
+            }
+
+            if (step.scheme && schemeMode.value !== step.scheme) {
+                setSchemeMode(step.scheme, { silent: true });
+            }
+            if (step.solverTab) {
+                solverModalTab.value = step.solverTab;
+                showSolverModal.value = true;
+            }
+            showGuide.value = false;
+            nextTick(() => {
+                updateAllActiveCharts();
+                if (map) map.invalidateSize();
+            });
         };
 
         const toggleViewMode = () => {
@@ -351,6 +596,8 @@ const app = createApp({
         let currentTileLayer = null;
         let tileLayers = {};
         let mapLayers = [];
+        let planRequestSeq = 0;
+        let planAbortController = null;
 
         let chartArrivals = null;
         let chartSaturation = null;
@@ -366,7 +613,7 @@ const app = createApp({
         let chartCompCost = null;
 
         // 切换现状/设施优化/人机协同/叠图方案
-        const setSchemeMode = (mode) => {
+        const setSchemeMode = (mode, options = {}) => {
             if (mode === 'baseline') mode = 's0';
             if (mode === 'optimized') mode = 's2';
             schemeMode.value = mode;
@@ -376,7 +623,7 @@ const app = createApp({
                 's2': '🟢 S2 人机协同推荐方案 (To-Be)',
                 'diff': '⚡ 双方案同屏叠图对比'
             };
-            showToast(`已切换至: ${names[mode] || mode}`, 'info');
+            if (!options.silent) showToast(`已切换至: ${names[mode] || mode}`, 'info');
             renderMapLayers();
         };
 
@@ -406,10 +653,25 @@ const app = createApp({
 
         // 初始化
         onMounted(async () => {
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape') return;
+                if (showGuide.value) showGuide.value = false;
+                else if (showImageModal.value) closeImagePreview();
+                else if (showAmapModal.value) showAmapModal.value = false;
+                else if (showSolverModal.value) showSolverModal.value = false;
+            });
             initMap();
             await fetchAmapConfig();
             await fetchMathModels();
             await fetchOverview();
+            const initialCommunity = overview.value?.communities?.find(item => item.id === selectedCommunityId.value);
+            if (initialCommunity) {
+                customHouseholds.value = initialCommunity.households;
+                if (selectedCommunityId.value === 'C01' || selectedCommunityId.value === 'C03') customDoorRatio.value = 1.0;
+                else if (selectedCommunityId.value === 'C02') customDoorRatio.value = 0.52;
+                else if (selectedCommunityId.value === 'C04') customDoorRatio.value = 0.25;
+                else if (selectedCommunityId.value === 'C05') customDoorRatio.value = 0.24;
+            }
             await loadCommunityPlan(selectedCommunityId.value);
             await fetchSimulation();
 
@@ -804,6 +1066,7 @@ const app = createApp({
         const fetchOverview = async () => {
             try {
                 const res = await fetch('/api/overview');
+                if (!res.ok) throw new Error(`总览接口返回 HTTP ${res.status}`);
                 overview.value = await res.json();
                 nextTick(() => {
                     updateTspChart();
@@ -811,15 +1074,21 @@ const app = createApp({
                 });
             } catch (e) {
                 console.error('Fetch overview failed:', e);
+                apiError.value = `总览数据加载失败：${e.message || e}`;
             }
         };
 
         const loadCommunityPlan = async (cid) => {
             loading.value = true;
+            apiError.value = '';
+            const requestId = ++planRequestSeq;
+            if (planAbortController) planAbortController.abort();
+            planAbortController = new AbortController();
             try {
                 const res = await fetch('/api/calculate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    signal: planAbortController.signal,
                     body: JSON.stringify({
                         community_id: cid,
                         custom_households: customHouseholds.value,
@@ -828,7 +1097,10 @@ const app = createApp({
                         is_peak_day: isPeakDay.value
                     })
                 });
-                planResult.value = await res.json();
+                if (!res.ok) throw new Error(`计算接口返回 HTTP ${res.status}`);
+                const data = await res.json();
+                if (requestId !== planRequestSeq) return null;
+                planResult.value = data;
                 nextTick(() => {
                     renderMapLayers();
                     updateCharts();
@@ -836,10 +1108,15 @@ const app = createApp({
                     renderMath();
                     if (map) map.invalidateSize();
                 });
+                return data;
             } catch (e) {
+                if (e.name === 'AbortError') return null;
                 console.error('Load plan failed:', e);
+                apiError.value = `方案计算失败：${e.message || e}`;
+                showToast(apiError.value, 'error', 5000);
+                return null;
             } finally {
-                loading.value = false;
+                if (requestId === planRequestSeq) loading.value = false;
             }
         };
 
@@ -847,6 +1124,7 @@ const app = createApp({
             if (scenario) simScenario.value = scenario;
             try {
                 const res = await fetch(`/api/simulation?scenario=${simScenario.value}`);
+                if (!res.ok) throw new Error(`仿真接口返回 HTTP ${res.status}`);
                 simulationResult.value = await res.json();
                 nextTick(() => {
                     updateSimCharts();
@@ -854,6 +1132,7 @@ const app = createApp({
                 });
             } catch (e) {
                 console.error('Fetch simulation failed:', e);
+                apiError.value = `仿真结果加载失败：${e.message || e}`;
             }
         };
 
@@ -863,6 +1142,7 @@ const app = createApp({
 
         const onSelectCommunity = (cid) => {
             selectedCommunityId.value = cid;
+            mobilePane.value = 'content';
             if (cid === 'ALL') {
                 loadCommunityPlan('ALL');
                 showToast('已切换至全域 5 社区综合底座', 'info');
@@ -884,8 +1164,13 @@ const app = createApp({
         };
 
         const onTweakParams = async () => {
-            await loadCommunityPlan(selectedCommunityId.value);
-            showToast('规划参数已重算并完成全流程优化', 'success');
+            const data = await loadCommunityPlan(selectedCommunityId.value);
+            if (!data) return;
+            if (String(data?.solver_console?.pipeline_status || '').includes('INFEASIBLE') || Number(data?.solver_console?.hard_constraint_violations || 0) > 0) {
+                showToast('重算完成，但存在硬约束未通过，请查看约束明细', 'warning', 5200);
+            } else {
+                showToast('规划参数已重算，方案通过硬约束校验', 'success', 4200);
+            }
         };
 
         const triggerCrisis = async (type) => {
@@ -899,6 +1184,8 @@ const app = createApp({
                 renderMath();
             } catch (e) {
                 console.error('Crisis trigger failed:', e);
+                apiError.value = `应急推演失败：${e.message || e}`;
+                showToast(apiError.value, 'error', 5000);
             }
         };
 
@@ -1881,41 +2168,48 @@ const app = createApp({
             chartIsaConvergence = getOrCreateChart('chart-isa-convergence');
             if (!chartIsaConvergence) return;
 
-            const iterations = [];
-            const temperatures = [];
-            const costs = [];
-            let T = 1000.0;
-            let currentCost = 1845.0;
-            let bestCost = 1845.0;
-
-            for (let i = 1; i <= 50; i++) {
-                iterations.push(`轮次 ${i}`);
-                temperatures.push(Number(T.toFixed(1)));
-                const delta = (Math.random() - 0.58) * (T / 12);
-                currentCost = Math.max(1042.5, currentCost + delta);
-                if (currentCost < bestCost) bestCost = currentCost;
-                costs.push(Number(bestCost.toFixed(1)));
-                T = T * 0.95;
+            const curve = planResult.value?.routing?.isa_convergence_curve || [];
+            if (!Array.isArray(curve) || curve.length < 2) {
+                chartIsaConvergence.clear();
+                chartIsaConvergence.setOption({
+                    backgroundColor: 'transparent',
+                    graphic: [{
+                        type: 'text',
+                        left: 'center',
+                        top: 'middle',
+                        style: {
+                            text: '暂无后端真实收敛轨迹',
+                            fill: '#94a3b8',
+                            fontSize: 12
+                        }
+                    }]
+                });
+                return;
             }
+
+            const iterations = curve.map((item, index) => `轮次 ${item.iter ?? index}`);
+            const temperatures = curve.map(item => Number(item.temperature ?? 0));
+            const costs = curve.map(item => Number(item.best_cost ?? item.tour_dist_km ?? 0));
 
             chartIsaConvergence.setOption({
                 backgroundColor: 'transparent',
                 tooltip: { trigger: 'axis' },
-                legend: { data: ['路径加权时间目标 Z (min)', '退火温度 T (°C)'], textStyle: { color: '#94a3b8', fontSize: 10 }, top: 0 },
+                legend: { data: ['子路径加权距离目标 Z (km)', '退火温度 T (°C)'], textStyle: { color: '#94a3b8', fontSize: 10 }, top: 0 },
                 grid: { top: 35, left: 55, right: 55, bottom: 25 },
                 xAxis: { type: 'category', data: iterations, axisLabel: { color: '#94a3b8', fontSize: 10 }, axisLine: { lineStyle: { color: '#334155' } } },
                 yAxis: [
-                    { type: 'value', name: '目标 Z (min)', min: 1000, max: 2000, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
-                    { type: 'value', name: '温度 T (°C)', min: 0, max: 1000, axisLabel: { color: '#f59e0b' }, splitLine: { show: false } }
+                    { type: 'value', name: '路径目标', min: 'dataMin', max: 'dataMax', axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+                    { type: 'value', name: '温度 T (°C)', min: 0, max: 'dataMax', axisLabel: { color: '#f59e0b' }, splitLine: { show: false } }
                 ],
                 series: [
                     {
-                        name: '路径加权时间目标 Z (min)',
+                        name: '子路径加权距离目标 Z (km)',
                         type: 'line',
                         data: costs,
                         itemStyle: { color: '#06b6d4' },
                         lineStyle: { width: 3 },
-                        smooth: true
+                        smooth: true,
+                        symbolSize: 5
                     },
                     {
                         name: '退火温度 T (°C)',
@@ -1924,7 +2218,8 @@ const app = createApp({
                         data: temperatures,
                         itemStyle: { color: '#f59e0b' },
                         lineStyle: { width: 2, type: 'dashed' },
-                        smooth: true
+                        smooth: true,
+                        symbolSize: 4
                     }
                 ]
             });
@@ -1980,6 +2275,20 @@ const app = createApp({
             }
         });
 
+        const syncUrlState = () => {
+            const params = new URLSearchParams();
+            params.set('tab', activeTab.value);
+            params.set('community', selectedCommunityId.value);
+            params.set('scheme', schemeMode.value);
+            params.set('scenario', currentScenario.value);
+            const nextHash = `#${params.toString()}`;
+            if (window.location.hash !== nextHash) {
+                window.history.replaceState(null, '', nextHash);
+            }
+        };
+
+        watch([activeTab, selectedCommunityId, schemeMode, currentScenario], syncUrlState);
+
         return {
             toasts,
             showToast,
@@ -1991,6 +2300,23 @@ const app = createApp({
             currentScenario,
             setScenario,
             loading,
+            apiError,
+            mobilePane,
+            setActiveTab,
+            moduleNav,
+            guideSteps,
+            guideStepIndex,
+            showGuide,
+            applyGuideStep,
+            planStatusMeta,
+            pipelineStatus,
+            constraintChecks,
+            failedConstraintChecks,
+            hardViolationCount,
+            formatConstraintValue,
+            showConstraintDetails,
+            renderMarkdown,
+            mathText,
             overview,
             comparisonMetric,
             metricValue,
