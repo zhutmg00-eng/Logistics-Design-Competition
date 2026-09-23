@@ -38,7 +38,7 @@
     <script src="/static/libs/katex/katex.min.js"></script>
     <script src="/static/libs/katex/auto-render.min.js"></script>
     <!-- Custom Industrial Styles (Pure Local Fonts & Industrial Dark) -->
-    <link rel="stylesheet" href="/static/style.css?v=20260923-15">
+    <link rel="stylesheet" href="/static/style.css?v=20260923-19">
 </head>
 <body class="theme-ops app-body bg-slate-950 text-slate-100 flex flex-col antialiased">
     <a class="skip-link" href="#main-content">跳到主要内容</a>
@@ -1580,18 +1580,17 @@
                             <span class="text-xs text-slate-400 mono">标准单班基准: 480 min (8h)</span>
                         </div>
                         <div class="overflow-x-auto rounded-lg border border-slate-800">
-                            <table class="industrial-table text-xs mono">
+                            <table class="industrial-table text-xs mono table-wide">
                                 <thead>
                                     <tr>
                                         <th>社区名称</th>
                                         <th>日件量</th>
                                         <th>趟次</th>
-                                        <th>无人车里程</th>
-                                        <th>上门里程</th>
-                                        <th>仿真时长</th>
-                                        <th>工时利用率</th>
-                                        <th>基准满柜风险</th>
-                                        <th>协同优化后</th>
+                                        <th>无人车 km</th>
+                                        <th>上门 km</th>
+                                        <th>仿真 min</th>
+                                        <th>工时利用</th>
+                                        <th>风险结果</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-800">
@@ -1611,13 +1610,8 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span :class="cr.full_risk_baseline === '是' ? 'text-rose-400 font-semibold bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-800' : 'text-slate-400'">
-                                                {{ cr.full_risk_baseline }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span :class="cr.full_risk_optimized === '否' ? 'text-emerald-400 font-semibold bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800' : 'text-rose-400'">
-                                                {{ cr.full_risk_optimized === '否' ? ' 已解除' : '需扩容' }}
+                                            <span :class="cr.full_risk_baseline === '否' ? 'text-slate-400' : (cr.full_risk_optimized === '否' ? 'text-emerald-400 font-semibold bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800' : 'text-rose-400')">
+                                                {{ cr.full_risk_baseline === '否' ? '无风险' : (cr.full_risk_optimized === '否' ? '已解除' : '需扩容') }}
                                             </span>
                                         </td>
                                     </tr>
@@ -2506,6 +2500,6 @@
     </div>
 
     <!-- Vue App Script (Local) -->
-    <script src="/static/app.js?v=20260923-15"></script>
+    <script src="/static/app.js?v=20260923-19"></script>
 </body>
 </html>

@@ -1973,3 +1973,69 @@ body.theme-ops .guide-close {
     color: var(--ops-ink) !important;
     background: #edf2f4 !important;
 }
+
+
+/* Numeric tables must never squeeze values, units or status chips. */
+body.theme-ops .industrial-table.mono {
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+}
+
+body.theme-ops .industrial-table.mono.table-wide {
+    min-width: 1080px;
+}
+
+body.theme-ops .industrial-table.mono th,
+body.theme-ops .industrial-table.mono td {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+body.theme-ops .industrial-table th,
+body.theme-ops .industrial-table td {
+    word-break: keep-all;
+}
+
+body.theme-ops .industrial-table span,
+body.theme-ops .industrial-table .rounded,
+body.theme-ops .industrial-table .rounded-lg {
+    white-space: nowrap;
+}
+
+body.theme-ops .plan-status-actions button {
+    white-space: nowrap;
+}
+
+
+body.theme-ops .industrial-table.mono.table-wide {
+    min-width: 900px;
+}
+
+body.theme-ops .industrial-table.mono.table-wide th,
+body.theme-ops .industrial-table.mono.table-wide td {
+    padding: 0.42rem 0.5rem;
+}
+
+
+body.theme-ops .industrial-table {
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+}
+
+body.theme-ops .industrial-table th,
+body.theme-ops .industrial-table td {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+
+body.theme-ops .industrial-table.mono.table-wide {
+    min-width: 650px;
+}
+
+body.theme-ops .industrial-table.mono.table-wide th,
+body.theme-ops .industrial-table.mono.table-wide td {
+    padding: 0.42rem 0.42rem;
+}
