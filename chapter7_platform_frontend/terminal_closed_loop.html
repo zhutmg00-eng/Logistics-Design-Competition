@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>跨主体异常协同与闭环反馈联动系统 (Chapter 7.3.5)</title>
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    :root {
+      --bg-main: var(--od-bg-base, #070b14);
+      --bg-panel: var(--od-bg-glass, rgba(15, 23, 42, 0.9));
+      --bg-card: var(--od-bg-card, rgba(30, 41, 59, 0.75));
+      --border-panel: var(--od-border-accent, rgba(56, 189, 248, 0.25));
+      --cyan: #06b6d4;
+      --blue: #0284c7;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --text-main: var(--od-fg-primary, #f8fafc);
+      --text-muted: var(--od-fg-muted, #94a3b8);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: var(--od-font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif);
+    }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 50% 10%, rgba(244, 63, 94, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.12) 0%, transparent 40%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    header {
+      height: 64px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(15, 23, 42, 0.75) 100%);
+      border-bottom: 1px solid var(--border-panel);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      border-radius: var(--od-radius-lg, 8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--rose);
+      box-shadow: var(--od-shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.35));
+    }
+    .title-group h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--od-fg-primary, #ffffff);
+      letter-spacing: var(--od-tracking-cjk, 0);
+    }
+    .title-group p { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+    .scenario-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 28px;
+      background: rgba(15, 23, 42, 0.7);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .scenario-selector {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .scenario-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-panel);
+      color: #e2e8f0;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .scenario-btn.active {
+      background: rgba(244, 63, 94, 0.18);
+      border-color: var(--rose);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+
+    .main-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px 28px 16px 28px;
+      overflow: hidden;
+    }
+
+    /* 7-Step Sequence */
+    .flow-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 10px;
+      padding: 10px 16px;
+    }
+    .flow-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .flow-steps {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+    }
+    .flow-steps::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 35px;
+      right: 35px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.12);
+      z-index: 1;
+    }
+    .flow-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      z-index: 2;
+      width: 125px;
+      text-align: center;
+    }
+    .flow-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #0f172a;
+      border: 2px solid var(--rose);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .flow-circle.c2 { border-color: #f97316; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+    .flow-circle.c3 { border-color: var(--amber); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+    .flow-circle.c4 { border-color: var(--blue); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+    .flow-circle.c5 { border-color: var(--cyan); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+    .flow-circle.c6 { border-color: var(--blue); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+    .flow-circle.c7 { border-color: var(--emerald); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+
+    .flow-node-title { font-size: 12px; font-weight: 700; color: #fff; }
+    .flow-node-desc { font-size: 10px; color: var(--text-muted); }
+
+    /* Middle Row: Digital Twin Map & Rerouting Comparison Sandbox */
+    .sandbox-card {
+      height: 280px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      overflow: hidden;
+    }
+    .sandbox-map-wrapper {
+      position: relative;
+      background: #090d16;
+      overflow: hidden;
+    }
+    #rerouteCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .sandbox-telemetry {
+      background: rgba(15, 23, 42, 0.85);
+      border-left: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* Bottom: 4 Terminals Synchronous Reactions */
+    .terminals-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      overflow: hidden;
+    }
+    .term-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      justify-content: space-between;
+      transition: border-color 0.2s;
+    }
+    .term-box.op { border-color: rgba(2, 132, 199, 0.45); }
+    .term-box.ent { border-color: rgba(244, 63, 94, 0.45); }
+    .term-box.courier { border-color: rgba(245, 158, 11, 0.45); }
+    .term-box.res { border-color: rgba(16, 185, 129, 0.45); }
+
+    .term-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .term-name { font-size: 13px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px; }
+    .term-badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    
+    .reaction-card {
+      background: rgba(15, 23, 42, 0.7);
+      border-radius: 6px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 11px;
+    }
+    .reaction-label { font-size: 10px; color: var(--text-muted); }
+    .reaction-val { font-size: 11px; font-weight: 600; color: #e2e8f0; line-height: 1.4; }
+    .reaction-diff {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #fecdd3;
+    }
+
+    .visual-widget {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <div class="logo-badge">
+        <svg class="od-icon od-icon-xl" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+      </div>
+      <div class="title-group">
+        <h1>跨主体异常协同与闭环反馈联动系统 (Chapter 7.3.5)</h1>
+        <p>Cross-Role Dynamic Exception Closed-Loop Coordination & Synchronous Feedback (Chapter 7.3.5)</p>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <span style="font-size:12px; color:var(--text-muted);">联动状态：<strong style="color:var(--emerald);">全链路事件总线就绪 (EventBus v3.1)</strong></span>
+      <div style="font-family:var(--od-font-mono, monospace); color:var(--blue); font-size:14px;">15:42:19</div>
+    </div>
+  </header>
+
+  <!-- Scenario Switcher -->
+  <div class="scenario-bar">
+    <div class="scenario-selector">
+      <span style="font-size:12px; color:var(--text-muted);">典型扰动情景演练：</span>
+      <button class="scenario-btn active">
+        <svg class="od-icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        情景1：社区道路临时施工阻断 (主路重路由)
+      </button>
+      <button class="scenario-btn">
+        <svg class="od-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+        情景2：智能快递柜高负荷满载 (四级分流)
+      </button>
+      <button class="scenario-btn">
+        <svg class="od-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        情景3：无人配送车低电量扰动 (快速换电)
+      </button>
+    </div>
+    <div style="font-size:12px; color:var(--cyan);">
+      触发模式：现场事件秒级下发 · 四端同步自适应更新
+    </div>
+  </div>
+
+  <div class="main-body">
+
+    <!-- Top: 7-Step Closed-Loop Sequence -->
+    <div class="flow-card">
+      <div class="flow-title">
+        <span>跨主体闭环反馈执行时序链 (7-Stage Closed-Loop Sequence)</span>
+        <span style="font-size:11px; color:var(--rose); font-weight:normal; display:inline-flex; align-items:center; gap:4px;">
+          <span class="pulse-dot" style="width:5px; height:5px; background:var(--rose);"></span>
+          闭环端到端处理耗时：1.42 秒 (0.38s 算法重算 + 1.04s 四端同步)
+        </span>
+      </div>
+
+      <div class="flow-steps">
+        <div class="flow-node">
+          <div class="flow-circle">1</div>
+          <div class="flow-node-title">异常发现</div>
+          <div class="flow-node-desc">配送员/传感器实时感知</div>
+        </div>
+
+        <div class="flow-node">
+          <div class="flow-circle c2">2</div>
+          <div class="flow-node-title">信息上传</div>
+          <div class="flow-node-desc">移动端一键回传总线</div>
+        </div>
+
+        <div class="flow-node">
+          <div class="flow-circle c3">3</div>
+          <div class="flow-node-title">状态更新</div>
+          <div class="flow-node-desc">拓扑路网置为不可通行</div>
+        </div>
+
+        <div class="flow-node">
+          <div class="flow-circle c4">4</div>
+          <div class="flow-node-title">方案重算</div>
+          <div class="flow-node-desc">M3协同调度引擎微调</div>
+        </div>
+
+        <div class="flow-node">
+          <div class="flow-circle c5">5</div>
+          <div class="flow-node-title">任务重配</div>
+          <div class="flow-node-desc">更新批次与人车交接点</div>
+        </div>
+
+        <div class="flow-node">
+          <div class="flow-circle c6">6</div>
+          <div class="flow-node-title">多端同步</div>
+          <div class="flow-node-desc">四角色终端数据秒级对齐</div>
+        </div>
+
+        <div class="flow-node">
+          <div class="flow-circle c7">7</div>
+          <div class="flow-node-title">继续执行</div>
+          <div class="flow-node-desc">无缝衔接完成履约闭环</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Middle: Digital Twin Map & Rerouting Comparison Sandbox -->
+    <div class="sandbox-card">
+      <div class="sandbox-map-wrapper">
+        <canvas id="rerouteCanvas" width="1480" height="280"></canvas>
+        <div style="position:absolute; top:10px; left:14px; display:flex; gap:8px; z-index:10;">
+          <span style="background:rgba(15,23,42,0.85); border:1px solid rgba(244,63,94,0.4); color:#fecdd3; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+            <svg class="od-icon od-icon-sm" style="color:var(--rose);" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            阻断点：D04-D06 干道施工 (原路线已切断)
+          </span>
+          <span style="background:rgba(15,23,42,0.85); border:1px solid rgba(16,185,129,0.4); color:#a7f3d0; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+            <svg class="od-icon od-icon-sm" style="color:var(--emerald);" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            动态重路由：经 D08 景观环道平滑绕行
+          </span>
+        </div>
+      </div>
+
+      <div class="sandbox-telemetry">
+        <div style="font-size:12px; font-weight:700; color:var(--cyan); display:flex; justify-content:space-between; align-items:center;">
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            <svg class="od-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            启发式算法重算工况
+          </span>
+          <span style="color:var(--emerald); font-family:var(--od-font-mono, monospace);">Dijkstra-A*</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:10px;">
+          <div style="background:rgba(30,41,59,0.6); padding:4px 6px; border-radius:4px;">
+            <span style="color:var(--text-muted);">算法求解耗时:</span><br><strong style="color:#fff;">0.38 秒</strong>
+          </div>
+          <div style="background:rgba(30,41,59,0.6); padding:4px 6px; border-radius:4px;">
+            <span style="color:var(--text-muted);">绕行增加里程:</span><br><strong style="color:var(--amber);">+ 240 米</strong>
+          </div>
+          <div style="background:rgba(30,41,59,0.6); padding:4px 6px; border-radius:4px;">
+            <span style="color:var(--text-muted);">时效平移量:</span><br><strong style="color:var(--blue);">+ 8 分钟</strong>
+          </div>
+          <div style="background:rgba(30,41,59,0.6); padding:4px 6px; border-radius:4px;">
+            <span style="color:var(--text-muted);">调换备用车:</span><br><strong style="color:var(--emerald);">否 (运力自适应)</strong>
+          </div>
+        </div>
+        <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:4px; padding:6px; font-size:10px; color:#a7f3d0; line-height:1.4;">
+          <strong>闭环评价：</strong> 新交接时间 16:10 仍在所有受影响订单的 17:00-19:00 预约窗前，客户客诉风险与违约金为 <strong>0</strong>。
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom: 4 Terminals Synchronous Reactions -->
+    <div class="terminals-grid">
+
+      <!-- 1. Operation Center -->
+      <div class="term-box op">
+        <div class="term-head">
+          <div class="term-name">
+            <svg class="od-icon" style="color:var(--blue);" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            运营管理端 (中枢)
+          </div>
+          <span class="term-badge" style="background:rgba(56,189,248,0.15); color:var(--blue);">路径重构</span>
+        </div>
+        <div class="reaction-card">
+          <div class="reaction-label">GIS 沙盘响应：</div>
+          <div class="reaction-val">D04至D06干道自动标红闪烁，系统在 0.38s 内调用混合算法，重构无人车 C04-V1 替代路线 (经 D08 环道)。</div>
+          <div class="reaction-diff">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--rose); vertical-align:-1px; margin-right:3px;"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            运行里程增加 240 米，耗时增加 8 分钟。
+          </div>
+          <div class="reaction-label">资源调度决策：</div>
+          <div class="reaction-val">自动平移交接时间至 16:10，运力成本无额外增加。</div>
+        </div>
+        <div class="visual-widget">
+          <div style="font-family:var(--od-font-mono, monospace); font-size:9px; color:#94a3b8; line-height:1.4;">
+            [15:42:01] ALERT: Road D04-D06 closed.<br>
+            [15:42:02] RE-ROUTE: C04-V1 via D08 (Cost +8m).<br>
+            [15:42:03] SYNC: Handoff D05 ETA shifted to 16:10.
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Logistics Enterprise Portal -->
+      <div class="term-box ent">
+        <div class="term-head">
+          <div class="term-name">
+            <svg class="od-icon" style="color:var(--rose);" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></svg>
+            物流企业协同端
+          </div>
+          <span class="term-badge" style="background:rgba(244,63,94,0.15); color:var(--rose);">SLA平移</span>
+        </div>
+        <div class="reaction-card">
+          <div class="reaction-label">企业看板实时响应：</div>
+          <div class="reaction-val">顺丰接入系统收到事件总线通知，批次 C04-R2 (含顺丰102件) 预计交接时间平移更新至 16:10。</div>
+          <div class="reaction-diff" style="background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.3); color:#a7f3d0; display:flex; align-items:center; gap:5px;">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            仍处于 17:00-19:00 用户预约窗内，超时赔付风险为 0。
+          </div>
+          <div class="reaction-label">数字存证记录：</div>
+          <div class="reaction-val">自动生成不可抗力施工扰动存证，免除企业派件考核扣分。</div>
+        </div>
+        <div class="visual-widget">
+          <div style="font-size:10px; color:#fda4af; font-weight:600;">企业ERP状态：</div>
+          <div style="font-size:10px; color:var(--emerald); font-family:var(--od-font-mono, monospace);">存证哈希: 0x8F92...B3C1 (区块链存证生效)</div>
+        </div>
+      </div>
+
+      <!-- 3. Courier Mobile App -->
+      <div class="term-box courier">
+        <div class="term-head">
+          <div class="term-name">
+            <svg class="od-icon" style="color:var(--amber);" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            配送执行移动端
+          </div>
+          <span class="term-badge" style="background:rgba(245,158,11,0.15); color:var(--amber);">现场响应</span>
+        </div>
+        <div class="reaction-card">
+          <div class="reaction-label">配送员界面提示：</div>
+          <div class="reaction-val">张伟手机发出震动：“您上报的施工阻断已生效。无人车已改行环道，最新预计到达 D05 泊位时间为 16:10。”</div>
+          <div class="reaction-diff" style="background:rgba(56,189,248,0.15); border-color:rgba(56,189,248,0.3); color:#bae6fd;">
+            避免现场人工盲目等待 8 分钟。
+          </div>
+          <div class="reaction-label">工单动态优化：</div>
+          <div class="reaction-val">系统智能建议张师傅利用空档优先完成 7号楼 1件急件交付。</div>
+        </div>
+        <div class="visual-widget" style="background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3);">
+          <div style="font-size:10px; color:#fed7aa; display:flex; align-items:center; gap:5px;">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            移动端已弹窗优化空档任务
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Resident Mini-Program -->
+      <div class="term-box res">
+        <div class="term-head">
+          <div class="term-name">
+            <svg class="od-icon" style="color:var(--emerald);" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            社区居民小程序
+          </div>
+          <span class="term-badge" style="background:rgba(16,185,129,0.15); color:var(--emerald);">柔性告知</span>
+        </div>
+        <div class="reaction-card">
+          <div class="reaction-label">微信服务通知推送：</div>
+          <div class="reaction-val">“尊敬的业主，小区主路临时施工，共配小车正在绕行，预计送达时间调整为 16:38，感谢您的理解！”</div>
+          <div class="reaction-diff" style="background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.3); color:#a7f3d0;">
+            居民满意度提升，避免无效催单客诉。
+          </div>
+          <div class="reaction-label">履约自主权保留：</div>
+          <div class="reaction-val">居民仍可一键调整为“暂存智能柜”或“延迟至明日派送”。</div>
+        </div>
+        <div class="visual-widget" style="background:rgba(16,185,129,0.1); border-color:rgba(16,185,129,0.3);">
+          <div style="font-size:10px; color:#a7f3d0; display:flex; align-items:center; gap:5px;">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            动态送达时间：16:38 (预约窗内)
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const canvas = document.getElementById('rerouteCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const nodes = {
+      hub: { x: 120, y: 140, name: '接驳中心 (Hub)' },
+      D01: { x: 280, y: 70, name: 'D01' },
+      D02: { x: 480, y: 60, name: 'D02' },
+      D03: { x: 700, y: 80, name: 'D03 (已卸120件)' },
+      D04: { x: 920, y: 110, name: 'D04 (已卸45件)' },
+      D06: { x: 920, y: 220, name: 'D06' },
+      D05: { x: 1220, y: 200, name: 'D05交接点 (85件)' },
+      D08: { x: 740, y: 180, name: 'D08 景观环道' },
+      D07: { x: 400, y: 220, name: 'D07' }
+    };
+
+    function drawReroute() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Normal roads
+      const roads = [
+        ['hub', 'D01'], ['D01', 'D02'], ['D02', 'D03'], ['D03', 'D04'],
+        ['D06', 'D05'], ['D05', 'D07'], ['D07', 'hub'],
+        ['D01', 'D08'], ['D02', 'D08'], ['D07', 'D08']
+      ];
+
+      roads.forEach(([fKey, tKey]) => {
+        const f = nodes[fKey];
+        const t = nodes[tKey];
+        ctx.beginPath();
+        ctx.moveTo(f.x, f.y);
+        ctx.lineTo(t.x, t.y);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      });
+
+      // 1. Blocked Road D04 -> D06 in dashed red
+      ctx.beginPath();
+      ctx.moveTo(nodes['D04'].x, nodes['D04'].y);
+      ctx.lineTo(nodes['D06'].x, nodes['D06'].y);
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 5;
+      ctx.setLineDash([8, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Hazard warning icon at midpoint of blocked road
+      const midX = (nodes['D04'].x + nodes['D06'].x) / 2;
+      const midY = (nodes['D04'].y + nodes['D06'].y) / 2;
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.9)';
+      ctx.beginPath();
+      ctx.arc(midX, midY, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Exclamation mark inside hazard badge
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(midX - 1.5, midY - 6, 3, 7);
+      ctx.beginPath();
+      ctx.arc(midX, midY + 4, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Text for blocked
+      ctx.fillStyle = '#fca5a5';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText('主干道突发施工受阻', midX + 65, midY);
+
+      // 2. Detour Path via D08 (D04 -> D08 -> D06 -> D05) in glowing cyan/green
+      ctx.beginPath();
+      ctx.moveTo(nodes['D04'].x, nodes['D04'].y);
+      ctx.lineTo(nodes['D08'].x, nodes['D08'].y);
+      ctx.lineTo(nodes['D06'].x, nodes['D06'].y);
+      ctx.lineTo(nodes['D05'].x, nodes['D05'].y);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 5;
+      ctx.stroke();
+
+      // Flow pulse dots on detour
+      ctx.beginPath();
+      ctx.arc(830, 145, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#34d399';
+      ctx.shadowColor = '#34d399';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // 3. Draw Nodes
+      Object.keys(nodes).forEach(key => {
+        const n = nodes[key];
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, key === 'D05' ? 12 : 8, 0, Math.PI * 2);
+        if (key === 'D05') {
+          ctx.fillStyle = '#f43f5e';
+          ctx.strokeStyle = '#fecdd3';
+          ctx.lineWidth = 3;
+        } else if (key === 'D08') {
+          ctx.fillStyle = '#10b981';
+          ctx.strokeStyle = '#a7f3d0';
+          ctx.lineWidth = 2;
+        } else {
+          ctx.fillStyle = '#0284c7';
+          ctx.strokeStyle = '#bae6fd';
+          ctx.lineWidth = 2;
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#f1f5f9';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(n.name, n.x, n.y - 12);
+      });
+
+      // 4. Vehicle C04-V1
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(nodes['D04'].x - 14, nodes['D04'].y + 10, 28, 16);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(nodes['D04'].x - 14, nodes['D04'].y + 10, 28, 16);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('C04-V1', nodes['D04'].x, nodes['D04'].y + 22);
+
+      // Courier at D05
+      ctx.beginPath();
+      ctx.arc(nodes['D05'].x + 20, nodes['D05'].y + 15, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#10b981';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+      ctx.fillStyle = '#a7f3d0';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillText('张伟 (16:10到位)', nodes['D05'].x + 55, nodes['D05'].y + 18);
+    }
+
+    drawReroute();
+  </script>
+</body>
+</html>

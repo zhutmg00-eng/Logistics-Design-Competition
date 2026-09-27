@@ -1,0 +1,150 @@
+/* ==========================================================================
+   OpenDesign Canonical Design System Tokens - Chapter 7 Logistics Platform
+   Adheres to open-design/craft: anti-ai-slop, typography, color rules
+   ========================================================================== */
+
+:root {
+  /* 1. Neutrals (70-90% of visual area) */
+  --od-bg-base: #070a12;
+  --od-bg-surface: #0f172a;
+  --od-bg-card: #151e30;
+  --od-bg-card-hover: #1b263b;
+  --od-bg-subtle: rgba(30, 41, 59, 0.6);
+  --od-bg-glass: rgba(15, 23, 42, 0.92);
+
+  /* Canonical aliases for existing pages */
+  --bg-dark: var(--od-bg-base);
+  --bg-main: var(--od-bg-base);
+  --bg-body: var(--od-bg-base);
+  --bg-panel: var(--od-bg-glass);
+  --bg-card: var(--od-bg-card);
+  --border-panel: var(--od-border-accent);
+  --border-subtle: var(--od-border-subtle);
+
+  /* 2. Text & Content Contrast */
+  --od-fg-primary: #f8fafc;
+  --od-fg-secondary: #cbd5e1;
+  --od-fg-muted: #94a3b8;
+  --od-fg-dim: #64748b;
+
+  --text-main: var(--od-fg-primary);
+  --text-secondary: var(--od-fg-secondary);
+  --text-muted: var(--od-fg-muted);
+
+  /* 3. Crisp 1px Borders (Avoid thick glowing strokes) */
+  --od-border-subtle: rgba(255, 255, 255, 0.08);
+  --od-border-medium: rgba(255, 255, 255, 0.14);
+  --od-border-accent: rgba(56, 189, 248, 0.28);
+
+  /* 4. Single Intentional Accent (5-10% share, strictly avoiding AI indigo #6366f1) */
+  --od-accent: #0284c7;
+  --od-accent-hover: #0369a1;
+  --od-accent-subtle: rgba(2, 132, 199, 0.15);
+  --od-accent-border: rgba(56, 189, 248, 0.4);
+
+  --blue: var(--od-accent);
+  --blue-light: #38bdf8;
+  --sky: var(--od-accent);
+  --sky-light: #38bdf8;
+
+  /* 5. Semantic Tokens (0-5% share) */
+  --od-success: #10b981;
+  --od-success-subtle: rgba(16, 185, 129, 0.12);
+  --od-warning: #f59e0b;
+  --od-warning-subtle: rgba(245, 158, 11, 0.12);
+  --od-danger: #f43f5e;
+  --od-danger-subtle: rgba(244, 63, 94, 0.12);
+  --od-info: #06b6d4;
+  --od-info-subtle: rgba(6, 182, 212, 0.12);
+  --od-sf-red: #dc2626;
+  --od-sf-red-subtle: rgba(220, 38, 38, 0.12);
+
+  --emerald: var(--od-success);
+  --emerald-light: #34d399;
+  --amber: var(--od-warning);
+  --amber-light: #fbbf24;
+  --rose: var(--od-danger);
+  --rose-light: #fb7185;
+  --cyan: var(--od-info);
+  --sf-red: var(--od-sf-red);
+
+  /* 6. Typography Scale (Multiplicative 1.25) */
+  --od-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --od-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  
+  --od-text-xs: 11px;
+  --od-text-sm: 12px;
+  --od-text-base: 13px;
+  --od-text-md: 14px;
+  --od-text-lg: 16px;
+  --od-text-xl: 18px;
+  --od-text-2xl: 22px;
+
+  /* CJK Overrides (OpenDesign Craft Rule: Line height floor 1.3-1.4 for headings, 1.6-1.7 for body) */
+  --od-leading-tight: 1.35;
+  --od-leading-normal: 1.6;
+  --od-tracking-cjk: 0;
+
+  /* 7. Radii & Shadows (Restrained, no AI-slop heavy blur) */
+  --od-radius-sm: 4px;
+  --od-radius-md: 6px;
+  --od-radius-lg: 8px;
+  --od-radius-xl: 12px;
+  --od-radius-pill: 9999px;
+
+  --od-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --od-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --od-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Universal Monoline SVG Icon Standard (OpenDesign Anti-AI-Slop Rule 3) */
+.od-icon {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: inline-block;
+  vertical-align: -2px;
+  flex-shrink: 0;
+}
+.od-icon-sm {
+  width: 12px;
+  height: 12px;
+  stroke-width: 1.8;
+}
+.od-icon-lg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.8;
+}
+.od-icon-xl {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+}
+
+/* Tabular Numbers */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Step Badge Helper */
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(2, 132, 199, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: var(--blue-light);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}

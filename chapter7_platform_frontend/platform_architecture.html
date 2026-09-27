@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多模型驱动的社区末端共同配送平台 · 总体架构与模型调用体系 (Chapter 7.1.3 & 7.2.1)</title>
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    :root {
+      --bg-main: #070a12;
+      --bg-panel: rgba(15, 23, 42, 0.92);
+      --bg-card: #151e30;
+      --border-panel: rgba(56, 189, 248, 0.22);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --cyan: #06b6d4;
+      --blue: #0284c7;
+      --blue-light: #38bdf8;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 20% 15%, rgba(2, 132, 199, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 85%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    /* Header */
+    header {
+      height: 68px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-panel);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      position: relative;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 10%;
+      width: 80%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blue-light), var(--cyan), transparent);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      background: rgba(2, 132, 199, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue-light);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .title-group h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+    .title-group p { 
+      font-size: 11px; 
+      color: var(--text-muted); 
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 12px;
+    }
+    .badge-pill {
+      background: rgba(2, 132, 199, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 5px 14px;
+      border-radius: 4px;
+      color: var(--blue-light);
+      font-weight: 600;
+    }
+
+    /* Main Container: 2-Column Split View */
+    .main-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+      padding: 16px 32px 20px 32px;
+      overflow: hidden;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 10px;
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .panel-header {
+      padding: 11px 18px;
+      background: rgba(30, 41, 59, 0.65);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.35;
+    }
+    .panel-body {
+      flex: 1;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    /* 5-Layer Stack on Left - Clean OpenDesign Card Structure */
+    .layer-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .layer-box:hover {
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .layer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .layer-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.35;
+    }
+    .layer-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .layer-items {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .layer-item {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      padding: 6px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .layer-item-title { 
+      font-size: 11px; 
+      font-weight: 600; 
+      color: #e2e8f0; 
+      display: flex; 
+      align-items: center; 
+      gap: 5px; 
+      line-height: 1.35;
+    }
+    .layer-item-sub { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+
+    /* Inter-layer Arrow Ribbon */
+    .layer-connector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--blue-light);
+      font-weight: 600;
+      padding: 1px 0;
+    }
+    .connector-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.25), transparent);
+    }
+
+    /* Right Panel: Model Invocation Pipeline */
+    .model-pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      justify-content: space-between;
+    }
+    .pipeline-node {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .node-icon-box {
+      width: 38px;
+      height: 38px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--od-font-mono);
+      flex-shrink: 0;
+    }
+    .node-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .node-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .node-title { font-size: 12px; font-weight: 700; color: #fff; line-height: 1.35; }
+    .node-badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+    .node-desc { font-size: 11px; color: var(--text-muted); line-height: 1.45; }
+    .node-output { font-size: 10px; color: var(--blue-light); margin-top: 1px; line-height: 1.4; }
+
+    .pipeline-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue-light);
+      font-size: 12px;
+      font-weight: bold;
+      gap: 8px;
+    }
+    .arrow-text { font-size: 10px; color: var(--text-muted); }
+
+    /* Dual Scale Box */
+    .dual-scale-box {
+      background: rgba(2, 132, 199, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <div class="logo-badge">
+        <svg class="od-icon od-icon-lg" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+      </div>
+      <div class="title-group">
+        <h1>多模型驱动的社区末端共同配送平台 · 总体架构与模型调用体系</h1>
+        <p>Overall Five-Layer Architecture & Multi-Model Sequential Invocation Cascade (Chapter 7.1.3 & 7.2.1)</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="badge-pill">核心理念：统一底座 · 多端协同 · 闭环反馈</span>
+      <div style="font-family:var(--od-font-mono); color:var(--blue-light); font-size:13px;" class="tnum">15:42:19</div>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+
+    <!-- Left: Five-Layer Architecture (图7-1) -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--cyan);"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          【图7-1】多模型驱动的社区末端共同配送平台总体架构 (自下而上五层底座)
+        </div>
+        <span style="font-size:11px; color:var(--emerald); font-weight:600;">层级解耦 · 数据打通 · 统一闭环</span>
+      </div>
+
+      <div class="panel-body">
+
+        <!-- Layer 5: 用户层 -->
+        <div class="layer-box" style="border-top: 2px solid var(--emerald);">
+          <div class="layer-header">
+            <div class="layer-name">
+              <span style="color:var(--emerald);">5. 用户层 (User Layer)</span>
+              <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">—— 多角色差异化入口，统一状态呈现</span>
+            </div>
+            <span class="layer-tag" style="background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.25); color:var(--emerald);">四端协同</span>
+          </div>
+          <div class="layer-items">
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--blue-light);"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                运营管理端
+              </div>
+              <div class="layer-item-sub">PC Web 驾驶舱 / 全局掌控 / 批次派发</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--rose);"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="18"></line><line x1="15" y1="22" x2="15" y2="18"></line></svg>
+                企业协同端
+              </div>
+              <div class="layer-item-sub">PC Web / 订单接入 / 全链路透明追踪</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--amber);"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                配送移动端
+              </div>
+              <div class="layer-item-sub">APP / 人车交接雷达 / 预约上门工单</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--emerald);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                居民小程序
+              </div>
+              <div class="layer-item-sub">微信小程序 / 方式自选 / 时间窗预约</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="layer-connector">
+          <div class="connector-line"></div>
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            业务指令下发 / 状态数据实时回传 (WebSocket / REST API)
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </span>
+          <div class="connector-line"></div>
+        </div>
+
+        <!-- Layer 4: 业务层 -->
+        <div class="layer-box" style="border-top: 2px solid var(--amber);">
+          <div class="layer-header">
+            <div class="layer-name">
+              <span style="color:var(--amber);">4. 业务层 (Business Logic Layer)</span>
+              <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">—— 将模型计算结果转化为可执行的业务指令与规则</span>
+            </div>
+            <span class="layer-tag" style="background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.25); color:var(--amber);">业务中台</span>
+          </div>
+          <div class="layer-items">
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--amber);"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                共同任务池
+              </div>
+              <div class="layer-item-sub">多企订单汇聚 / 空间邻近度 / 时序编排</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--amber);"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                滚动组批引擎
+              </div>
+              <div class="layer-item-sub">装载量与等待时长双阈值动态触发</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--amber);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                人车交接协同
+              </div>
+              <div class="layer-item-sub">泊位对齐 / 任务拆解 / 换乘无缝衔接</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--amber);"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+                四级分流与闭环
+              </div>
+              <div class="layer-item-sub">智能柜满载预警 / 临时施工动态重路由</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="layer-connector">
+          <div class="connector-line"></div>
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            模型求解方案输入 / 业务约束条件反馈
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </span>
+          <div class="connector-line"></div>
+        </div>
+
+        <!-- Layer 3: 模型层 -->
+        <div class="layer-box" style="border-top: 2px solid var(--blue-light);">
+          <div class="layer-header">
+            <div class="layer-name">
+              <span style="color:var(--blue-light);">3. 模型层 (Model & Algorithm Layer)</span>
+              <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">—— 核心算法库与多模型连续协同计算引擎</span>
+            </div>
+            <span class="layer-tag" style="background:rgba(2,132,199,0.15); border-color:rgba(56,189,248,0.3); color:var(--blue-light);">算法引擎</span>
+          </div>
+          <div class="layer-items" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="layer-item">
+              <div class="layer-item-title" style="color:var(--blue-light);">M1 需求估计</div>
+              <div class="layer-item-sub">时空多维负荷矩阵</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title" style="color:var(--blue-light);">M2 网络规划</div>
+              <div class="layer-item-sub">节点服务匹配拓扑</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title" style="color:var(--blue-light);">M3 人车调度</div>
+              <div class="layer-item-sub">路径规划与交接优化</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title" style="color:var(--blue-light);">M4 动态仿真</div>
+              <div class="layer-item-sub">微观扰动与排队时延</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title" style="color:var(--blue-light);">M5 综合评价</div>
+              <div class="layer-item-sub">碳排放/成本/SLA考核</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="layer-connector">
+          <div class="connector-line"></div>
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            标准化结构数据输入 / 模型参数动态标定
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </span>
+          <div class="connector-line"></div>
+        </div>
+
+        <!-- Layer 2: 数据层 -->
+        <div class="layer-box" style="border-top: 2px solid var(--cyan);">
+          <div class="layer-header">
+            <div class="layer-name">
+              <span style="color:var(--cyan);">2. 数据层 (Data & Storage Layer)</span>
+              <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">—— 统一数据模型、全域时空数据库与安全隔离保障</span>
+            </div>
+            <span class="layer-tag" style="background:rgba(6,182,212,0.12); border-color:rgba(6,182,212,0.25); color:var(--cyan);">数据底座</span>
+          </div>
+          <div class="layer-items">
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--cyan);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                统一订单数据库
+              </div>
+              <div class="layer-item-sub">SF/JD/ZTO多源解析 / 商流物理隔离</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--cyan);"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                GIS时空拓扑库
+              </div>
+              <div class="layer-item-sub">D01-D08住宅节点 / 路网阻抗 / 泊位点</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--cyan);"><rect x="1" y="6" width="18" height="12" rx="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line></svg>
+                运力资源状态库
+              </div>
+              <div class="layer-item-sub">UGV电量SOC / 柜机格口 / 配送员在岗</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--cyan);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                存证与运行日志
+              </div>
+              <div class="layer-item-sub">履约时间戳 / 扰动存证 / 审计日志</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="layer-connector">
+          <div class="connector-line"></div>
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            物联网感知采集 / 北斗高精定位 / 传感器上报
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </span>
+          <div class="connector-line"></div>
+        </div>
+
+        <!-- Layer 1: 现实运行层 -->
+        <div class="layer-box" style="border-top: 2px solid var(--blue);">
+          <div class="layer-header">
+            <div class="layer-name">
+              <span style="color:var(--blue-light);">1. 现实运行层 (Physical Operation Layer)</span>
+              <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">—— 实际存在的配送物理实体、作业人员与终端设施</span>
+            </div>
+            <span class="layer-tag" style="background:rgba(2,132,199,0.12); border-color:rgba(56,189,248,0.25); color:var(--blue-light);">物理实体</span>
+          </div>
+          <div class="layer-items" style="grid-template-columns: repeat(6, 1fr);">
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect></svg>
+                分拨中心
+              </div>
+              <div class="layer-item-sub">多企包裹集发</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                社区接驳站
+              </div>
+              <div class="layer-item-sub">集中拆包与装车</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon></svg>
+                无人配送车
+              </div>
+              <div class="layer-item-sub">C04-V1~V4 车队</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                智能快递柜
+              </div>
+              <div class="layer-item-sub">S01~S04 社区柜机</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                配送管家
+              </div>
+              <div class="layer-item-sub">现场人工入户履约</div>
+            </div>
+            <div class="layer-item">
+              <div class="layer-item-title">
+                <svg class="od-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                社区居民
+              </div>
+              <div class="layer-item-sub">亦城茗苑业主受众</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right: Multi-Model Calling Relationship (图7-2) -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--blue-light);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          【图7-2】多模型协同调用关系与闭环时序图 (7.2.1)
+        </div>
+        <span style="font-size:11px; color:var(--blue-light); font-weight:600;">长周期规划 vs. 分钟级滚动</span>
+      </div>
+
+      <div class="panel-body">
+        <div class="model-pipeline">
+
+          <!-- Node 1 -->
+          <div class="pipeline-node">
+            <div class="node-icon-box" style="background:rgba(2,132,199,0.15); border:1px solid var(--blue-light); color:var(--blue-light);">
+              M1
+            </div>
+            <div class="node-content">
+              <div class="node-title-row">
+                <span class="node-title" style="display:inline-flex; align-items:center;">社区基础数据与历史订单 <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="margin:0 4px;"><polyline points="9 18 15 12 9 6"></polyline></svg> 需求估计与情景模拟模型</span>
+                <span class="node-badge" style="background:rgba(2,132,199,0.12); color:var(--blue-light);">规划期 / 日前</span>
+              </div>
+              <div class="node-desc">识别社区、楼栋、时段与服务方式多维负荷矩阵，输出峰值预测与服务意愿分布。</div>
+              <div class="node-output">
+                <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <span>输出：社区-情景-楼栋-时段需求分布矩阵</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pipeline-arrow">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+            <span class="arrow-text">输入需求分布与候选网络节点</span>
+          </div>
+
+          <!-- Node 2 -->
+          <div class="pipeline-node">
+            <div class="node-icon-box" style="background:rgba(6,182,212,0.15); border:1px solid var(--cyan); color:var(--cyan);">
+              M2
+            </div>
+            <div class="node-content">
+              <div class="node-title-row">
+                <span class="node-title">末端配送网络规划模型</span>
+                <span class="node-badge" style="background:rgba(6,182,212,0.12); color:var(--cyan);">网络层拓扑</span>
+              </div>
+              <div class="node-desc">确定住宅需求节点 (D01-D08) 与末端设施 (S01-S04、接驳站) 的服务对应关系与拓扑连接。</div>
+              <div class="node-output">
+                <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <span>输出：相对稳定的社区节点拓扑与设施分配关系</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pipeline-arrow">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+            <span class="arrow-text">实际订单实时汇聚 + 调用已固化节点网络</span>
+          </div>
+
+          <!-- Node 3 -->
+          <div class="pipeline-node" style="border-color:rgba(245,158,11,0.4); background:rgba(30,41,59,0.85);">
+            <div class="node-icon-box" style="background:rgba(245,158,11,0.15); border:1px solid var(--amber); color:var(--amber);">
+              M3
+            </div>
+            <div class="node-content">
+              <div class="node-title-row">
+                <span class="node-title" style="display:inline-flex; align-items:center;">实际订单进入 <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="margin:0 4px;"><polyline points="9 18 15 12 9 6"></polyline></svg> 滚动组批与人车协同调度模型</span>
+                <span class="node-badge" style="background:rgba(245,158,11,0.15); color:var(--amber);">日常运行 / 分钟级</span>
+              </div>
+              <div class="node-desc">基于双触发机制形成配送批次 (C04-R2)，优化无人车路径、智能柜分流及人车交接时间窗。</div>
+              <div class="node-output" style="color:var(--amber);">
+                <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <span>输出：车辆路径、发车时刻表、人车交接任务单 (16:02 D05)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pipeline-arrow">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+            <span class="arrow-text">下发方案至物理现实层执行</span>
+          </div>
+
+          <!-- Node 4 -->
+          <div class="pipeline-node">
+            <div class="node-icon-box" style="background:rgba(2,132,199,0.15); border:1px solid var(--blue-light); color:var(--blue-light);">
+              M4
+            </div>
+            <div class="node-content">
+              <div class="node-title-row">
+                <span class="node-title">微观动态运行与数字孪生仿真引擎</span>
+                <span class="node-badge" style="background:rgba(2,132,199,0.12); color:var(--blue-light);">在线跟踪 / 扰动重算</span>
+              </div>
+              <div class="node-desc">实时跟踪分时到达、交接排队、临时道路阻断与柜机负荷，驱动局部重路由与SLA平移。</div>
+              <div class="node-output">
+                <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <span>输出：微观运行轨迹、动态ETA、扰动重路由方案</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pipeline-arrow">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+            <span class="arrow-text">统计实际运行工况与资源消耗</span>
+          </div>
+
+          <!-- Node 5 -->
+          <div class="pipeline-node">
+            <div class="node-icon-box" style="background:rgba(16,185,129,0.15); border:1px solid var(--emerald); color:var(--emerald);">
+              M5
+            </div>
+            <div class="node-content">
+              <div class="node-title-row">
+                <span class="node-title">碳排放、运行成本与服务水平综合评价</span>
+                <span class="node-badge" style="background:rgba(16,185,129,0.12); color:var(--emerald);">闭环评价看板</span>
+              </div>
+              <div class="node-desc">对比传统分散配送，核算减碳 -28.4%、降本 -21.6%、时延 -32.0%，为运营调整提供依据。</div>
+              <div class="node-output" style="color:var(--emerald);">
+                <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                <span>输出：综合效益指标集、多情景横向对标报告</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dual Scale Box -->
+          <div class="dual-scale-box">
+            <strong style="color:var(--blue-light);">时间尺度解耦与运行闭环机制：</strong><br>
+            日常运营并不需要每单重新计算全网规划。M1/M2 在规划期确定基础网络拓扑；日常运行阶段直接复用网络关系，由 M3 实施<strong>分钟级滚动调度</strong>，M4 实施<strong>秒级动态扰动微调</strong>，M5 持续反馈形成参数自适应优化闭环。
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

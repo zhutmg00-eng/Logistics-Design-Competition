@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>物流企业与分拨中心共同配送协同接入系统 (Chapter 7.3.2)</title>
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    :root {
+      --bg-main: #070a12;
+      --bg-panel: rgba(15, 23, 42, 0.92);
+      --bg-card: #151e30;
+      --border-panel: rgba(56, 189, 248, 0.22);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --cyan: #06b6d4;
+      --blue: #0284c7;
+      --blue-light: #38bdf8;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --sf-red: #dc2626;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(220, 38, 38, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(2, 132, 199, 0.08) 0%, transparent 40%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    /* Header */
+    header {
+      height: 68px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-panel);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: relative;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 15%;
+      width: 70%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--sf-red), var(--blue-light), transparent);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      background: var(--sf-red);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      font-weight: 900;
+      font-size: 16px;
+      color: #fff;
+    }
+    .title-group h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+    .title-group p { font-size: 11px; color: var(--text-muted); line-height: 1.35; margin-top: 2px; }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .tenant-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(220, 38, 38, 0.12);
+      border: 1px solid rgba(220, 38, 38, 0.35);
+      padding: 5px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #fca5a5;
+      font-weight: 600;
+    }
+    .security-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 5px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #34d399;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* KPI Row */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      padding: 10px 24px;
+    }
+    .kpi-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 0.2s ease;
+    }
+    .kpi-card:hover {
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .kpi-label { font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; }
+    .kpi-value { font-size: 22px; font-weight: 700; color: #fff; margin: 4px 0; }
+    .kpi-value span { font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 4px; }
+    .kpi-sub { font-size: 10px; color: var(--emerald); }
+
+    /* Main Container */
+    .main-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 880px 1fr;
+      gap: 16px;
+      padding: 0 24px 14px 24px;
+      overflow: hidden;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .panel-header {
+      padding: 10px 16px;
+      background: rgba(30, 41, 59, 0.6);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .title-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--sf-red);
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .panel-content {
+      padding: 12px 16px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    /* Order Table */
+    .search-bar {
+      display: flex;
+      gap: 8px;
+    }
+    .search-input {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: #fff;
+      font-size: 12px;
+    }
+    .btn-action {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border: none;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .order-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .order-table th {
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--text-muted);
+      text-align: left;
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-weight: 600;
+    }
+    .order-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+    }
+    .order-table tr:hover { background: rgba(56, 189, 248, 0.06); }
+    .order-table tr.selected {
+      background: rgba(220, 38, 38, 0.12);
+      outline: 1px solid rgba(220, 38, 38, 0.35);
+    }
+    .tag-status {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .status-transporting { background: rgba(56, 189, 248, 0.15); color: var(--blue); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .status-delivering { background: rgba(16, 185, 129, 0.15); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .status-pool { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    /* Visual Stepper / Chain Tracking */
+    .stepper-container {
+      background: var(--bg-card);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 14px;
+    }
+    .step-track {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      margin: 14px 6px 6px 6px;
+    }
+    .step-track::before {
+      content: '';
+      position: absolute;
+      top: 13px;
+      left: 25px;
+      right: 25px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 1;
+    }
+    .step-track-fill {
+      position: absolute;
+      top: 13px;
+      left: 25px;
+      width: 70%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--sf-red), var(--blue));
+      z-index: 2;
+    }
+    .step-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 3;
+      width: 85px;
+      text-align: center;
+    }
+    .step-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #0f172a;
+      border: 2px solid var(--text-muted);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .step-node.done .step-circle {
+      background: #e11d48;
+      border-color: #fecdd3;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .step-node.active .step-circle {
+      background: var(--blue);
+      border-color: #bae6fd;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .step-node-title { font-size: 10px; font-weight: 600; color: #fff; }
+    .step-node-time { font-size: 9px; color: var(--text-muted); }
+
+    /* Public Batch Card */
+    .public-batch-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 8px;
+      padding: 12px 14px;
+      position: relative;
+    }
+    .batch-badge {
+      background: rgba(14, 165, 233, 0.15);
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .batch-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .meta-box {
+      background: rgba(15, 23, 42, 0.6);
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .meta-label { font-size: 10px; color: var(--text-muted); }
+    .meta-val { font-size: 12px; font-weight: 600; color: #fff; margin-top: 2px; }
+
+    /* Privacy & SLA */
+    .privacy-notice {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      color: #a7f3d0;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="header-left">
+      <div class="logo-badge">SF</div>
+      <div class="title-group">
+        <h1>物流企业与分拨中心共同配送协同接入系统 · 全链路追踪中心</h1>
+        <p>Logistics Enterprise & Distribution Center Co-Delivery Integration Portal (Chapter 7.3.2)</p>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="tenant-badge">
+        <span>当前企业：顺丰速运 (华北区大兴分拨中心)</span>
+      </div>
+      <div class="security-badge">
+        <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <span>跨企业数据边界物理隔离 (AES-256已加固)</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span>协议：APIv4.2 双向流</span>
+      <span>同步时延：<strong style="color:var(--emerald);">8 ms</strong></span>
+      <div style="font-family:var(--od-font-mono); color:var(--blue-light); font-size:13px; font-weight:600;" class="tnum">15:42:19</div>
+    </div>
+  </header>
+
+  <!-- KPI Row -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">今日提交共配总单量 <span>Submitted</span></div>
+      <div class="kpi-value tnum">1,120 <span>件</span></div>
+      <div class="kpi-sub">占末端进区单量 100% 全量接入</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">待入池 / 滚动编组中 <span>Pending Batch</span></div>
+      <div class="kpi-value tnum" style="color:var(--amber);">145 <span>件</span></div>
+      <div class="kpi-sub">平均等待时长 11.4 min</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">无人干支线运输中 <span>UGV In-Transit</span></div>
+      <div class="kpi-value tnum" style="color:var(--blue-light);">420 <span>件</span></div>
+      <div class="kpi-sub">分布于 4 个公共配送批次</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">现场人工接力派送中 <span>Courier Doorstep</span></div>
+      <div class="kpi-value tnum" style="color:var(--cyan);">310 <span>件</span></div>
+      <div class="kpi-sub">居民预约时间窗准时率 99.4%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">今日已成功签收 <span>Delivered</span></div>
+      <div class="kpi-value tnum" style="color:var(--emerald);">245 <span>件</span></div>
+      <div class="kpi-sub">签收回执秒级回传 ERP</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">共配模式综合节约 <span>Cost & Carbon</span></div>
+      <div class="kpi-value tnum" style="color:var(--emerald);">148.5 <span>kg CO₂</span></div>
+      <div class="kpi-sub">单票末端成本节约 0.38 元</div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="main-body">
+
+    <!-- Left: Order Ingestion & Node Resolution Table -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="title-dot"></div>
+          企业订单流接入与末端需求节点自动映射
+        </div>
+        <div style="font-size:11px; color:var(--text-muted);">
+          展示顺丰自主包裹，严格脱敏其他同行商流
+        </div>
+      </div>
+      <div class="panel-content">
+        <!-- Search & Filter -->
+        <div class="search-bar">
+          <input type="text" class="search-input" placeholder="输入顺丰运单号 / 手机号 / 楼栋地址检索..." value="SF108392817">
+          <button class="btn-action">
+            <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            运单穿透追踪
+          </button>
+          <button class="btn-action" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);">批量同步任务</button>
+        </div>
+
+        <!-- Table (8 Rows to fill nicely) -->
+        <table class="order-table">
+          <thead>
+            <tr>
+              <th>顺丰运单号</th>
+              <th>目标社区与具体住址</th>
+              <th>映射服务节点</th>
+              <th>居民选定服务方式</th>
+              <th>所属公共批次</th>
+              <th>承运车辆</th>
+              <th>当前配送阶段</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="selected">
+              <td><strong>SF108392817</strong><br><span style="font-size:9px; color:var(--text-muted);">生鲜特快</span></td>
+              <td>亦城茗苑 5号楼2单元1402</td>
+              <td><span style="color:var(--rose); font-weight:700;">D05 (交接点)</span></td>
+              <td><span style="color:var(--emerald);">预约上门 (17:00-19:00)</span></td>
+              <td><strong style="color:var(--blue);">C04-R2</strong></td>
+              <td>C04-V1</td>
+              <td><span class="tag-status status-transporting">无人车在途 (即将交接)</span></td>
+            </tr>
+            <tr>
+              <td><strong>SF108392942</strong><br><span style="font-size:9px; color:var(--text-muted);">标快文件</span></td>
+              <td>亦城茗苑 3号楼1单元601</td>
+              <td>D02 (住宅节点)</td>
+              <td>智能柜自提 (S02柜)</td>
+              <td>C04-R1</td>
+              <td>C04-V2</td>
+              <td><span class="tag-status status-delivering">已投柜待取</span></td>
+            </tr>
+            <tr>
+              <td><strong>SF108393108</strong><br><span style="font-size:9px; color:var(--text-muted);">电商包裹</span></td>
+              <td>亦城茗苑 5号楼1单元801</td>
+              <td>D05 (交接点)</td>
+              <td><span style="color:var(--amber);">特殊服务 (大件搬运)</span></td>
+              <td><strong style="color:var(--blue);">C04-R2</strong></td>
+              <td>C04-V1</td>
+              <td><span class="tag-status status-transporting">无人车在途</span></td>
+            </tr>
+            <tr>
+              <td><strong>SF108393255</strong><br><span style="font-size:9px; color:var(--text-muted);">医药冷链</span></td>
+              <td>亦城茗苑 7号楼2单元303</td>
+              <td>D04 (住宅节点)</td>
+              <td>普通送货上门</td>
+              <td><strong style="color:var(--blue);">C04-R2</strong></td>
+              <td>C04-V1</td>
+              <td><span class="tag-status status-transporting">无人车在途</span></td>
+            </tr>
+            <tr>
+              <td><strong>SF108393891</strong><br><span style="font-size:9px; color:var(--text-muted);">日用品</span></td>
+              <td>亦城茗苑 1号楼3单元402</td>
+              <td>D01 (住宅节点)</td>
+              <td>智能柜自提 (S01柜)</td>
+              <td>C04-R3</td>
+              <td>C04-V3</td>
+              <td><span class="tag-status status-pool">任务池组批完成 (待发车)</span></td>
+            </tr>
+            <tr>
+              <td><strong>SF108394012</strong><br><span style="font-size:9px; color:var(--text-muted);">食品包裹</span></td>
+              <td>亦城茗苑 6号楼3单元202</td>
+              <td>D05 (交接点)</td>
+              <td>预约上门 (17:00-19:00)</td>
+              <td><strong style="color:var(--blue);">C04-R2</strong></td>
+              <td>C04-V1</td>
+              <td><span class="tag-status status-transporting">无人车在途</span></td>
+            </tr>
+            <tr>
+              <td><strong>SF108394155</strong><br><span style="font-size:9px; color:var(--text-muted);">数码配件</span></td>
+              <td>亦城茗苑 2号楼1单元502</td>
+              <td>D02 (住宅节点)</td>
+              <td>智能柜自提 (S02柜)</td>
+              <td>C04-R1</td>
+              <td>C04-V2</td>
+              <td><span class="tag-status status-delivering">已投柜待取</span></td>
+            </tr>
+            <tr>
+              <td><strong>SF108394330</strong><br><span style="font-size:9px; color:var(--text-muted);">服装鞋帽</span></td>
+              <td>亦城茗苑 4号楼2单元1101</td>
+              <td>D03 (住宅节点)</td>
+              <td>普通送货上门</td>
+              <td>C04-R2</td>
+              <td>C04-V1</td>
+              <td><span class="tag-status status-transporting">无人车在途</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Multi-Enterprise Co-Delivery Analytics Box -->
+        <div style="background:var(--bg-card); border-radius:8px; padding:10px; border:1px solid rgba(255,255,255,0.06);">
+          <div style="font-size:11px; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
+            <span>多主体协同单量与履约方式结构分析</span>
+            <span style="color:var(--cyan); font-size:10px;">顺丰市场占比 31.5%</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:10px; margin-top:6px; font-size:10px;">
+            <!-- Enterprise Share Bars -->
+            <div>
+              <div style="color:var(--text-muted); margin-bottom:4px;">各物流企业今日接入单量：</div>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                  <span>顺丰速运 (SF)</span><strong style="color:#fda4af;">1,120 件 (31.5%)</strong>
+                </div>
+                <div style="height:4px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden;">
+                  <div style="width:31.5%; height:100%; background:var(--sf-red);"></div>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                  <span>京东物流 (JD)</span><strong>890 件 (25.0%)</strong>
+                </div>
+                <div style="height:4px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden;">
+                  <div style="width:25%; height:100%; background:#ef4444;"></div>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                  <span>通达系 (ZTO/YTO/YD)</span><strong>1,550 件 (43.5%)</strong>
+                </div>
+                <div style="height:4px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden;">
+                  <div style="width:43.5%; height:100%; background:var(--blue);"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Delivery Mode Split -->
+            <div style="background:rgba(15,23,42,0.6); padding:6px 10px; border-radius:6px; display:flex; flex-direction:column; justify-content:center; gap:4px;">
+              <div style="color:var(--text-muted);">居民选定履约方式分布：</div>
+              <div style="display:flex; justify-content:space-between;"><span>智能快递柜自提:</span><strong style="color:var(--emerald);">45.2%</strong></div>
+              <div style="display:flex; justify-content:space-between;"><span>送货上门(预约):</span><strong style="color:var(--blue);">38.4%</strong></div>
+              <div style="display:flex; justify-content:space-between;"><span>特殊关爱服务:</span><strong style="color:var(--amber);">16.4%</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="privacy-notice">
+          <div style="display:flex; align-items:center; justify-content:center;">
+            <svg class="od-icon od-icon-lg" viewBox="0 0 24 24" style="color:var(--emerald);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          </div>
+          <div>
+            <strong>共同配送多主体数据隔离边界保证：</strong> 依据平台协议，顺丰可完整调阅本企业订单的交付人、车辆工况与人车交接时间。同行竞品包裹已自动脱敏，仅共享装载量与运力调度指标。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Co-Delivery Full-Chain Transparency Visualizer (7.3.2) -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="title-dot" style="background:var(--blue); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);"></div>
+          共同配送全业务链路透明化追踪 (运单: SF108392817)
+        </div>
+        <span style="font-size:11px; color:var(--emerald);">全程数字化穿透监控</span>
+      </div>
+      <div class="panel-content">
+
+        <!-- Visual Multi-Step Stepper -->
+        <div class="stepper-container">
+          <div style="font-size:12px; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
+            <span>全链路七阶协同作业推进图</span>
+            <span style="color:var(--cyan); font-size:11px;">当前阶段：第5阶 人车交接准备</span>
+          </div>
+
+          <div class="step-track">
+            <div class="step-track-fill"></div>
+
+            <div class="step-node done">
+              <div class="step-circle"><svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <div class="step-node-title">分拨中心出库</div>
+              <div class="step-node-time">14:10:00</div>
+            </div>
+
+            <div class="step-node done">
+              <div class="step-circle"><svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <div class="step-node-title">社区接驳点入池</div>
+              <div class="step-node-time">14:45:22</div>
+            </div>
+
+            <div class="step-node done">
+              <div class="step-circle"><svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <div class="step-node-title">纳入公共批次</div>
+              <div class="step-node-time">15:10:05 (C04-R2)</div>
+            </div>
+
+            <div class="step-node done">
+              <div class="step-circle"><svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              <div class="step-node-title">无人配送车承运</div>
+              <div class="step-node-time">15:35:00 (C04-V1)</div>
+            </div>
+
+            <div class="step-node active">
+              <div class="step-circle">5</div>
+              <div class="step-node-title" style="color:var(--blue);">人车交接点</div>
+              <div class="step-node-time" style="color:var(--blue);">16:02 (余3min)</div>
+            </div>
+
+            <div class="step-node">
+              <div class="step-circle">6</div>
+              <div class="step-node-title">配送员入户</div>
+              <div class="step-node-time">16:15 预约履约</div>
+            </div>
+
+            <div class="step-node">
+              <div class="step-circle">7</div>
+              <div class="step-node-title">居民签收回执</div>
+              <div class="step-node-time">预计 16:28</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Public Batch Aggregation Card -->
+        <div class="public-batch-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:13px; font-weight:700; color:#fff;">
+              所属公共配送批次：C04-R2 运行档案
+            </div>
+            <span class="batch-badge">装载率 94.2%</span>
+          </div>
+
+          <div class="batch-meta-grid">
+            <div class="meta-box">
+              <div class="meta-label">顺丰本企订单数</div>
+              <div class="meta-val" style="color:#fda4af;">102 件 <span style="font-size:9px; color:var(--text-muted);">(25.8%)</span></div>
+            </div>
+            <div class="meta-box">
+              <div class="meta-label">批次装载总量</div>
+              <div class="meta-val">396 件 (4家共配)</div>
+            </div>
+            <div class="meta-box">
+              <div class="meta-label">承运无人车</div>
+              <div class="meta-val" style="color:var(--cyan);">C04-V1 (SOC 78%)</div>
+            </div>
+            <div class="meta-box">
+              <div class="meta-label">下一目标节点</div>
+              <div class="meta-val" style="color:var(--rose);">D05 (交接泊位)</div>
+            </div>
+          </div>
+
+          <div style="margin-top:8px; background:rgba(15,23,42,0.6); padding:8px 10px; border-radius:4px; font-size:11px;">
+            <div style="display:flex; justify-content:space-between; color:#e2e8f0;">
+              <span>对接配送管家：<strong>张伟 (工号 C-0407)</strong></span>
+              <span>交接件数：<strong>85 件 (含顺丰24件)</strong></span>
+              <span>计划交接时间：<strong>16:02</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hourly Injection Curve SVG Chart -->
+        <div style="background:var(--bg-card); border-radius:8px; padding:10px 12px; border:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:4px;">
+          <div style="font-size:11px; font-weight:700; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+            <span>分时包裹注入与接驳到货波峰趋势 (08:00 - 18:00)</span>
+            <span style="color:var(--cyan); font-size:10px;">峰值时段: 14:00-16:00 (C04-R2触发期)</span>
+          </div>
+          <svg width="100%" height="52" viewBox="0 0 540 52" style="overflow:visible;">
+            <defs>
+              <linearGradient id="curveGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(56, 189, 248, 0.45)"/>
+                <stop offset="100%" stop-color="rgba(56, 189, 248, 0.0)"/>
+              </linearGradient>
+            </defs>
+            <line x1="30" y1="8" x2="520" y2="8" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3"/>
+            <line x1="30" y1="26" x2="520" y2="26" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3"/>
+            <line x1="30" y1="42" x2="520" y2="42" stroke="rgba(255,255,255,0.1)"/>
+            <path d="M 30 42 L 30 35 Q 80 32 130 28 T 230 20 T 310 10 T 390 18 T 460 28 T 520 36 L 520 42 Z" fill="url(#curveGrad)"/>
+            <path d="M 30 35 Q 80 32 130 28 T 230 20 T 310 10 T 390 18 T 460 28 T 520 36" fill="none" stroke="var(--blue)" stroke-width="2"/>
+            <path d="M 30 39 Q 80 37 130 35 T 230 30 T 310 24 T 390 29 T 460 35 T 520 39" fill="none" stroke="var(--sf-red)" stroke-width="1.8" stroke-dasharray="4,2"/>
+            <circle cx="310" cy="10" r="3.5" fill="var(--cyan)"/>
+            <text x="310" y="5" fill="var(--cyan)" font-size="8.5" text-anchor="middle" font-weight="bold">15:00 峰值 (412件/h)</text>
+            <text x="30" y="50" fill="#64748b" font-size="8" text-anchor="middle">08:00</text>
+            <text x="130" y="50" fill="#64748b" font-size="8" text-anchor="middle">10:00</text>
+            <text x="230" y="50" fill="#64748b" font-size="8" text-anchor="middle">12:00</text>
+            <text x="310" y="50" fill="#38bdf8" font-size="8" text-anchor="middle" font-weight="bold">14:00-16:00</text>
+            <text x="410" y="50" fill="#64748b" font-size="8" text-anchor="middle">16:30</text>
+            <text x="510" y="50" fill="#64748b" font-size="8" text-anchor="middle">18:00</text>
+          </svg>
+          <div style="display:flex; justify-content:space-between; font-size:9.5px; color:var(--text-muted);">
+            <div style="display:flex; gap:10px;">
+              <span><strong style="color:var(--blue);">—</strong> 全网包裹汇入总量</span>
+              <span><strong style="color:var(--sf-red);">- -</strong> 顺丰注入分量 (31.5%)</span>
+            </div>
+            <span style="color:var(--emerald);">双触发策略：满载率达到94.2% 即刻截单发运</span>
+          </div>
+        </div>
+
+        <!-- Dynamic SLA & Risk Card -->
+        <div style="background:var(--bg-card); border-radius:8px; padding:10px 12px; border:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:6px;">
+          <div style="font-size:12px; font-weight:700; color:#fff; display:flex; justify-content:space-between;">
+            <span>履约时效与动态闭环响应看板</span>
+            <span style="color:var(--emerald); font-size:10px;">时效保障率 99.8%</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px;">
+            <div style="background:rgba(15,23,42,0.6); padding:8px; border-radius:4px;">
+              <div style="color:var(--text-muted); font-size:10px;">路况微调协同：</div>
+              <div style="color:#e2e8f0; margin-top:2px;">
+                D04主干道临时抢修，无人车自动绕行环道，时效平移 +8 分钟，仍处于用户预约时间窗 (17:00-19:00) 范围内，无违约风险。
+              </div>
+            </div>
+            <div style="background:rgba(15,23,42,0.6); padding:8px; border-radius:4px;">
+              <div style="color:var(--text-muted); font-size:10px;">签收存证与逆向追溯：</div>
+              <div style="color:#e2e8f0; margin-top:2px;">
+                支持客户电子签收、柜机开箱视频存证及人工交付拍照秒级回传企业ERP，实现责任边界清晰判定。
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

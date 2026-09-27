@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社区居民共同配送服务小程序 (微信小程序 · 三屏协同展示) (Chapter 7.3.4)</title>
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    :root {
+      --bg-body: #070a12;
+      --app-bg: #f8fafc;
+      --card-bg: #ffffff;
+      --wechat-green: #07c160;
+      --brand-blue: #0284c7;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --emerald: #10b981;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: var(--bg-body);
+      color: #fff;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(7, 193, 96, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(2, 132, 199, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 85% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    /* Header */
+    header {
+      height: 68px;
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.22);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      position: relative;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 10%;
+      width: 80%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--wechat-green), var(--brand-blue), transparent);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      background: rgba(7, 193, 96, 0.15);
+      border: 1px solid rgba(7, 193, 96, 0.4);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--wechat-green);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .title-group h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+    .title-group p { font-size: 11px; color: #94a3b8; line-height: 1.35; margin-top: 2px; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 12px;
+    }
+    .resident-pill {
+      background: rgba(7, 193, 96, 0.12);
+      border: 1px solid rgba(7, 193, 96, 0.35);
+      padding: 5px 14px;
+      border-radius: 4px;
+      color: #a7f3d0;
+      font-weight: 600;
+    }
+
+    /* Showcase Main Body: 3 Phones Side by Side */
+    .showcase-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 50px;
+      padding: 16px 40px;
+      overflow: hidden;
+    }
+
+    .phone-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .phone-tag-badge {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 5px 16px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Smartphone Frame */
+    .phone-mockup {
+      width: 410px;
+      height: 840px;
+      background: var(--app-bg);
+      border: 6px solid #1e293b;
+      border-radius: 36px;
+      box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.9), 0 0 25px rgba(7, 193, 96, 0.18);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      color: var(--text-main);
+    }
+
+    /* WeChat Mini-Program Header / Top Bar */
+    .wechat-top-bar {
+      height: 68px;
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 10px 16px 8px 16px;
+      position: relative;
+    }
+    .status-time {
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .status-icons {
+      position: absolute;
+      top: 10px;
+      right: 16px;
+      font-size: 11px;
+      color: #0f172a;
+    }
+    .miniapp-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      text-align: center;
+      margin-top: 4px;
+    }
+    .wechat-capsule {
+      position: absolute;
+      bottom: 8px;
+      right: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 2px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: #0f172a;
+      background: #f8fafc;
+    }
+    .capsule-dot { font-weight: bold; }
+    .capsule-circle { width: 6px; height: 6px; border-radius: 50%; border: 1.5px solid #0f172a; }
+
+    /* App Scrollable Content */
+    .app-content {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      background: #f1f5f9;
+    }
+
+    .content-card {
+      background: var(--card-bg);
+      border-radius: 6px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .home-indicator {
+      width: 110px;
+      height: 4px;
+      background: #94a3b8;
+      border-radius: 2px;
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="header-left">
+      <div class="logo-badge">
+        <svg class="od-icon od-icon-lg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      </div>
+      <div class="title-group">
+        <h1>社区居民共同配送服务小程序 (微信小程序轻量端 · 居民端三屏全景)</h1>
+        <p>Resident WeChat Mini-Program Suite: Micro-Level Lifecycle Tracking, Delivery Mode Customization & Dynamic ETA (Chapter 7.3.4)</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="resident-pill">
+        <span>服务试点：亦城茗苑 5号楼2单元1402室 (业主端)</span>
+      </div>
+      <div style="font-family:var(--od-font-mono); color:var(--blue-light); font-size:13px;" class="tnum">15:42:19</div>
+    </div>
+  </header>
+
+  <!-- Main Showcase Grid (3 Phones Side by Side) -->
+  <div class="showcase-container">
+
+    <!-- Screen 1: 包裹全生命周期微观追踪 -->
+    <div class="phone-column">
+      <div class="phone-tag-badge">
+        <span class="step-badge" style="color:var(--wechat-green); border-color:rgba(7,193,96,0.4); background:rgba(7,193,96,0.15);">1</span> 包裹全生命周期微观追踪
+      </div>
+      <div class="phone-mockup">
+        <div class="wechat-top-bar">
+          <div class="status-time">15:42</div>
+          <div class="status-icons">5G · 98%</div>
+          <div class="miniapp-title">共配便民驿站 · 亦城茗苑</div>
+          <div class="wechat-capsule"><span class="capsule-dot">···</span><span class="capsule-circle"></span></div>
+        </div>
+
+        <div class="app-content">
+          <!-- Parcel Overview Card -->
+          <div class="content-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+              <div>
+                <div style="font-size:13px; font-weight:700; color:#0f172a;">顺丰生鲜件 · SF108392817</div>
+                <div style="font-size:11px; color:#64748b; margin-top:2px;">车厘子鲜果 (冷链保鲜箱)</div>
+              </div>
+              <span style="background:rgba(7,193,96,0.12); color:#059669; font-weight:700; font-size:10px; padding:3px 8px; border-radius:4px; border:1px solid rgba(7,193,96,0.3);">配送进行中</span>
+            </div>
+
+            <!-- Granular Timeline -->
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
+              <div style="display:flex; gap:10px; position:relative;">
+                <div style="width:20px; height:20px; border-radius:50%; background:#07c160; color:#fff; display:flex; align-items:center; justify-content:center;">
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div>
+                  <div style="font-size:11px; font-weight:700; color:#0f172a;">社区接驳中心入库并匹配</div>
+                  <div style="font-size:9px; color:#64748b;">14:45 已智能匹配至 亦城茗苑 5号楼 (D05住宅节点)</div>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:10px; position:relative;">
+                <div style="width:20px; height:20px; border-radius:50%; background:#07c160; color:#fff; display:flex; align-items:center; justify-content:center;">
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div>
+                  <div style="font-size:11px; font-weight:700; color:#0f172a;">纳入共同配送批次 C04-R2</div>
+                  <div style="font-size:9px; color:#64748b;">15:10 与京东、中通订单完成社区统一集包</div>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:10px; position:relative;">
+                <div style="width:20px; height:20px; border-radius:50%; background:#07c160; color:#fff; display:flex; align-items:center; justify-content:center;">
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div>
+                  <div style="font-size:11px; font-weight:700; color:#0f172a;">无人配送车 C04-V1 发车</div>
+                  <div style="font-size:9px; color:#64748b;">15:35 满载发车，正在沿社区低速道路驶向5号楼</div>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:10px; position:relative;">
+                <div style="width:20px; height:20px; border-radius:50%; background:#0284c7; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:bold; box-shadow:0 0 8px rgba(2,132,199,0.5);">4</div>
+                <div>
+                  <div style="font-size:11px; font-weight:700; color:#0284c7;">即将交接配送管家 (张师傅)</div>
+                  <div style="font-size:9px; color:#0369a1;">预计 16:02 在5号楼交接泊位完成人车换乘</div>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:10px; position:relative;">
+                <div style="width:20px; height:20px; border-radius:50%; background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:bold;">5</div>
+                <div>
+                  <div style="font-size:11px; font-weight:700; color:#64748b;">专人送货上门履约</div>
+                  <div style="font-size:9px; color:#94a3b8;">按您预约的 17:00-19:00 时间窗准时送达入户</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Courier Profile Card -->
+          <div class="content-card" style="background:#f0fdf4; border-color:#bbf7d0;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:32px; height:32px; border-radius:50%; background:#07c160; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:13px;">张</div>
+                <div>
+                  <div style="font-size:11px; font-weight:700; color:#14532d;">配送管家：张师傅 (C-0407)</div>
+                  <div style="font-size:9px; color:#166534;">本社区专属管家 · 准时率 99.4%</div>
+                </div>
+              </div>
+              <button style="background:#fff; border:1px solid #86efac; color:#15803d; font-size:9px; padding:4px 10px; border-radius:4px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                电话联系
+              </button>
+            </div>
+          </div>
+
+          <button style="width:100%; background:#07c160; color:#fff; border:none; padding:10px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(7,193,96,0.25);">
+            查看包裹全景与动态地图
+          </button>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+
+    <!-- Screen 2: 交付方式自主定制与时段预约 -->
+    <div class="phone-column">
+      <div class="phone-tag-badge">
+        <span class="step-badge" style="color:var(--brand-blue); border-color:rgba(2,132,199,0.4); background:rgba(2,132,199,0.15);">2</span> 交付方式自主选择与预约
+      </div>
+      <div class="phone-mockup">
+        <div class="wechat-top-bar">
+          <div class="status-time">15:42</div>
+          <div class="status-icons">5G · 98%</div>
+          <div class="miniapp-title">服务方式与时段定制</div>
+          <div class="wechat-capsule"><span class="capsule-dot">···</span><span class="capsule-circle"></span></div>
+        </div>
+
+        <div class="app-content">
+          <!-- Mode Selection Card -->
+          <div class="content-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#0f172a;">1. 自主选择交付方式</span>
+              <span style="font-size:9px; color:#07c160; font-weight:600;">实时驱动后台调度分流</span>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+              <!-- Doorstep Selected -->
+              <div style="border:1.5px solid #0284c7; background:rgba(2,132,199,0.06); border-radius:6px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <div style="width:28px; height:28px; background:#e0f2fe; border-radius:4px; display:flex; align-items:center; justify-content:center;">
+                    <svg class="od-icon od-icon-md" viewBox="0 0 24 24" style="color:var(--brand-blue);"><path d="M3 21h18M6 21V3h12v18M14 11v2"></path></svg>
+                  </div>
+                  <div>
+                    <div style="font-size:11px; font-weight:700; color:#0f172a;">送货上门 (当前选择)</div>
+                    <div style="font-size:9px; color:#64748b;">专人按预约时间送达家门口，支持轻敲免打扰</div>
+                  </div>
+                </div>
+                <div style="width:16px; height:16px; border-radius:50%; background:#0284c7; color:#fff; display:flex; align-items:center; justify-content:center;">
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+              </div>
+
+              <!-- Locker Option -->
+              <div style="border:1px solid #e2e8f0; background:#fafafa; border-radius:6px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <div style="width:28px; height:28px; background:#dcfce7; border-radius:4px; display:flex; align-items:center; justify-content:center;">
+                    <svg class="od-icon od-icon-md" viewBox="0 0 24 24" style="color:#059669;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                  </div>
+                  <div>
+                    <div style="font-size:11px; font-weight:700; color:#0f172a;">智能快递柜自提</div>
+                    <div style="font-size:9px; color:#64748b;">投递至5号楼S03智能柜，凭码24小时自取</div>
+                  </div>
+                </div>
+                <div style="width:16px; height:16px; border-radius:50%; border:1px solid #cbd5e1;"></div>
+              </div>
+
+              <!-- Care Option -->
+              <div style="border:1px solid #e2e8f0; background:#fafafa; border-radius:6px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <div style="width:28px; height:28px; background:#fef3c7; border-radius:4px; display:flex; align-items:center; justify-content:center;">
+                    <svg class="od-icon od-icon-md" viewBox="0 0 24 24" style="color:#d97706;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                  </div>
+                  <div>
+                    <div style="font-size:11px; font-weight:700; color:#0f172a;">特殊关爱服务</div>
+                    <div style="font-size:9px; color:#64748b;">助老/行动不便/大件重物，管家协助搬运进门</div>
+                  </div>
+                </div>
+                <div style="width:16px; height:16px; border-radius:50%; border:1px solid #cbd5e1;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time Window Card -->
+          <div class="content-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#0f172a;">2. 预约送达时间窗</span>
+              <span style="font-size:9px; color:#0284c7;">人车运力智能推荐</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:4px;">
+              <div style="border:1.5px solid #07c160; background:#ecfdf5; border-radius:6px; padding:8px; text-align:center; font-size:10px; font-weight:700; color:#065f46;">
+                今日 17:00 - 19:00<br>
+                <span style="font-size:8px; font-weight:normal; color:#047857;">(已预约 · 最优推荐)</span>
+              </div>
+              <div style="border:1px solid #e2e8f0; background:#f8fafc; border-radius:6px; padding:8px; text-align:center; font-size:10px; font-weight:600; color:#334155;">
+                今日 19:00 - 21:00<br>
+                <span style="font-size:8px; color:#64748b;">(运力充足)</span>
+              </div>
+              <div style="border:1px solid #e2e8f0; background:#f8fafc; border-radius:6px; padding:8px; text-align:center; font-size:10px; font-weight:600; color:#334155;">
+                明日 09:00 - 11:00<br>
+                <span style="font-size:8px; color:#64748b;">(可选时间段)</span>
+              </div>
+              <div style="border:1px solid #f1f5f9; background:#f1f5f9; border-radius:6px; padding:8px; text-align:center; font-size:10px; color:#94a3b8; opacity:0.6;">
+                今日 15:00 - 17:00<br>
+                <span style="font-size:8px;">(已截止)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Doorstep Setting Card -->
+          <div class="content-card" style="background:#f8fafc;">
+            <div style="font-size:11px; font-weight:700; color:#0f172a;">3. 个性化交付偏好：</div>
+            <div style="display:flex; gap:6px; margin-top:4px;">
+              <span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:9px; padding:3px 8px; border-radius:4px; font-weight:600;">轻敲房门</span>
+              <span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:9px; padding:3px 8px; border-radius:4px; font-weight:600;">放置门口地垫</span>
+              <span style="background:#fff; color:#64748b; border:1px solid #e2e8f0; font-size:9px; padding:3px 8px; border-radius:4px;">电联确认</span>
+            </div>
+          </div>
+
+          <button style="width:100%; background:#0284c7; color:#fff; border:none; padding:10px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(2,132,199,0.25);">
+            确认变更并同步调度系统
+          </button>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+
+    <!-- Screen 3: 动态ETA通知与取件/签收凭证 -->
+    <div class="phone-column">
+      <div class="phone-tag-badge">
+        <span class="step-badge" style="color:var(--rose); border-color:rgba(244,63,94,0.4); background:rgba(244,63,94,0.15);">3</span> 动态ETA通知与签收凭证
+      </div>
+      <div class="phone-mockup">
+        <div class="wechat-top-bar">
+          <div class="status-time">15:42</div>
+          <div class="status-icons">5G · 98%</div>
+          <div class="miniapp-title">服务通知与取件凭证</div>
+          <div class="wechat-capsule"><span class="capsule-dot">···</span><span class="capsule-circle"></span></div>
+        </div>
+
+        <div class="app-content">
+          <!-- Dynamic ETA Notice Card -->
+          <div class="content-card" style="background:#f0fdf4; border-color:#bbf7d0;">
+            <div style="display:flex; gap:8px;">
+              <div style="display:flex; align-items:center;">
+                <svg class="od-icon od-icon-md" viewBox="0 0 24 24" style="color:#0284c7;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              </div>
+              <div>
+                <div style="font-size:11px; font-weight:700; color:#14532d;">动态闭环通知：时效微调通知</div>
+                <div style="font-size:10px; color:#166534; line-height:1.45; margin-top:2px;">
+                  尊敬的业主：因小区主干道临时施工，无人车已自动切换至景观环道绕行。您的包裹预计送达时间微调至 <strong>16:38</strong>，仍在您预约的 17:00-19:00 时间窗前，请您放心！
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Digital Pick-up / Sign-off QR Card -->
+          <div class="content-card" style="align-items:center; text-align:center; padding:16px;">
+            <div style="font-size:13px; font-weight:700; color:#0f172a;">动态安全签收码</div>
+            <div style="font-size:10px; color:#64748b; margin-top:2px;">配送管家上门时请出示此码核销</div>
+
+            <!-- Simulated QR Code -->
+            <div style="width:140px; height:140px; background:#0f172a; border-radius:8px; margin:12px 0; padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.15);">
+              <div style="width:120px; height:120px; background:#fff; border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
+                <!-- QR Elements -->
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2">
+                  <rect x="3" y="3" width="6" height="6"></rect>
+                  <rect x="15" y="3" width="6" height="6"></rect>
+                  <rect x="3" y="15" width="6" height="6"></rect>
+                  <rect x="15" y="15" width="2" height="2"></rect>
+                  <rect x="19" y="15" width="2" height="2"></rect>
+                  <rect x="15" y="19" width="2" height="2"></rect>
+                  <rect x="19" y="19" width="2" height="2"></rect>
+                </svg>
+                <div style="font-family:var(--od-font-mono); font-weight:bold; font-size:11px; color:#0284c7; margin-top:4px;">SF-8392</div>
+              </div>
+            </div>
+
+            <div style="font-size:15px; font-weight:800; letter-spacing:2px; color:#0284c7; font-family:var(--od-font-mono);">
+              8 3 9 2 - 1 4 0 2
+            </div>
+            <div style="font-size:9px; color:#94a3b8; margin-top:4px;">有效期至今日 19:30 · 动态刷新</div>
+          </div>
+
+          <!-- Carbon & Evaluation Card -->
+          <div class="content-card" style="background:#ecfdf5; border-color:#a7f3d0;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-size:11px; font-weight:700; color:#065f46; display:flex; align-items:center; gap:4px;">
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:#059669;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  本次共配绿色碳减排贡献
+                </div>
+                <div style="font-size:9px; color:#047857; margin-top:2px;">共同配送 + 无人低碳运输：节约 <strong>182.4g CO₂</strong></div>
+              </div>
+              <span style="background:#10b981; color:#fff; font-size:9px; padding:3px 8px; border-radius:4px; font-weight:bold;">+18 绿色积分</span>
+            </div>
+          </div>
+
+          <button style="width:100%; background:#07c160; color:#fff; border:none; padding:10px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(7,193,96,0.25);">
+            确认收货并评价服务
+          </button>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

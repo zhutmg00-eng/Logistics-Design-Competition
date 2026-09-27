@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多模型驱动的社区末端共同配送协同决策与运行中枢</title>
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    :root {
+      --bg-dark: #070a12;
+      --bg-nav: rgba(15, 23, 42, 0.96);
+      --border-panel: rgba(56, 189, 248, 0.22);
+      --cyan: #06b6d4;
+      --blue: #0284c7;
+      --blue-light: #38bdf8;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Executive Navigation Bar */
+    .master-nav {
+      height: 56px;
+      background: var(--bg-nav);
+      border-bottom: 1px solid var(--border-panel);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 1000;
+      backdrop-filter: blur(12px);
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #0369a1, #0284c7);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .nav-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+    }
+    .nav-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-btn {
+      background: rgba(30, 41, 59, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .tab-btn:hover {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: #fff;
+    }
+    .tab-btn.active {
+      background: rgba(2, 132, 199, 0.25);
+      border-color: var(--blue-light);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .tab-btn .od-icon {
+      color: var(--blue-light);
+    }
+    .tab-btn.active .od-icon {
+      color: #fff;
+    }
+
+    /* Nav Actions - Real Production Controls */
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pilot-pill {
+      font-size: 11px;
+      color: #cbd5e1;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+    .clock-display {
+      font-family: var(--od-font-mono);
+      font-size: 12px;
+      color: var(--blue-light);
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .user-pill {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Content Area */
+    .content-frame-container {
+      flex: 1;
+      width: 100%;
+      height: calc(100% - 56px);
+      position: relative;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Executive Navigation Bar -->
+  <nav class="master-nav">
+    <div class="nav-brand">
+      <div class="nav-logo">
+        <svg class="od-icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+      </div>
+      <div>
+        <div class="nav-title">多模型驱动的社区末端共同配送协同决策与运行平台</div>
+        <div class="nav-sub">北京亦庄新城 · 智慧微循环示范工程综合调度中枢 (生产环境 v2.4.0)</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('platform_architecture.html', this)">
+        <svg class="od-icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+        总体架构与模型链
+      </button>
+      <button class="tab-btn" onclick="switchTab('overview_matrix.html', this)">
+        <svg class="od-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        四端协同全景矩阵
+      </button>
+      <button class="tab-btn" onclick="switchTab('terminal_operation.html', this)">
+        <svg class="od-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        运营管理端 (中枢)
+      </button>
+      <button class="tab-btn" onclick="switchTab('terminal_enterprise.html', this)">
+        <svg class="od-icon" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="18"></line><line x1="15" y1="22" x2="15" y2="18"></line><line x1="9" y1="6" x2="9.01" y2="6"></line><line x1="15" y1="6" x2="15.01" y2="6"></line><line x1="9" y1="10" x2="9.01" y2="10"></line><line x1="15" y1="10" x2="15.01" y2="10"></line><line x1="9" y1="14" x2="9.01" y2="14"></line><line x1="15" y1="14" x2="15.01" y2="14"></line></svg>
+        物流企业端 (顺丰)
+      </button>
+      <button class="tab-btn" onclick="switchTab('terminal_courier.html', this)">
+        <svg class="od-icon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+        配送移动端 (配送管家)
+      </button>
+      <button class="tab-btn" onclick="switchTab('terminal_resident.html', this)">
+        <svg class="od-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        居民小程序 (微信)
+      </button>
+      <button class="tab-btn" onclick="switchTab('terminal_closed_loop.html', this)">
+        <svg class="od-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        跨主体异常闭环
+      </button>
+      <a href="/" class="tab-btn" style="text-decoration: none; color: #38bdf8; border-color: rgba(56, 189, 248, 0.45); background: rgba(2, 132, 199, 0.18);" title="切换至运筹决策中枢与数字孪生底座">
+        <svg class="od-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+        运筹算法决策中枢
+      </a>
+    </div>
+
+    <!-- Right Actions - Authentic Enterprise Controls -->
+    <div class="nav-actions">
+      <div class="pilot-pill">
+        <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        示范区：亦城茗苑
+      </div>
+      <div class="status-badge">
+        <span class="pulse-dot"></span>
+        中枢服务在线
+      </div>
+      <div id="systemClock" class="clock-display tnum">15:42:19</div>
+      <div class="user-pill">
+        <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        调度员 DSP-092
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main View Frame -->
+  <div class="content-frame-container">
+    <iframe id="mainFrame" src="platform_architecture.html"></iframe>
+  </div>
+
+  <script>
+    function switchTab(url, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('mainFrame').src = url;
+    }
+
+    // Dynamic Live Clock
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      const clockEl = document.getElementById('systemClock');
+      if (clockEl) {
+        clockEl.textContent = `${h}:${m}:${s}`;
+      }
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>

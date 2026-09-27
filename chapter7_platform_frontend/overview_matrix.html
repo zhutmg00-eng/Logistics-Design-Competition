@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多模型驱动社区末端共同配送平台 · 四端协同全景总览 (Chapter 7.3)</title>
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    :root {
+      --bg-main: #070a12;
+      --bg-panel: rgba(15, 23, 42, 0.92);
+      --bg-card: #151e30;
+      --border-panel: rgba(56, 189, 248, 0.22);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --cyan: #06b6d4;
+      --blue: #0284c7;
+      --blue-light: #38bdf8;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --sf-red: #dc2626;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(2, 132, 199, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 10% 90%, rgba(15, 23, 42, 0.6) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    /* Header */
+    header {
+      height: 64px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-panel);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: relative;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 10%;
+      width: 80%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blue-light), var(--cyan), transparent);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      background: rgba(2, 132, 199, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue-light);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .title-group h1 {
+      font-size: 19px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+    .title-group p { 
+      font-size: 11px; 
+      color: var(--text-muted); 
+      line-height: 1.35; 
+      margin-top: 1px; 
+    }
+
+    /* 5-Layer Architecture Ribbon */
+    .arch-ribbon {
+      height: 40px;
+      background: rgba(15, 23, 42, 0.85);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      font-size: 11px;
+    }
+    .arch-chain {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .arch-pill {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid var(--border-subtle);
+      padding: 3px 9px;
+      border-radius: 4px;
+      color: #e2e8f0;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .arch-arrow { color: var(--blue-light); font-weight: bold; }
+
+    /* Main Content: 4 Columns Matrix */
+    .matrix-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.08fr 1.08fr 0.92fr 0.92fr;
+      gap: 16px;
+      padding: 12px 24px;
+      overflow: hidden;
+    }
+
+    .matrix-col {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .col-header {
+      padding: 10px 14px;
+      background: rgba(30, 41, 59, 0.65);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .col-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1.35;
+    }
+    .col-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+
+    .col-content {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      justify-content: flex-start;
+    }
+
+    .preview-card {
+      background: var(--bg-card);
+      border-radius: 6px;
+      padding: 9px 12px;
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: border-color 0.2s ease;
+    }
+    .preview-card:hover {
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+    .preview-title { 
+      font-size: 11px; 
+      font-weight: 700; 
+      color: #bae6fd; 
+      display: flex; 
+      justify-content: space-between; 
+      line-height: 1.35;
+    }
+    .preview-desc { font-size: 10px; color: var(--text-muted); line-height: 1.5; }
+
+    /* Phone Mockup in Column 3 & 4 (Full Height Filling) */
+    .mini-phone-full {
+      flex: 1;
+      background: #020617;
+      border: 5px solid #1e293b;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+    .mini-phone-status {
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 9px;
+      font-weight: 600;
+      color: #fff;
+      background: #0f172a;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .mini-phone-body {
+      flex: 1;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      overflow-y: auto;
+      justify-content: flex-start;
+    }
+
+    /* Bottom Unified Order Flow Banner */
+    .order-flow-footer {
+      height: 46px;
+      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid var(--border-panel);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      font-size: 11px;
+    }
+    .flow-tag {
+      background: rgba(2, 132, 199, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px 10px;
+      border-radius: 4px;
+      color: var(--blue-light);
+      font-weight: 700;
+    }
+    .flow-chain-text {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #e2e8f0;
+      font-size: 11px;
+    }
+    .flow-arrow { color: var(--blue-light); font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="header-left">
+      <div class="logo-badge">
+        <svg class="od-icon od-icon-lg" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      </div>
+      <div class="title-group">
+        <h1>多模型驱动的社区末端共同配送协同决策与运行平台 · 四端协同全景矩阵</h1>
+        <p>Unified Multi-Role Collaborative Decision & Operation Architecture (Chapter 7 Overview)</p>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:20px;">
+      <span style="font-size:12px; color:var(--text-muted);">核心机制：<strong style="color:var(--emerald);">统一底座 · 四端协同 · 闭环一致</strong></span>
+      <div style="font-family:var(--od-font-mono); color:var(--blue-light); font-size:13px;" class="tnum">15:42:19</div>
+    </div>
+  </header>
+
+  <!-- 5-Layer Architecture Ribbon -->
+  <div class="arch-ribbon">
+    <div class="arch-chain">
+      <span style="color:var(--text-muted); font-weight:600;">自下而上五层技术底座：</span>
+      <div class="arch-pill"><span style="color:var(--cyan);">1. 现实运行层</span> 分拨中心/接驳站/无人车/智能柜/配送员/居民</div>
+      <div class="arch-arrow"><svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></div>
+      <div class="arch-pill"><span style="color:var(--blue-light);">2. 数据层</span> 统一订单/时空路网/GIS住宅节点/资源健康库</div>
+      <div class="arch-arrow"><svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></div>
+      <div class="arch-pill"><span style="color:var(--cyan);">3. 模型层</span> M1需求估计/M2网络规划/M3调度/M4仿真/M5评价</div>
+      <div class="arch-arrow"><svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></div>
+      <div class="arch-pill"><span style="color:var(--amber);">4. 业务层</span> 任务池/滚动组批/人车协同交接/四级分流/异常闭环</div>
+      <div class="arch-arrow"><svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></div>
+      <div class="arch-pill"><span style="color:var(--emerald);">5. 用户层</span> 运营管理端/企业协同端/配送移动端/居民小程序</div>
+    </div>
+    <div style="color:var(--blue-light); font-weight:600; display:flex; align-items:center; gap:5px;">
+      <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--emerald);"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      全域订单状态毫秒级实时对齐 (EventBus v3.1)
+    </div>
+  </div>
+
+  <!-- Main Content: 4 Columns Matrix -->
+  <div class="matrix-body">
+
+    <!-- Col 1: 共同配送运营管理端 -->
+    <div class="matrix-col">
+      <div class="col-header">
+        <div class="col-title">
+          <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--blue-light);"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          运营管理端 (PC Web 驾驶舱)
+        </div>
+        <span class="col-tag" style="background:rgba(2,132,199,0.15); border-color:rgba(56,189,248,0.3); color:var(--blue-light);">全局组织与调度</span>
+      </div>
+      <div class="col-content">
+        <div class="preview-card">
+          <div class="preview-title">
+            <span>面向角色与核心使命</span>
+            <span style="color:var(--blue-light);">中枢决策</span>
+          </div>
+          <div class="preview-desc"><strong>共同配送运营方：</strong> 从全局角度掌握订单、车辆、人员、设施和道路状态，将前述多模型求解结果转化为实际运营方案。</div>
+        </div>
+
+        <div class="preview-card" style="background:rgba(15,23,42,0.85); border-color:rgba(56,189,248,0.25);">
+          <div class="preview-title" style="color:var(--cyan);">全局运行态势指标看板</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:10px; margin-top:2px;">
+            <div style="background:rgba(30,41,59,0.6); padding:5px 8px; border-radius:4px;">
+              <span style="color:var(--text-muted);">今日总单量:</span> <strong style="color:#fff;" class="tnum">2,840件</strong>
+            </div>
+            <div style="background:rgba(30,41,59,0.6); padding:5px 8px; border-radius:4px;">
+              <span style="color:var(--text-muted);">车队在勤率:</span> <strong style="color:var(--emerald);" class="tnum">12/15台 (78%)</strong>
+            </div>
+            <div style="background:rgba(30,41,59,0.6); padding:5px 8px; border-radius:4px;">
+              <span style="color:var(--text-muted);">人车交接准时:</span> <strong style="color:var(--blue-light);" class="tnum">98.2%</strong>
+            </div>
+            <div style="background:rgba(30,41,59,0.6); padding:5px 8px; border-radius:4px;">
+              <span style="color:var(--text-muted);">智能柜负荷:</span> <strong style="color:var(--amber);" class="tnum">76.5% (S03预警)</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-card">
+          <div class="preview-title">
+            <span>重点批次 C04-R2 与人车交接</span>
+            <span style="color:var(--emerald);">执行中</span>
+          </div>
+          <div class="preview-desc">
+            <div style="display:flex; align-items:flex-start; gap:6px; margin-bottom:3px;">
+              <span style="color:var(--blue-light); font-weight:bold;">·</span>
+              <span>承运车：<strong>C04-V1</strong> (载重800kg，装载396件，满载率94.2%)</span>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:6px; margin-bottom:3px;">
+              <span style="color:var(--blue-light); font-weight:bold;">·</span>
+              <span style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">访问节点：D03(120件) <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg> D04(45件) <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg> D06(146件) <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg> D05(85件)</span>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:6px;">
+              <span style="color:var(--blue-light); font-weight:bold;">·</span>
+              <span><strong>人车协同交接：</strong> 16:02 在 D05 专用泊位与配送员张伟交接85件入户预约包裹。</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-card" style="background:rgba(2,132,199,0.08); border-color:rgba(56,189,248,0.25);">
+          <div class="preview-title" style="color:var(--blue-light);">综合效益评价结果 (M5)</div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:#e2e8f0; margin-top:2px;">
+            <span>碳减排: <strong style="color:var(--emerald);">-28.4%</strong></span>
+            <span>成本节约: <strong style="color:var(--cyan);">-21.6%</strong></span>
+            <span>时延压缩: <strong style="color:var(--blue-light);">-32.0%</strong></span>
+          </div>
+        </div>
+
+        <div class="preview-card" style="border-color:rgba(56,189,248,0.3); background:rgba(15,23,42,0.9);">
+          <div style="font-size:10px; color:var(--cyan); font-weight:700; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">
+            <span>看状态</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>组任务</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>派车辆</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>配人员</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>管运行</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>做评价</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 2: 物流企业协同端 -->
+    <div class="matrix-col">
+      <div class="col-header">
+        <div class="col-title">
+          <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--sf-red);"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="18"></line><line x1="15" y1="22" x2="15" y2="18"></line></svg>
+          物流企业协同端 (PC Web 企业端)
+        </div>
+        <span class="col-tag" style="background:rgba(220,38,38,0.12); border-color:rgba(220,38,38,0.25); color:#fca5a5;">订单接入与透明履约</span>
+      </div>
+      <div class="col-content">
+        <div class="preview-card">
+          <div class="preview-title">
+            <span>面向角色与核心使命</span>
+            <span style="color:#fca5a5;">顺丰接入</span>
+          </div>
+          <div class="preview-desc"><strong>物流企业/分拨中心：</strong> 提交订单任务，掌握进入社区共配体系后的节点、车辆、交接人和履约进度，打破传统“末端黑盒”。</div>
+        </div>
+
+        <div class="preview-card" style="background:rgba(15,23,42,0.85); border-color:rgba(220,38,38,0.25);">
+          <div class="preview-title" style="color:#fca5a5;">企业级全链路七阶穿透追踪</div>
+          <div style="font-size:9px; color:#e2e8f0; line-height:1.45; margin-top:2px; display:flex; align-items:center; flex-wrap:wrap; gap:3px;">
+            <span>分拨出库(14:10)</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>接驳入池(14:45)</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>纳入批次C04-R2(15:10)</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>无人车承运(15:35)</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>D05人车交接(16:02)</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>配送员入户(16:15)</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>签收回执(16:28)</span>
+          </div>
+        </div>
+
+        <div class="preview-card">
+          <div class="preview-title">
+            <span>公共批次与物理数据隔离</span>
+            <span style="color:var(--blue-light);">AES-256</span>
+          </div>
+          <div class="preview-desc">
+            <div style="display:flex; align-items:flex-start; gap:6px; margin-bottom:3px;">
+              <span style="color:#fca5a5; font-weight:bold;">·</span>
+              <span><strong>公共批次档案：</strong> 掌握顺丰102件包裹在 C04-R2 (共396件) 中的承运工况与交接安排。</span>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:6px; margin-bottom:3px;">
+              <span style="color:#fca5a5; font-weight:bold;">·</span>
+              <span><strong>数据边界物理隔离：</strong> 严格脱敏同行客户姓名与订单隐私，兼顾协同与商业安全。</span>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:6px;">
+              <span style="color:#fca5a5; font-weight:bold;">·</span>
+              <span><strong>SLA 免考核存证：</strong> 遇施工自动生成不可抗力存证，免除派件考核扣分。</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-card" style="background:rgba(220,38,38,0.08); border-color:rgba(220,38,38,0.25);">
+          <div class="preview-title" style="color:#fca5a5;">顺丰今日共配快照</div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:#e2e8f0; margin-top:2px;" class="tnum">
+            <span>接入: <strong>1,120件</strong></span>
+            <span>无人干支: <strong>420件</strong></span>
+            <span>人工接力: <strong>310件</strong></span>
+            <span>已签收: <strong>245件</strong></span>
+          </div>
+        </div>
+
+        <div class="preview-card" style="border-color:rgba(220,38,38,0.3); background:rgba(15,23,42,0.9);">
+          <div style="font-size:10px; color:#fca5a5; font-weight:700; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">
+            <span>提交订单</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>查看配送安排</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>跟踪运输状态</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span>获取履约结果</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 3: 配送执行移动端 -->
+    <div class="matrix-col">
+      <div class="col-header">
+        <div class="col-title">
+          <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--amber);"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+          配送移动端 (App 手机端)
+        </div>
+        <span class="col-tag" style="background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.25); color:var(--amber);">现场执行与反馈</span>
+      </div>
+      <div class="col-content">
+        <div class="mini-phone-full">
+          <div class="mini-phone-status">
+            <span>15:42</span>
+            <span style="color:var(--blue-light); display:inline-flex; align-items:center; gap:3px;"><span class="pulse-dot" style="width:4px; height:4px; background:var(--blue-light);"></span>UGV: 3min</span>
+            <span>5G · 98%</span>
+          </div>
+
+          <div class="mini-phone-body">
+            <!-- Courier Header -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(30,41,59,0.7); padding:6px 8px; border-radius:4px;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <div style="width:24px; height:24px; border-radius:50%; background:rgba(2,132,199,0.3); border:1px solid var(--blue-light); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; color:#fff;">张</div>
+                <div>
+                  <div style="font-size:11px; font-weight:700; color:#fff;">张伟 · 配送管家</div>
+                  <div style="font-size:8px; color:var(--text-muted);">负责: D04-D06楼栋</div>
+                </div>
+              </div>
+              <span style="background:rgba(16,185,129,0.15); color:#34d399; font-size:8px; padding:2px 6px; border-radius:4px; font-weight:600; display:inline-flex; align-items:center; gap:3px;"><span class="pulse-dot" style="width:4px; height:4px; background:#10b981;"></span>在岗作业中</span>
+            </div>
+
+            <!-- Summary KPI -->
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:4px; text-align:center; background:rgba(15,23,42,0.6); padding:4px; border-radius:4px; font-size:9px;">
+              <div><strong style="color:var(--cyan); font-size:12px;" class="tnum">1次</strong><br><span style="color:var(--text-muted); font-size:8px;">待交接(85件)</span></div>
+              <div><strong style="color:var(--amber); font-size:12px;" class="tnum">24件</strong><br><span style="color:var(--text-muted); font-size:8px;">待入户(预约)</span></div>
+              <div><strong style="color:var(--emerald); font-size:12px;" class="tnum">42件</strong><br><span style="color:var(--text-muted); font-size:8px;">今日已完成</span></div>
+            </div>
+
+            <!-- Radar Handoff Alert -->
+            <div style="background:rgba(2,132,199,0.15); border:1px solid rgba(56,189,248,0.35); border-radius:6px; padding:7px 9px;">
+              <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:#fff;">
+                <span style="display:flex; align-items:center; gap:4px;">
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon></svg>
+                  人车交接雷达 (即将到达)
+                </span>
+                <span style="color:var(--amber);">余3分钟</span>
+              </div>
+              <div style="font-size:9px; color:#e2e8f0; margin-top:3px; line-height:1.35;">
+                车辆: <strong style="color:var(--cyan);">C04-V1 (C04-R2)</strong> | 泊位: <strong>D05</strong><br>
+                预计到达: <strong>16:02</strong> | 接收包裹: <strong style="color:var(--emerald);">85件</strong>
+              </div>
+              <div style="margin-top:5px; background:var(--blue); color:#fff; text-align:center; padding:4px; border-radius:4px; font-size:9px; font-weight:700;">
+                一键扫码核验交接 (85件)
+              </div>
+            </div>
+
+            <!-- Doorstep Task Queue -->
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="font-size:10px; font-weight:700; color:#cbd5e1; display:flex; justify-content:space-between;">
+                <span>待入户工单 (预约优先)</span>
+                <span style="font-size:8px; color:var(--text-muted);">动线优化</span>
+              </div>
+              <div style="background:rgba(30,41,59,0.8); border:1px solid rgba(245,158,11,0.3); border-radius:4px; padding:5px 7px; font-size:9px;">
+                <div style="display:flex; justify-content:space-between; font-weight:600;">
+                  <span style="color:#fff;">5号楼2单元1402</span>
+                  <span style="color:var(--emerald); background:rgba(16,185,129,0.15); padding:1px 4px; border-radius:2px;">顺丰 / 17-19点</span>
+                </div>
+                <div style="color:var(--text-muted); font-size:8px; margin-top:2px;">SF108392817 · 车厘子冷链 · 待人车交接后派送</div>
+              </div>
+              <div style="background:rgba(30,41,59,0.8); border:1px solid var(--border-subtle); border-radius:4px; padding:5px 7px; font-size:9px;">
+                <div style="display:flex; justify-content:space-between; font-weight:600;">
+                  <span style="color:#fff;">5号楼1单元801 (独居老人)</span>
+                  <span style="color:var(--amber); background:rgba(245,158,11,0.15); padding:1px 4px; border-radius:2px;">特殊关爱</span>
+                </div>
+                <div style="color:var(--text-muted); font-size:8px; margin-top:2px;">JD891230194 · 大件重物协助搬运入户</div>
+              </div>
+            </div>
+
+            <!-- Exception Trigger -->
+            <div style="background:rgba(244,63,94,0.12); border:1px dashed rgba(244,63,94,0.35); border-radius:4px; padding:4px; text-align:center; color:#fecdd3; font-size:9px; font-weight:700;">
+              现场异常一键上报 (施工/门禁/满载)
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:10px; color:var(--amber); font-weight:700; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">
+          <span>看任务</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span>找车辆</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span>完成交接</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span>上门配送</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span>反馈现场</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 4: 社区居民小程序 -->
+    <div class="matrix-col">
+      <div class="col-header">
+        <div class="col-title">
+          <svg class="od-icon" viewBox="0 0 24 24" style="color:var(--emerald);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          居民小程序 (微信轻量端)
+        </div>
+        <span class="col-tag" style="background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.25); color:var(--emerald);">需求表达与时间窗</span>
+      </div>
+      <div class="col-content">
+        <div class="mini-phone-full" style="background:#f8fafc; border-color:#334155;">
+          <div class="mini-phone-status" style="background:#fff; color:#0f172a; border-bottom:1px solid #e2e8f0;">
+            <span style="font-weight:700;">共配便民驿站</span>
+            <span style="color:#64748b; font-size:11px; display:flex; align-items:center; gap:4px;">
+              <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:10px; height:10px;"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+              <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:10px; height:10px;"><circle cx="12" cy="12" r="8"></circle></svg>
+            </span>
+          </div>
+
+          <div class="mini-phone-body">
+            <!-- Active Parcel Card -->
+            <div style="background:#fff; border-radius:6px; padding:7px 9px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #e2e8f0;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="font-size:11px; color:#0f172a;">顺丰生鲜 · SF108392817</strong>
+                <span style="background:rgba(7,193,96,0.12); color:#059669; font-size:8px; padding:2px 6px; border-radius:3px; font-weight:700;">配送中</span>
+              </div>
+              <div style="font-size:9px; color:#64748b; margin-top:2px;">车厘子鲜果 (冷链保鲜箱) · 亦城茗苑5号楼</div>
+
+              <!-- Mini Stepper -->
+              <div style="margin-top:6px; display:flex; flex-direction:column; gap:4px; font-size:8px; color:#334155;">
+                <div style="display:flex; align-items:center; gap:4px; color:#059669; font-weight:600;">
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:#059669; width:10px; height:10px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span class="tnum">15:35</span><span>无人车 C04-V1 满载发车</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:4px; color:#0284c7; font-weight:700;">
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:#0284c7; width:8px; height:8px;"><circle cx="12" cy="12" r="6" fill="#0284c7"></circle></svg>
+                  <span class="tnum">16:02</span><span>即将交接配送管家张师傅 (5号楼)</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:4px; color:#64748b;">
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:#94a3b8; width:8px; height:8px;"><circle cx="12" cy="12" r="6"></circle></svg>
+                  <span>17-19点</span><span>专人按预约时间窗送达入户</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Service Mode Selection -->
+            <div style="background:#fff; border-radius:6px; padding:7px 9px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #e2e8f0;">
+              <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:#0f172a;">
+                <span>自主选择交付方式</span>
+                <span style="color:#059669; font-size:8px;">实时驱动后台调度</span>
+              </div>
+              <div style="margin-top:4px; display:flex; flex-direction:column; gap:3px; font-size:9px;">
+                <div style="background:#e0f2fe; border:1px solid #38bdf8; border-radius:4px; padding:4px 6px; display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-weight:700; color:#0369a1;">送货上门 (当前选择)</span>
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:#0284c7; width:10px; height:10px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px; padding:4px 6px; display:flex; justify-content:space-between; align-items:center; color:#64748b;">
+                  <span>智能快递柜自提</span>
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:#cbd5e1; width:10px; height:10px;"><circle cx="12" cy="12" r="8"></circle></svg>
+                </div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px; padding:4px 6px; display:flex; justify-content:space-between; align-items:center; color:#64748b;">
+                  <span>特殊关爱服务 (助老/大件)</span>
+                  <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:#cbd5e1; width:10px; height:10px;"><circle cx="12" cy="12" r="8"></circle></svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Time Window Booking -->
+            <div style="background:#fff; border-radius:6px; padding:7px 9px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #e2e8f0;">
+              <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:#0f172a;">
+                <span>预约送达时间窗</span>
+                <span style="color:#0284c7; font-size:8px;">人车运力推荐</span>
+              </div>
+              <div style="margin-top:4px; display:grid; grid-template-columns:1fr 1fr; gap:4px; font-size:8px; text-align:center;">
+                <div style="background:#ecfdf5; border:1px solid #059669; border-radius:4px; padding:4px; color:#065f46; font-weight:700;">
+                  今日 17:00-19:00<br><span style="font-size:7px; font-weight:normal;">(已预约 · 推荐)</span>
+                </div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px; padding:4px; color:#334155;">
+                  今日 19:00-21:00<br><span style="font-size:7px; color:#64748b;">(运力充足)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ETA Notice & Action -->
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:4px; padding:5px 7px; font-size:8px; color:#166534; line-height:1.4;">
+              <strong>动态闭环：</strong> 主路遇施工微调，系统调配配送员绕行，送达时间稳定在预约窗内。
+            </div>
+
+            <div style="background:#07c160; color:#fff; text-align:center; padding:5px; border-radius:4px; font-size:10px; font-weight:700;">
+              查看取件 / 动态签收码
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:10px; color:var(--emerald); font-weight:700; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">
+          <span>查看包裹</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span>选择方式</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span>预约时间</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span>查看进度</span><svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="width:8px; height:8px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span>动态调整</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Unified Order Flow Banner -->
+  <div class="order-flow-footer">
+    <div class="flow-tag">标准包裹全生命周期协同业务流 (Chapter 7.2.2)</div>
+    <div class="flow-chain-text" style="display:flex; align-items:center; gap:4px;">
+      <span>1. 订单进入</span>
+      <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <span>2. 需求确认 (居民端)</span>
+      <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <span>3. 节点匹配 (D01-D08)</span>
+      <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <span>4. 进入任务池</span>
+      <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <span>5. 共同组批 (C04-R2)</span>
+      <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <span>6. 分配无人车 (C04-V1)</span>
+      <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <span>7. 干支运输</span>
+      <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <span>8. 人车交接 (D05)</span>
+      <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <span>9. 专人入户/投柜</span>
+      <svg class="od-icon od-icon-sm" viewBox="0 0 24 24" style="color:var(--text-muted); width:9px; height:9px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <span>10. 闭环完成</span>
+    </div>
+    <div style="font-size:11px; color:var(--text-muted);">
+      试点社区：亦城茗苑示范区
+    </div>
+  </div>
+
+</body>
+</html>

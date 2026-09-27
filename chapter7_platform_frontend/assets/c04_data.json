@@ -1,0 +1,706 @@
+{
+  "info": {
+    "id": "C04",
+    "name": "亦城茗苑",
+    "street": "大兴区博兴街道 亦城茗苑社区",
+    "address": "北京经济技术开发区博兴六路泰河园五里",
+    "area_sqm": 79300.0,
+    "build_area_sqm": 325500.0,
+    "plot_ratio": 4.1,
+    "building_count": 19,
+    "households": 2353,
+    "polygon": [
+      [
+        39.7610907,
+        116.5021752
+      ],
+      [
+        39.7632438,
+        116.5030971
+      ],
+      [
+        39.7634032,
+        116.5036026
+      ],
+      [
+        39.7626874,
+        116.5063436
+      ],
+      [
+        39.760295,
+        116.5052917
+      ],
+      [
+        39.7609426,
+        116.5026654
+      ],
+      [
+        39.760985,
+        116.5026433
+      ],
+      [
+        39.7610907,
+        116.5021752
+      ]
+    ],
+    "center": [
+      39.761717299999994,
+      116.5034992625
+    ]
+  },
+  "demand_nodes": [
+    {
+      "id": "C04-D01",
+      "community_id": "C04",
+      "name": "住宅建筑簇01（OSM 252848272）",
+      "lng": 116.5035636,
+      "lat": 39.7629409,
+      "building_type": "高层住宅（OSM层数25）",
+      "households": 317,
+      "daily_pkgs": 190.2,
+      "peak_pkgs": 380.4,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D02",
+      "community_id": "C04",
+      "name": "住宅建筑簇02（OSM 475482758）",
+      "lng": 116.5045614,
+      "lat": 39.7626409,
+      "building_type": "高层住宅（OSM层数未标注）",
+      "households": 327,
+      "daily_pkgs": 196.2,
+      "peak_pkgs": 392.4,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D03",
+      "community_id": "C04",
+      "name": "住宅建筑簇03（OSM 359008003）",
+      "lng": 116.5058885,
+      "lat": 39.762507,
+      "building_type": "高层住宅（OSM层数未标注）",
+      "households": 117,
+      "daily_pkgs": 70.2,
+      "peak_pkgs": 140.4,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D04",
+      "community_id": "C04",
+      "name": "住宅建筑簇04（OSM 359008000）",
+      "lng": 116.5052605,
+      "lat": 39.7624745,
+      "building_type": "高层住宅（OSM层数未标注）",
+      "households": 117,
+      "daily_pkgs": 70.2,
+      "peak_pkgs": 140.4,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D05",
+      "community_id": "C04",
+      "name": "住宅建筑簇05（OSM 267655859）",
+      "lng": 116.5030145,
+      "lat": 39.7623759,
+      "building_type": "高层住宅（OSM层数25）",
+      "households": 137,
+      "daily_pkgs": 82.2,
+      "peak_pkgs": 164.4,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D06",
+      "community_id": "C04",
+      "name": "住宅建筑簇06（OSM 359008004）",
+      "lng": 116.5056648,
+      "lat": 39.7620254,
+      "building_type": "高层住宅（OSM层数未标注）",
+      "households": 117,
+      "daily_pkgs": 70.2,
+      "peak_pkgs": 140.4,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D07",
+      "community_id": "C04",
+      "name": "住宅建筑簇07（OSM 475482757）",
+      "lng": 116.5035326,
+      "lat": 39.7619434,
+      "building_type": "高层住宅（OSM层数未标注）",
+      "households": 269,
+      "daily_pkgs": 161.4,
+      "peak_pkgs": 322.8,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D08",
+      "community_id": "C04",
+      "name": "住宅建筑簇08（OSM 475482756）",
+      "lng": 116.5045629,
+      "lat": 39.7618585,
+      "building_type": "高层住宅（OSM层数未标注）",
+      "households": 273,
+      "daily_pkgs": 163.79999999999998,
+      "peak_pkgs": 327.59999999999997,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D09",
+      "community_id": "C04",
+      "name": "住宅建筑簇09（OSM 359007998）",
+      "lng": 116.504142,
+      "lat": 39.7614241,
+      "building_type": "高层住宅（OSM层数未标注）",
+      "households": 117,
+      "daily_pkgs": 70.2,
+      "peak_pkgs": 140.4,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D10",
+      "community_id": "C04",
+      "name": "住宅建筑簇10（OSM 359008001）",
+      "lng": 116.5047081,
+      "lat": 39.7610251,
+      "building_type": "高层住宅（OSM层数未标注）",
+      "households": 117,
+      "daily_pkgs": 70.2,
+      "peak_pkgs": 140.4,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D11",
+      "community_id": "C04",
+      "name": "住宅建筑簇11（OSM 359008002）",
+      "lng": 116.5042844,
+      "lat": 39.7607256,
+      "building_type": "高层住宅（OSM层数未标注）",
+      "households": 116,
+      "daily_pkgs": 69.6,
+      "peak_pkgs": 139.2,
+      "time_window": "08:00—21:00（待核）"
+    },
+    {
+      "id": "C04-D12",
+      "community_id": "C04",
+      "name": "住宅建筑簇12（OSM 359007999）",
+      "lng": 116.5051148,
+      "lat": 39.7606746,
+      "building_type": "高层住宅（OSM层数未标注）",
+      "households": 117,
+      "daily_pkgs": 70.2,
+      "peak_pkgs": 140.4,
+      "time_window": "08:00—21:00（待核）"
+    }
+  ],
+  "facilities": [
+    {
+      "id": "C04-F01",
+      "community_id": "C04",
+      "name": "电动自行车集中充电区（位置近似）",
+      "type": "充电区",
+      "status": "现有",
+      "lng": 116.5043,
+      "lat": 39.7618,
+      "capacity_str": "待核",
+      "current_util": 0.0,
+      "open_time": "待核"
+    },
+    {
+      "id": "C04-F02",
+      "community_id": "C04",
+      "name": "18号楼社区服务中心（位置近似）",
+      "type": "社区服务设施",
+      "status": "现有",
+      "lng": 116.5036,
+      "lat": 39.7632,
+      "capacity_str": "1700㎡中心中的社区空间，物流可用面积待核",
+      "current_util": 0.0,
+      "open_time": "待核"
+    },
+    {
+      "id": "C04-F03",
+      "community_id": "C04",
+      "name": "东侧入口智能快递柜（候选）",
+      "type": "快递柜",
+      "status": "候选",
+      "lng": 116.5063,
+      "lat": 39.76265,
+      "capacity_str": "104格（情景）",
+      "current_util": 0.0,
+      "open_time": "00:00—24:00"
+    },
+    {
+      "id": "C04-F04",
+      "community_id": "C04",
+      "name": "东侧入口无人车换电柜（候选）",
+      "type": "换电站",
+      "status": "候选",
+      "lng": 116.50625,
+      "lat": 39.76261,
+      "capacity_str": "1柜+4组电池（情景）",
+      "current_util": 0.0,
+      "open_time": "00:00—24:00"
+    },
+    {
+      "id": "C04-F05",
+      "community_id": "C04",
+      "name": "东侧入口无人车接驳点（候选）",
+      "type": "接驳点",
+      "status": "候选",
+      "lng": 116.5062,
+      "lat": 39.76257,
+      "capacity_str": "2个车位（情景）",
+      "current_util": 0.0,
+      "open_time": "06:00—23:00（待核）"
+    }
+  ],
+  "road_nodes": [
+    {
+      "id": "C04-R001",
+      "community_id": "C04",
+      "type": "出入口",
+      "lng": 116.5063436,
+      "lat": 39.7626874
+    },
+    {
+      "id": "C04-R002",
+      "community_id": "C04",
+      "type": "出入口",
+      "lng": 116.5036026,
+      "lat": 39.7634032
+    },
+    {
+      "id": "C04-R003",
+      "community_id": "C04",
+      "type": "内部道路节点",
+      "lng": 116.50435,
+      "lat": 39.76185
+    },
+    {
+      "id": "C04-R004",
+      "community_id": "C04",
+      "type": "内部道路节点",
+      "lng": 116.5042,
+      "lat": 39.76065
+    },
+    {
+      "id": "C04-R005",
+      "community_id": "C04",
+      "type": "内部道路节点",
+      "lng": 116.5026,
+      "lat": 39.7612
+    },
+    {
+      "id": "C04-RD01",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5035636,
+      "lat": 39.7629409
+    },
+    {
+      "id": "C04-RD02",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5045614,
+      "lat": 39.7626409
+    },
+    {
+      "id": "C04-RD03",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5058885,
+      "lat": 39.762507
+    },
+    {
+      "id": "C04-RD04",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5052605,
+      "lat": 39.7624745
+    },
+    {
+      "id": "C04-RD05",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5030145,
+      "lat": 39.7623759
+    },
+    {
+      "id": "C04-RD06",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5056648,
+      "lat": 39.7620254
+    },
+    {
+      "id": "C04-RD07",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5035326,
+      "lat": 39.7619434
+    },
+    {
+      "id": "C04-RD08",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5045629,
+      "lat": 39.7618585
+    },
+    {
+      "id": "C04-RD09",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.504142,
+      "lat": 39.7614241
+    },
+    {
+      "id": "C04-RD10",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5047081,
+      "lat": 39.7610251
+    },
+    {
+      "id": "C04-RD11",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5042844,
+      "lat": 39.7607256
+    },
+    {
+      "id": "C04-RD12",
+      "community_id": "C04",
+      "type": "需求接入点",
+      "lng": 116.5051148,
+      "lat": 39.7606746
+    }
+  ],
+  "road_edges": [
+    {
+      "id": "C04-EB01",
+      "community_id": "C04",
+      "from_node": "C04-R001",
+      "to_node": "C04-R003",
+      "length_m": 223.3,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 3.5,
+      "slope_pct": 0.5,
+      "obstacle": "路桩、台阶、停车待核",
+      "from_coord": [
+        39.7626874,
+        116.5063436
+      ],
+      "to_coord": [
+        39.76185,
+        116.50435
+      ]
+    },
+    {
+      "id": "C04-EB02",
+      "community_id": "C04",
+      "from_node": "C04-R002",
+      "to_node": "C04-R003",
+      "length_m": 211.8,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 3.5,
+      "slope_pct": 0.5,
+      "obstacle": "路桩、台阶、停车待核",
+      "from_coord": [
+        39.7634032,
+        116.5036026
+      ],
+      "to_coord": [
+        39.76185,
+        116.50435
+      ]
+    },
+    {
+      "id": "C04-EB03",
+      "community_id": "C04",
+      "from_node": "C04-R003",
+      "to_node": "C04-R004",
+      "length_m": 154.2,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 3.5,
+      "slope_pct": 0.5,
+      "obstacle": "路桩、台阶、停车待核",
+      "from_coord": [
+        39.76185,
+        116.50435
+      ],
+      "to_coord": [
+        39.76065,
+        116.5042
+      ]
+    },
+    {
+      "id": "C04-EB04",
+      "community_id": "C04",
+      "from_node": "C04-R003",
+      "to_node": "C04-R005",
+      "length_m": 191.1,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 3.5,
+      "slope_pct": 0.5,
+      "obstacle": "路桩、台阶、停车待核",
+      "from_coord": [
+        39.76185,
+        116.50435
+      ],
+      "to_coord": [
+        39.7612,
+        116.5026
+      ]
+    },
+    {
+      "id": "C04-EC01",
+      "community_id": "C04",
+      "from_node": "C04-RD01",
+      "to_node": "C04-R002",
+      "length_m": 56.7,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7629409,
+        116.5035636
+      ],
+      "to_coord": [
+        39.7634032,
+        116.5036026
+      ]
+    },
+    {
+      "id": "C04-EC02",
+      "community_id": "C04",
+      "from_node": "C04-RD02",
+      "to_node": "C04-R003",
+      "length_m": 98.8,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7626409,
+        116.5045614
+      ],
+      "to_coord": [
+        39.76185,
+        116.50435
+      ]
+    },
+    {
+      "id": "C04-EC03",
+      "community_id": "C04",
+      "from_node": "C04-RD03",
+      "to_node": "C04-R001",
+      "length_m": 48.1,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.762507,
+        116.5058885
+      ],
+      "to_coord": [
+        39.7626874,
+        116.5063436
+      ]
+    },
+    {
+      "id": "C04-EC04",
+      "community_id": "C04",
+      "from_node": "C04-RD04",
+      "to_node": "C04-R001",
+      "length_m": 105.1,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7624745,
+        116.5052605
+      ],
+      "to_coord": [
+        39.7626874,
+        116.5063436
+      ]
+    },
+    {
+      "id": "C04-EC05",
+      "community_id": "C04",
+      "from_node": "C04-RD05",
+      "to_node": "C04-R002",
+      "length_m": 137.3,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7623759,
+        116.5030145
+      ],
+      "to_coord": [
+        39.7634032,
+        116.5036026
+      ]
+    },
+    {
+      "id": "C04-EC06",
+      "community_id": "C04",
+      "from_node": "C04-RD06",
+      "to_node": "C04-R001",
+      "length_m": 103.1,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7620254,
+        116.5056648
+      ],
+      "to_coord": [
+        39.7626874,
+        116.5063436
+      ]
+    },
+    {
+      "id": "C04-EC07",
+      "community_id": "C04",
+      "from_node": "C04-RD07",
+      "to_node": "C04-R003",
+      "length_m": 77.7,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7619434,
+        116.5035326
+      ],
+      "to_coord": [
+        39.76185,
+        116.50435
+      ]
+    },
+    {
+      "id": "C04-EC08",
+      "community_id": "C04",
+      "from_node": "C04-RD08",
+      "to_node": "C04-R003",
+      "length_m": 20.0,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7618585,
+        116.5045629
+      ],
+      "to_coord": [
+        39.76185,
+        116.50435
+      ]
+    },
+    {
+      "id": "C04-EC09",
+      "community_id": "C04",
+      "from_node": "C04-RD09",
+      "to_node": "C04-R003",
+      "length_m": 55.6,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7614241,
+        116.504142
+      ],
+      "to_coord": [
+        39.76185,
+        116.50435
+      ]
+    },
+    {
+      "id": "C04-EC10",
+      "community_id": "C04",
+      "from_node": "C04-RD10",
+      "to_node": "C04-R004",
+      "length_m": 66.2,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7610251,
+        116.5047081
+      ],
+      "to_coord": [
+        39.76065,
+        116.5042
+      ]
+    },
+    {
+      "id": "C04-EC11",
+      "community_id": "C04",
+      "from_node": "C04-RD11",
+      "to_node": "C04-R004",
+      "length_m": 12.2,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7607256,
+        116.5042844
+      ],
+      "to_coord": [
+        39.76065,
+        116.5042
+      ]
+    },
+    {
+      "id": "C04-EC12",
+      "community_id": "C04",
+      "from_node": "C04-RD12",
+      "to_node": "C04-R004",
+      "length_m": 86.1,
+      "is_bidirectional": true,
+      "unmanned_passable": false,
+      "width_m": 2.5,
+      "slope_pct": 0.5,
+      "obstacle": "楼前台阶、停车待核",
+      "from_coord": [
+        39.7606746,
+        116.5051148
+      ],
+      "to_coord": [
+        39.76065,
+        116.5042
+      ]
+    }
+  ],
+  "road_edge_count": 16,
+  "total_households": 2141,
+  "total_daily_pkgs": 1284.6,
+  "total_peak_pkgs": 2569.2
+}
