@@ -4,7 +4,6 @@ const app = createApp({
     setup() {
         const activeTab = ref('comparison');
         const viewMode = ref('split'); // 'split' | 'wide'
-        const presentationMode = ref(false);
         const schemeMode = ref('diff'); // 's0' | 's1' | 's2' | 'diff'
         const currentScenario = ref('N'); // 'N' | 'P15' | 'P20'
         const loading = ref(false);
@@ -103,7 +102,7 @@ const app = createApp({
             const models = aiDetectedModels.value.length ? aiDetectedModels.value : [];
             const pickModel = (predicate, fallback) => models.find(predicate)?.id || fallback;
             const candidates = [
-                { key: 'fast', icon: '⚡', label: '极速响应', model: pickModel(m => m.category === 'fast', current), description: '优先低延迟模型，适合快速问答与录屏演示' },
+                { key: 'fast', icon: '⚡', label: '极速响应', model: pickModel(m => m.category === 'fast', current), description: '优先低延迟模型，适合快速问答与系统交互' },
                 { key: 'reasoning', icon: '🧠', label: '深度推理', model: pickModel(m => m.category === 'reasoning', 'deepseek-reasoner'), description: '优先推理模型，适合应急推演与复杂诊断' },
                 { key: 'quality', icon: '✦', label: '旗舰质量', model: pickModel(m => m.category === 'flagship' || m.category === 'chat', current), description: '优先综合能力更强的通用模型' }
             ];
@@ -476,16 +475,6 @@ const app = createApp({
             mobilePane.value = 'content';
             showConstraintDetails.value = false;
         };
-
-        const togglePresentationMode = () => {
-            presentationMode.value = !presentationMode.value;
-            if (presentationMode.value) showConstraintDetails.value = false;
-            showToast(presentationMode.value ? '已进入录屏精简模式' : '已退出录屏精简模式', 'info');
-        };
-
-        watch(presentationMode, (active) => {
-            document.body.classList.toggle('presentation-mode', active);
-        }, { immediate: true });
 
         const toggleViewMode = () => {
             viewMode.value = viewMode.value === 'split' ? 'wide' : 'split';
@@ -2575,8 +2564,6 @@ const app = createApp({
             showToast,
             activeTab,
             viewMode,
-            presentationMode,
-            togglePresentationMode,
             toggleViewMode,
             schemeMode,
             setSchemeMode,

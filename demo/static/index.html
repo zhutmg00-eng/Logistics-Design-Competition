@@ -42,7 +42,7 @@
 </head>
 <body class="theme-ops app-body bg-slate-950 text-slate-100 flex flex-col antialiased">
     <a class="skip-link" href="#main-content">跳到主要内容</a>
-    <div id="app" class="app-shell flex flex-col flex-1 overflow-hidden relative" :class="{ 'is-presenting': presentationMode }">
+    <div id="app" class="app-shell flex flex-col flex-1 overflow-hidden relative">
 
         <!-- Global Lightweight Toast Notification System -->
         <div class="toast-container" role="status" aria-live="polite" aria-atomic="true">
@@ -101,14 +101,6 @@
                     <span>AI 设置</span>
                 </button>
 
-                <!-- Recording / presentation mode -->
-                <button @click="togglePresentationMode"
-                    class="presentation-mode-button flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition"
-                    :class="presentationMode ? 'bg-emerald-950/80 border-emerald-500 text-emerald-200' : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-emerald-300'"
-                    :aria-pressed="presentationMode">
-                    <span class="w-2 h-2 rounded-full" :class="presentationMode ? 'bg-emerald-300 animate-pulse' : 'bg-slate-500'"></span>
-                    <span>{{ presentationMode ? '退出录屏' : '录屏模式' }}</span>
-                </button>
 
                 <!-- 宽屏/分屏视图模式切换开关 -->
                 <button @click="toggleViewMode" class="view-mode-toggle flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition" aria-label="切换宽屏与左右分屏视图"
@@ -3032,7 +3024,7 @@
                             <span>⚡</span> 双引擎高可用协同架构说明
                         </div>
                         <p class="leading-relaxed">
-                            系统可接入任意 OpenAI 兼容云端模型完成物流推演；未配置 Key、断网或请求超限时，<b>自动降级至内置运筹智能推演引擎</b>，确保录屏演示不中断。模型选择优先按“极速、推理、旗舰”能力档位展示。
+                            系统可接入任意 OpenAI 兼容云端模型完成物流推演；未配置 Key、断网或请求超限时，<b>自动降级至内置运筹智能推演引擎</b>，确保调度业务连续不中断。模型选择优先按“极速、推理、旗舰”能力档位展示。
                         </p>
                     </div>
 

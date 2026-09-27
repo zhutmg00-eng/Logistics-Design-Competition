@@ -564,34 +564,6 @@ body.app-body {
     box-shadow: 0 12px 34px rgba(2, 6, 23, 0.32);
 }
 
-.presentation-mode-button {
-    white-space: nowrap;
-}
-
-/* Recording mode removes accidental controls and prevents telemetry overflow. */
-body.presentation-mode .ai-config-button,
-body.presentation-mode .view-mode-toggle,
-body.presentation-mode .command-telemetry {
-    display: none !important;
-}
-
-body.presentation-mode .secondary-command-bar {
-    justify-content: space-between;
-    gap: 18px;
-}
-
-body.presentation-mode .guide-fab {
-    background: linear-gradient(135deg, #0f766e, #0891b2) !important;
-    box-shadow: 0 10px 30px rgba(8, 145, 178, 0.32);
-}
-
-body.presentation-mode .plan-status-banner {
-    padding: 10px 12px;
-}
-
-body.presentation-mode .content-panel .text-xs {
-    line-height: 1.66;
-}
 
 .desktop-module-nav,
 .desktop-module-nav button,
@@ -2879,9 +2851,6 @@ body.theme-ops .secondary-command-bar {
     font-size: 12px;
 }
 
-body.presentation-mode .map-legend {
-    display: none !important;
-}
 
 /* AI answer readability: keep all assistant content high contrast on dark glass. */
 .ai-drawer-panel .ai-message-row.is-assistant .ai-bubble-body {
@@ -2928,11 +2897,6 @@ body.presentation-mode .map-legend {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* Recording view: constraint diagnostics are intentionally omitted. */
-body.presentation-mode .plan-status-banner,
-body.presentation-mode .constraint-details-panel {
-    display: none !important;
-}
 
 /* Light operations theme: keep constraint diagnostics readable if opened outside recording mode. */
 body.theme-ops .plan-status-copy strong,
