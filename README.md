@@ -34,7 +34,7 @@
 ![2E-MDVRPTW-DC 核心参数灵敏度分析阵列](docs/images/models/fig2_parameter_sensitivity_analysis.png)
 
 #### 图 3 改进多目标进化算法（改进 NSGA-II）求解性能与 Pareto 前沿对比
-对比改进 NSGA-II、经典 NSGA-II 与标准遗传算法 GA 的收敛特性（65代快速收敛，解质量提升17.0%）、双目标 Pareto 最优前沿与 TOPSIS 膝点折衷解（成本 131.4 万元，满意度 94.8 分）、超体积指标演化（HV=0.925）与计算复杂度扩展性。
+对比改进 NSGA-II、经典 NSGA-II 与标准遗传算法 GA 的收敛特性（65代快速收敛，解质量提升17.0%）、双目标 Pareto 最优前沿与 TOPSIS 膝点折衷解（成本 128.58 万元，满意度 94.8 分）、超体积指标演化（HV=0.925）与计算复杂度扩展性。
 
 ![改进多目标进化算法求解性能与 Pareto 前沿对比图](docs/images/models/fig3_algorithm_pareto_convergence.png)
 

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>京枢智网·畅达末端｜16:9封面</title>
+<style>
+  @font-face { font-family: "Noto Sans SC Local"; src: url("file:///C:/Windows/Fonts/NotoSansSC-VF.ttf") format("truetype"); font-weight: 100 900; }
+  @font-face { font-family: "Noto Serif SC Local"; src: url("file:///C:/Windows/Fonts/NotoSerifSC-VF.ttf") format("truetype"); font-weight: 200 900; }
+  * { box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; margin: 0; overflow: hidden; background: #050810; }
+  body { font-family: "Noto Sans SC Local", "Microsoft YaHei", sans-serif; color: #f7fbff; }
+  .cover { position: relative; width: 100%; height: 100%; isolation: isolate; background: #050810; }
+  .cover::before { content: ""; position: absolute; inset: 0; z-index: -2; background-image: url("covers-landscape_bg.png"); background-size: cover; background-position: center center; filter: brightness(1.18) saturate(1.07) contrast(1.015); }
+  .cover::after { content: ""; position: absolute; inset: 0; z-index: -1;
+    background:
+      linear-gradient(90deg, rgba(4,7,14,.97) 0%, rgba(4,7,14,.93) 42%, rgba(4,7,14,.53) 56%, rgba(4,7,14,.045) 78%, rgba(4,7,14,.17) 100%),
+      linear-gradient(180deg, rgba(4,7,14,.22), transparent 35%, rgba(4,7,14,.18)); }
+  .grid { position: absolute; inset: 0; opacity: .12; pointer-events: none;
+    background-image: linear-gradient(rgba(255,255,255,.13) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px); background-size: 72px 72px;
+    mask-image: linear-gradient(90deg, #000 0, transparent 69%); }
+  header { position: absolute; top: 54px; left: 72px; right: 72px; display: flex; align-items: center; justify-content: space-between; padding-bottom: 21px; border-bottom: 1px solid rgba(255,255,255,.15); }
+  .brand { display: flex; align-items: center; gap: 14px; font-size: 18px; font-weight: 680; letter-spacing: .045em; color: rgba(244,250,255,.94); }
+  .brand-mark { width: 21px; height: 21px; position: relative; border: 1.5px solid #22bce8; transform: rotate(45deg); }
+  .brand-mark::after { content: ""; position: absolute; left: 6px; top: 6px; width: 7px; height: 7px; background: #10b981; }
+  .track { font-size: 15px; letter-spacing: .11em; color: rgba(207,224,236,.64); }
+  .content { position: absolute; left: 82px; top: 232px; width: 890px; }
+  .kicker { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; color: #63d5f3; font-size: 16px; font-weight: 780; letter-spacing: .19em; }
+  .kicker::before { content: ""; width: 48px; height: 2px; background: linear-gradient(90deg, #0284c7, #2dd4bf); }
+  h1 { margin: 0; font-family: "Noto Serif SC Local", "Songti SC", serif; font-size: 98px; font-weight: 870; line-height: 1.12; letter-spacing: .025em; text-shadow: 0 5px 25px rgba(0,0,0,.3); }
+  h1 .dot { color: #60d6f3; font-family: "Noto Sans SC Local", sans-serif; font-size: .55em; margin-left: .07em; vertical-align: .25em; font-weight: 500; }
+  .subtitle { margin-top: 28px; font-size: 31px; line-height: 1.52; font-weight: 560; letter-spacing: .018em; color: rgba(241,248,252,.93); }
+  .en { width: 720px; margin-top: 21px; font-family: "Segoe UI", "Arial", sans-serif; font-size: 13px; line-height: 1.55; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: rgba(139,188,214,.76); }
+  .rule { width: 112px; height: 4px; margin-top: 35px; background: linear-gradient(90deg, #0284c7 0 48%, #10b981 48% 68%, #f59e0b 68% 100%); }
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; width: 810px; margin-top: 35px; border: 1px solid rgba(137,201,222,.17); background: rgba(137,201,222,.17); }
+  .metric { min-height: 92px; padding: 17px 20px 15px; background: rgba(5,15,27,.54); backdrop-filter: blur(9px); }
+  .metric-value { font-family: "Segoe UI", sans-serif; font-size: 29px; line-height: 1; font-weight: 760; color: #65d8f3; font-variant-numeric: tabular-nums; }
+  .metric-label { margin-top: 10px; font-size: 15px; letter-spacing: .07em; color: rgba(219,235,243,.77); }
+  .bottom { position: absolute; left: 82px; right: 82px; bottom: 52px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .scene { color: rgba(221,239,246,.82); font-size: 15px; letter-spacing: .045em; }
+  .scene strong { color: #eff9fc; font-weight: 650; }
+  .footer { color: rgba(169,207,222,.70); font-size: 12px; letter-spacing: .14em; text-align: right; }
+  .edge { position: absolute; left: 38px; top: 38px; bottom: 38px; width: 2px; background: linear-gradient(180deg, #0284c7 0 47%, rgba(16,185,129,.9) 47% 68%, rgba(245,158,11,.8) 68% 75%, rgba(255,255,255,.10) 75% 100%); }
+</style>
+</head>
+<body>
+  <main class="cover">
+    <div class="grid"></div><div class="edge"></div>
+    <header>
+      <div class="brand"><span class="brand-mark"></span><span>第九届北京市大学生物流设计大赛</span></div>
+      <div class="track">主题二｜智慧物流与城市末端配送</div>
+    </header>
+
+    <section class="content">
+      <div class="kicker">SUPERCITY LAST-MILE COLLABORATION</div>
+      <h1>京枢智网<span class="dot">·</span><br>畅达末端</h1>
+      <div class="subtitle">面向超大城市的末端配送三级协同网络规划与智能决策平台</div>
+      <div class="en">Three-tier collaborative network planning and intelligent decision platform for megacity last-mile delivery</div>
+      <div class="rule"></div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-value">5</div><div class="metric-label">典型社区实证样区</div></div>
+        <div class="metric"><div class="metric-value">3</div><div class="metric-label">三级协同网络层级</div></div>
+        <div class="metric"><div class="metric-value">10,000</div><div class="metric-label">蒙特卡洛情景推演</div></div>
+      </div>
+    </section>
+
+    <section class="bottom">
+      <div class="scene"><strong>网络底座</strong>　HUB / 社区接驳点 / 智能快件柜与楼栋单元　·　<strong>决策闭环</strong>　需求预测 / 选址定容 / 人机协同 / 情景推演</div>
+      <div class="footer">JINGSHU INTELLIGENT NETWORK<br>SEAMLESS LAST-MILE</div>
+    </section>
+  </main>
+</body>
+</html>
+
