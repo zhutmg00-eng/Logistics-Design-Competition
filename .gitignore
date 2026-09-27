@@ -19,16 +19,39 @@ demo/config.json
 ~$*.docx
 *.zip
 parsed_*.txt
+*_extracted.txt
+*_dump.txt
+doc_full_dump.txt
+chapter7_extracted.txt
 全网数据搜集_主题二与分工方案汇总/
 G数据_已汇总/
 
-# Temporary Local Screenshots & Test Profiles (Excluding docs/images)
+# Build Outputs & Generated Packages
+output/
+chapter7_platform_frontend/screenshots/
+chapter7_platform_frontend_backup*/
+chapter7_platform_frontend/docx_text.txt
+
+# Temporary Local Screenshots & Verification Artifacts
 demo/*.png
+shot_*.png
+screenshot_*.png
+test_chrome_shot.png
+sample_render.pdf
+test_*.html
+test_*.pdf
+test_*.mjs
+verify_*.mjs
+capture_ui.mjs
+test_ascii.py
+test_edge_chrome.py
+test_helpers.py
+test_katex_render.py
+test_placeholder.py
 *.log
 tmp/
 .codex_tmp/
 .playwright-cli/
-output/playwright/
 academic-research-skills/
 
 # IDE & System

@@ -13,7 +13,7 @@ if current_dir not in sys.path:
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 
@@ -43,11 +43,16 @@ static_dir = os.path.join(current_dir, "static")
 os.makedirs(static_dir, exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+# Mount Chapter 7 Multi-Terminal Frontend for seamless unified showcase
+chapter7_dir = os.path.abspath(os.path.join(current_dir, "..", "chapter7_platform_frontend"))
+if os.path.exists(chapter7_dir):
+    app.mount("/chapter7", StaticFiles(directory=chapter7_dir), name="chapter7")
+
 @app.get("/")
 def read_root():
     index_path = os.path.join(static_dir, "index.html")
     if os.path.exists(index_path):
-        return FileResponse(index_path)
+        return FileResponse(index_path, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
     return {"message": "Server is running. Please add static/index.html"}
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -458,12 +463,86 @@ def get_all_math_models():
         ]
     }
 
+# ==========================================
+# AI 智能调度中枢与多智能体应急中枢 (AICopilot) 接口
+# ==========================================
+
+class AIChatRequest(BaseModel):
+    query: str
+    context: Optional[Dict[str, Any]] = None
+
+class AICrisisStreamRequest(BaseModel):
+    event_type: str
+    context: Optional[Dict[str, Any]] = None
+
+class AIConfigRequest(BaseModel):
+    provider: Optional[str] = None
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+    model: Optional[str] = None
+
+@app.get("/api/ai/config")
+def get_ai_config():
+    return ai_copilot.get_config()
+
+@app.post("/api/ai/config")
+def save_ai_config(req: AIConfigRequest):
+    data = {}
+    if req.provider is not None: data["provider"] = req.provider
+    if req.base_url is not None: data["base_url"] = req.base_url
+    if req.api_key is not None: data["api_key"] = req.api_key
+    if req.model is not None: data["model"] = req.model
+    return ai_copilot.save_config(data)
+
+@app.post("/api/ai/test")
+def test_ai_connection():
+    return ai_copilot.test_cloud_connection()
+
+class AIModelDetectRequest(BaseModel):
+    provider: Optional[str] = None
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+
+@app.post("/api/ai/models")
+def detect_ai_models(req: AIModelDetectRequest):
+    return ai_copilot.fetch_available_models(
+        api_key=req.api_key,
+        base_url=req.base_url,
+        provider=req.provider
+    )
+
+@app.post("/api/ai/chat/stream")
+def stream_ai_chat(req: AIChatRequest):
+    return StreamingResponse(
+        ai_copilot.stream_chat(req.query, req.context),
+        media_type="text/event-stream"
+    )
+
+@app.post("/api/ai/crisis/stream")
+def stream_ai_crisis(req: AICrisisStreamRequest):
+    event_info = ai_copilot.CRISIS_EVENTS.get(req.event_type, {})
+    event_name = event_info.get("name", req.event_type)
+    query = f"请针对突发应急事件【{event_name}】启动多智能体协同自适应重规划推演，输出异构态势感知、冲击评估、车-机-人协同调度决策及工单"
+    return StreamingResponse(
+        ai_copilot.stream_chat(query, req.context),
+        media_type="text/event-stream"
+    )
+
+@app.post("/api/ai/diagnose/stream")
+def stream_ai_diagnose(req: AIChatRequest):
+    query = "请对当前选定社区生成一份结合 M5-M8 运筹模型遥测数据的全链路数智化与绿色化运行诊断评估报告，并给出改进建议。"
+    return StreamingResponse(
+        ai_copilot.stream_chat(query, req.context),
+        media_type="text/event-stream"
+    )
+
 class CrisisRequest(BaseModel):
     event_type: str
+    context: Optional[Dict[str, Any]] = None
 
 @app.post("/api/crisis")
 def handle_crisis(req: CrisisRequest):
-    return ai_copilot.handle_crisis_event(req.event_type)
+    return ai_copilot.handle_crisis_event(req.event_type, req.context)
 
 # ==========================================
 # 高德开放平台 (Amap LBS / MCP) 接口

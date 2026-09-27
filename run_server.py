@@ -15,10 +15,13 @@ if __name__ == "__main__":
 
     from demo.server import app
 
+    host = os.getenv("HOST", "127.0.0.1")
+    port = int(os.getenv("PORT", "8000"))
+
     print("=" * 60)
     print("超大城市末端配送协同网络数智化与绿色化决策平台")
     print("第九届北京市大学生物流设计大赛 · 主题二 原型系统")
-    print("服务地址: http://127.0.0.1:8000")
+    print(f"服务地址: http://{host}:{port}")
     print("=" * 60)
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host=host, port=port)

@@ -38,11 +38,11 @@
     <script src="/static/libs/katex/katex.min.js"></script>
     <script src="/static/libs/katex/auto-render.min.js"></script>
     <!-- Custom Industrial Styles (Pure Local Fonts & Industrial Dark) -->
-    <link rel="stylesheet" href="/static/style.css?v=20260923-19">
+    <link rel="stylesheet" href="/static/style.css?v=20260923-33">
 </head>
 <body class="theme-ops app-body bg-slate-950 text-slate-100 flex flex-col antialiased">
     <a class="skip-link" href="#main-content">跳到主要内容</a>
-    <div id="app" class="app-shell flex flex-col flex-1 overflow-hidden relative">
+    <div id="app" class="app-shell flex flex-col flex-1 overflow-hidden relative" :class="{ 'is-presenting': presentationMode }">
 
         <!-- Global Lightweight Toast Notification System -->
         <div class="toast-container" role="status" aria-live="polite" aria-atomic="true">
@@ -65,7 +65,7 @@
                         <h1 class="text-sm font-bold tracking-tight text-white whitespace-nowrap">
                             超大城市末端配送协同决策中枢
                         </h1>
-                        <span class="brand-badge text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300 whitespace-nowrap">主题二 · 原型系统</span>
+                        <span class="brand-badge text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300 whitespace-nowrap">AI赋能 · 原型系统</span>
                     </div>
                     <p class="brand-subtitle text-xs text-slate-400">第九届北京市大学生物流设计大赛 · 亦庄示范区 (BDA) 样本底座</p>
                 </div>
@@ -81,11 +81,35 @@
                 <button @click="activeTab = 'layout'" :class="activeTab === 'layout' ? 'bg-cyan-700 text-white font-bold shadow-sm' : 'text-slate-300 hover:text-white'" class="px-2.5 py-1.5 rounded-lg transition">选址定容</button>
                 <button @click="activeTab = 'routing'" :class="activeTab === 'routing' ? 'bg-cyan-700 text-white font-bold shadow-sm' : 'text-slate-300 hover:text-white'" class="px-2.5 py-1.5 rounded-lg transition">人车协同</button>
                 <button @click="activeTab = 'simulation'" :class="activeTab === 'simulation' ? 'bg-cyan-700 text-white font-bold shadow-sm' : 'text-slate-300 hover:text-white'" class="px-2.5 py-1.5 rounded-lg transition">仿真对抗</button>
-                <button @click="activeTab = 'copilot'" :class="activeTab === 'copilot' ? 'bg-cyan-700 text-white font-bold shadow-sm' : 'text-slate-300 hover:text-white'" class="px-2.5 py-1.5 rounded-lg transition">应急调度</button>
+                <button @click="activeTab = 'copilot'" :class="activeTab === 'copilot' ? 'bg-cyan-700 text-white font-bold shadow-sm' : 'text-slate-300 hover:text-white'" class="px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                    AI 应急调度
+                </button>
             </nav>
 
             <!-- Global Controls -->
             <div class="global-controls flex items-center space-x-2 text-xs flex-shrink-0">
+
+                <!-- AI 调度中枢 抽屉呼出按钮 -->
+                <button @click="toggleAiDrawer" class="ai-hub-button flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-sky-600 to-cyan-600 text-white font-bold hover:brightness-110 shadow-sm transition text-xs" aria-label="打开 AI 智能调度中枢">
+                    <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                    <span>AI 调度中枢</span>
+                </button>
+
+                <!-- AI 大模型配置按钮 -->
+                <button @click="showAiConfigModal = true" class="ai-config-button flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-cyan-300 transition text-xs" title="配置大模型 API Key 与推理模型">
+                    <span>AI 设置</span>
+                </button>
+
+                <!-- Recording / presentation mode -->
+                <button @click="togglePresentationMode"
+                    class="presentation-mode-button flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition"
+                    :class="presentationMode ? 'bg-emerald-950/80 border-emerald-500 text-emerald-200' : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-emerald-300'"
+                    :aria-pressed="presentationMode">
+                    <span class="w-2 h-2 rounded-full" :class="presentationMode ? 'bg-emerald-300 animate-pulse' : 'bg-slate-500'"></span>
+                    <span>{{ presentationMode ? '退出录屏' : '录屏模式' }}</span>
+                </button>
+
                 <!-- 宽屏/分屏视图模式切换开关 -->
                 <button @click="toggleViewMode" class="view-mode-toggle flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition" aria-label="切换宽屏与左右分屏视图"
                     :class="viewMode === 'wide' ? 'bg-slate-800 border-cyan-600 text-cyan-300' : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'">
@@ -96,7 +120,6 @@
                 <button @click="showSolverModal = true" class="solver-board-button flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-cyan-300 font-semibold hover:bg-slate-700 transition text-xs" aria-label="打开运筹算法看板">
                     <span class="solver-board-label">算法看板</span>
                 </button>
-
             </div>
         </header>
 
@@ -112,76 +135,115 @@
         </nav>
 
         <!-- Secondary Command Strip (Unified Command Bar) -->
-        <div class="secondary-command-bar h-11 bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between z-20 flex-shrink-0 text-xs">
+        <div class="secondary-command-bar h-11 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between z-20 flex-shrink-0 text-xs overflow-x-auto whitespace-nowrap gap-3">
             <!-- Left: Community Selector -->
-            <div class="command-community flex items-center space-x-2">
-                <span class="text-slate-400 font-semibold flex items-center gap-1"> 社区:</span>
-                <div class="flex space-x-1">
+            <div class="command-community flex items-center space-x-2 shrink-0">
+                <span class="text-slate-400 font-semibold flex items-center gap-1 shrink-0 whitespace-nowrap"> 社区:</span>
+                <div class="flex space-x-1 shrink-0">
                     <button @click="onSelectCommunity('ALL')"
                         :class="selectedCommunityId === 'ALL' ? 'bg-cyan-700 text-white font-bold shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
-                        class="px-2.5 py-1 text-xs rounded-lg font-medium transition flex items-center gap-1">
+                        class="px-2.5 py-1 text-xs rounded-lg font-medium transition flex items-center gap-1 shrink-0 whitespace-nowrap">
                          全域 (5社区)
                     </button>
                     <button v-for="c in (overview ? overview.communities : [])" :key="c.id"
                         @click="onSelectCommunity(c.id)"
                         :class="selectedCommunityId === c.id ? 'bg-cyan-700 text-white font-bold shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
-                        class="px-2.5 py-1 text-xs rounded-lg font-medium transition">
+                        class="px-2.5 py-1 text-xs rounded-lg font-medium transition shrink-0 whitespace-nowrap">
                         {{ c.id }} {{ c.name }}
                     </button>
                 </div>
             </div>
 
             <!-- Center: Scheme Mode Switcher (S0 / S1 / S2 / Diff) -->
-            <div class="command-scheme flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                <span class="text-xs font-semibold text-slate-400 px-1.5 hidden sm:inline">方案模式:</span>
+            <div class="command-scheme flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+                <span class="text-xs font-semibold text-slate-400 px-1.5 shrink-0 whitespace-nowrap">方案模式:</span>
                 <button @click="setSchemeMode('s0')"
                     :class="(schemeMode === 's0' || schemeMode === 'baseline') ? 'bg-rose-700 text-white font-bold shadow-sm' : 'text-rose-300 hover:text-white'"
-                    class="px-2.5 py-1 text-xs rounded-lg transition flex items-center gap-1" title="现状基准：HUB独立往返 + 现有单柜设施 + 全人工社区作业">
+                    class="px-2.5 py-1 text-xs rounded-lg transition flex items-center gap-1 shrink-0 whitespace-nowrap" title="现状基准：HUB独立往返 + 现有单柜设施 + 全人工社区作业">
                      S0 现状基准
                 </button>
                 <button @click="setSchemeMode('s1')"
                     :class="schemeMode === 's1' ? 'bg-amber-700 text-white font-bold shadow-sm' : 'text-amber-300 hover:text-white'"
-                    class="px-2.5 py-1 text-xs rounded-lg transition flex items-center gap-1" title="网络设施优化：M1巡回干线 + 设施定容扩容 + 全人工执行">
+                    class="px-2.5 py-1 text-xs rounded-lg transition flex items-center gap-1 shrink-0 whitespace-nowrap" title="网络设施优化：M1巡回干线 + 设施定容扩容 + 全人工执行">
                      S1 设施优化
                 </button>
                 <button @click="setSchemeMode('s2')"
                     :class="(schemeMode === 's2' || schemeMode === 'optimized') ? 'bg-emerald-700 text-white font-bold shadow-sm' : 'text-emerald-300 hover:text-white'"
-                    class="px-2.5 py-1 text-xs rounded-lg transition flex items-center gap-1" title="人机协同推荐：M1巡回干线 + 设施定容扩容 + 无人车巡航 + 人工精准上门">
+                    class="px-2.5 py-1 text-xs rounded-lg transition flex items-center gap-1 shrink-0 whitespace-nowrap" title="人机协同推荐：M1巡回干线 + 设施定容扩容 + 无人车巡航 + 人工精准上门">
                      S2 人机协同
                 </button>
                 <button @click="setSchemeMode('diff')"
                     :class="schemeMode === 'diff' ? 'bg-cyan-800 text-white font-bold shadow-sm' : 'text-cyan-300 hover:text-white'"
-                    class="px-2.5 py-1 text-xs rounded-lg transition flex items-center gap-1" title="同屏叠图：S0 vs S2 空间重叠对比">
+                    class="px-2.5 py-1 text-xs rounded-lg transition flex items-center gap-1 shrink-0 whitespace-nowrap" title="同屏叠图：S0 vs S2 空间重叠对比">
                      叠图对比
                 </button>
             </div>
 
             <!-- Right: Multi-Scenario Switcher (N / P15 / P20) & Live Telemetry -->
-            <div class="command-scenario flex items-center space-x-2 text-xs">
-                <div class="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                    <span class="text-xs font-semibold text-slate-400 px-1 hidden md:inline">情景:</span>
+            <div class="command-scenario flex items-center space-x-2 text-xs shrink-0">
+                <div class="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+                    <span class="text-xs font-semibold text-slate-400 px-1 shrink-0 whitespace-nowrap">情景:</span>
                     <button @click="setScenario('N')"
                         :class="currentScenario === 'N' ? 'bg-slate-700 text-cyan-300 font-bold' : 'text-slate-400 hover:text-slate-200'"
-                        class="scenario-btn px-2 py-0.5 text-xs rounded transition" title="普通日日均件量 2589.6 件 (1.0x)">
+                        class="scenario-btn px-2 py-0.5 text-xs rounded transition shrink-0 whitespace-nowrap" title="普通日日均件量 2589.6 件 (1.0x)">
                         N 普通日
                     </button>
                     <button @click="setScenario('P15')"
                         :class="currentScenario === 'P15' ? 'bg-amber-800 text-amber-100 font-bold' : 'text-slate-400 hover:text-slate-200'"
-                        class="scenario-btn px-2 py-0.5 text-xs rounded transition" title="中高峰需求 1.5x 承载测试">
+                        class="scenario-btn px-2 py-0.5 text-xs rounded transition shrink-0 whitespace-nowrap" title="中高峰需求 1.5x 承载测试">
                         P15 中高峰
                     </button>
                     <button @click="setScenario('P20')"
                         :class="currentScenario === 'P20' ? 'bg-rose-800 text-rose-100 font-bold' : 'text-slate-400 hover:text-slate-200'"
-                        class="scenario-btn px-2 py-0.5 text-xs rounded transition" title="大促极端峰值 2.0x 压力推演">
+                        class="scenario-btn px-2 py-0.5 text-xs rounded transition shrink-0 whitespace-nowrap" title="大促极端峰值 2.0x 压力推演">
                         P20 大促峰值
                     </button>
                 </div>
-                <div class="command-telemetry hidden xl:flex items-center space-x-2 text-xs mono text-slate-300">
-                    <span>干线: <b class="text-cyan-400">{{ improvementText('trunk_distance') }}</b></span>
-                    <span class="text-slate-600">|</span>
-                    <span>工时: <b class="text-emerald-400">{{ improvementText('labor_hours') }}</b></span>
-                    <span class="text-slate-600">|</span>
-                    <span>年节约: <b class="text-amber-400">¥{{ savingValue('annual_cost', 10000, 1) }}万</b></span>
+                <div class="command-telemetry hidden xl:flex items-center space-x-2 text-xs mono text-slate-300 shrink-0 whitespace-nowrap">
+                    <template v-if="isS0">
+                        <span class="px-2 py-0.5 rounded bg-rose-950/90 border border-rose-600 text-rose-300 font-bold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                            🔴 S0 现状高负荷
+                        </span>
+                        <span>干线: <b class="text-rose-400">24.84 km</b> (空驶)</span>
+                        <span class="text-slate-600">|</span>
+                        <span>工时: <b class="text-rose-400">123.5 h</b> (严重超时)</span>
+                        <span class="text-slate-600">|</span>
+                        <span>爆柜溢出: <b class="text-rose-400">1465.1 件</b></span>
+                    </template>
+                    <template v-else-if="isS1">
+                        <span class="px-2 py-0.5 rounded bg-amber-950/90 border border-amber-600 text-amber-300 font-bold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                            🟡 S1 设施优化
+                        </span>
+                        <span>干线: <b class="text-amber-400">13.42 km (-46%)</b></span>
+                        <span class="text-slate-600">|</span>
+                        <span>有效容量: <b class="text-amber-300">1560 格口</b></span>
+                        <span class="text-slate-600">|</span>
+                        <span>纯人工工时: <b class="text-amber-400">65.9 h</b></span>
+                    </template>
+                    <template v-else-if="isS2">
+                        <span class="px-2 py-0.5 rounded bg-emerald-950/90 border border-emerald-600 text-emerald-300 font-bold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            🟢 S2 人机协同推荐
+                        </span>
+                        <span>干线: <b class="text-emerald-400">13.42 km (-46.0%)</b></span>
+                        <span class="text-slate-600">|</span>
+                        <span>工时: <b class="text-emerald-400">54.2 h (-56.1%)</b></span>
+                        <span class="text-slate-600">|</span>
+                        <span>年节约: <b class="text-emerald-300">¥117.1万</b></span>
+                    </template>
+                    <template v-else>
+                        <span class="px-2 py-0.5 rounded bg-cyan-950/90 border border-cyan-600 text-cyan-300 font-bold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                            🔵 同屏叠图对比
+                        </span>
+                        <span>干线: 24.84 ➔ <b class="text-cyan-400">13.42 km (-46%)</b></span>
+                        <span class="text-slate-600">|</span>
+                        <span>工时: 123.5 ➔ <b class="text-emerald-400">54.2 h (-56.1%)</b></span>
+                        <span class="text-slate-600">|</span>
+                        <span>年节约: <b class="text-amber-400">¥117.1万</b></span>
+                    </template>
                 </div>
             </div>
         </div>
@@ -225,26 +287,51 @@
                     </div>
                 </div>
 
+                <!-- Map Scheme Floating Badge -->
+                <div class="absolute top-14 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none transition-all duration-300">
+                    <div v-if="isS0" class="glass-panel px-3.5 py-1.5 rounded-full border border-rose-500/70 bg-rose-950/90 text-rose-200 text-xs font-semibold shadow-lg shadow-rose-950/60 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping shrink-0"></span>
+                        <span>🔴 S0 现状基准方案 (As-Is)：5条独立往返干线 · 纯人工重载步巡 · 爆柜溢出风险</span>
+                    </div>
+                    <div v-else-if="isS1" class="glass-panel px-3.5 py-1.5 rounded-full border border-amber-500/70 bg-amber-950/90 text-amber-200 text-xs font-semibold shadow-lg shadow-amber-950/60 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
+                        <span>🟡 S1 网络设施优化 (Facility Opt)：M1巡回干线 -46% · MIP自适应扩容 · 150m红线达标</span>
+                    </div>
+                    <div v-else-if="isS2" class="glass-panel px-3.5 py-1.5 rounded-full border border-emerald-500/70 bg-emerald-950/90 text-emerald-200 text-xs font-semibold shadow-lg shadow-emerald-950/60 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                        <span>🟢 S2 人机协同推荐 (To-Be)：M1干线巡回 + M2无人车微循环 (4.69km) + M3适老上门 (-56.1%工时)</span>
+                    </div>
+                    <div v-else class="glass-panel px-3.5 py-1.5 rounded-full border border-cyan-500/70 bg-slate-950/90 text-cyan-200 text-xs font-semibold shadow-lg shadow-cyan-950/60 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 shrink-0"></span>
+                        <span>🔵 双方案同屏叠图对比 (Diff View)：现状红虚线 vs 优化青实线 | 纯人工重负荷 vs 人机协同</span>
+                    </div>
+                </div>
+
                 <!-- Leaflet Container with CAD Grid Fallback -->
                 <div id="map-container" class="cyber-gis-grid flex-1 w-full h-full relative"></div>
 
                 <!-- Map Bottom Info Overlay -->
                 <div class="absolute bottom-3 left-3 right-3 z-[1000] glass-panel p-2.5 rounded-xl flex flex-wrap items-center justify-between text-xs text-slate-300">
-                    <div class="flex items-center space-x-3 text-xs">
+                    <div class="map-legend flex items-center space-x-3 text-xs">
                         <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> 枢纽</div>
-                        <template v-if="schemeMode === 'baseline' || schemeMode === 'diff'">
+                        <template v-if="isS0 || isDiff">
                             <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-rose-500 border-dashed"></span> 现状往返</div>
-                            <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> 爆柜风险</div>
+                            <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span> 爆柜风险</div>
+                            <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-rose-400 border-dashed"></span> 纯人工步巡</div>
                         </template>
-                        <template v-if="schemeMode === 'optimized' || schemeMode === 'diff'">
+                        <template v-if="isS1 || isS2 || isDiff">
                             <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-cyan-400"></span> M1巡回</div>
                             <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> 优化设施</div>
+                        </template>
+                        <template v-if="isS2 || isDiff">
+                            <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-sky-400"></span> M2无人车</div>
+                            <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-orange-400 border-dashed"></span> M3上门步巡</div>
                         </template>
                         <div class="flex items-center gap-1"><span class="w-3.5 h-0.5 bg-slate-500"></span> 内部路网</div>
                     </div>
                     <div class="flex items-center space-x-2 text-xs mono">
-                        <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300">
-                            {{ tileStatusText }}
+                        <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300" :title="mapCrsText">
+                            {{ tileStatusText }} · {{ mapCrsText }}
                         </span>
                         <span v-if="planResult" class="text-slate-400">
                             {{ planResult.community_name }} |
@@ -306,19 +393,136 @@
                 <!-- ==================== TAB 0:  全景对比 (现状 vs 优化) ==================== -->
                 <div v-if="activeTab === 'comparison'" class="space-y-4 animate-fadeIn">
 
-                    <!-- 顶部标题横幅 -->
-                    <div class="glass-panel p-4 rounded-xl border-l-4 border-l-cyan-600 space-y-2">
+                    <!-- 动态方案态势横幅 (随 S0 / S1 / S2 / Diff 实时动态切换) -->
+                    <div v-if="isS0" class="glass-panel p-4 rounded-xl border-l-4 border-l-rose-500 bg-rose-950/30 border border-rose-800/70 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-sm font-bold text-rose-400 flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+                                🔴 S0 现状基准方案 (As-Is) 全景运行诊断与风险画像
+                            </h2>
+                            <span class="px-2.5 py-0.5 rounded bg-rose-950 border border-rose-700 text-rose-300 text-xs font-semibold mono">
+                                瓶颈严重 · 约束未通过 (INFEASIBLE)
+                            </span>
+                        </div>
+                        <p class="text-xs text-rose-200/90 leading-relaxed">
+                            基于亦庄 5 大样本社区实地调研：干线采用 5 条车辆独立往返（总长 24.84 km，空驶严重）；末端单柜峰值饱和度达 1203%，日终造成 1465.1 件快件爆柜外溢；纯人工步巡工时高达 123.5 小时，重度疲劳过载。
+                        </p>
+                        <div class="grid grid-cols-3 gap-2 text-xs">
+                            <div class="bg-slate-900/90 border border-rose-900/60 p-2.5 rounded-lg">
+                                <span class="text-slate-400 block text-[11px]">现状年运营成本</span>
+                                <div class="text-base font-bold text-rose-400 mono mt-0.5">¥245.6 万元</div>
+                                <span class="text-[10px] text-rose-300/80">纯人工高额工时与燃油</span>
+                            </div>
+                            <div class="bg-slate-900/90 border border-rose-900/60 p-2.5 rounded-lg">
+                                <span class="text-slate-400 block text-[11px]">单柜峰值饱和度</span>
+                                <div class="text-base font-bold text-rose-400 mono mt-0.5">1203.0% (爆柜)</div>
+                                <span class="text-[10px] text-rose-300/80">未完成快件 1465.1 件</span>
+                            </div>
+                            <div class="bg-slate-900/90 border border-rose-900/60 p-2.5 rounded-lg">
+                                <span class="text-slate-400 block text-[11px]">全网人工总工时</span>
+                                <div class="text-base font-bold text-rose-400 mono mt-0.5">123.5 小时</div>
+                                <span class="text-[10px] text-rose-300/80">严重超时，急需重构</span>
+                            </div>
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <span class="text-rose-300 text-[11px]">🤖 AI 宏观诊断：S0 方案存在 2 项关键硬约束违反，急需采用 S2 人机协同进行结构性重构。</span>
+                            <button @click="sendAiMessage('请对亦庄全域现状 (S0) 与人机协同 (S2) 优化方案进行全景效益诊断：深度对比干线里程、总成本节约、减碳排效果与投资回收期'); showAiDrawer = true"
+                                    class="px-2.5 py-1 rounded bg-rose-800 hover:bg-rose-700 text-white font-semibold transition shrink-0 text-xs shadow-sm">
+                                <span>AI 诊断 S0 瓶颈 →</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-else-if="isS1" class="glass-panel p-4 rounded-xl border-l-4 border-l-amber-500 bg-amber-950/30 border border-amber-800/70 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                                🟡 S1 网络设施优化方案 (Facility Opt) 运行表现
+                            </h2>
+                            <span class="px-2.5 py-0.5 rounded bg-amber-950 border border-amber-700 text-amber-300 text-xs font-semibold mono">
+                                设施定容合规 · 纯人工执行
+                            </span>
+                        </div>
+                        <p class="text-xs text-amber-200/90 leading-relaxed">
+                            干线采用 M1 巡回闭环集约拓扑（13.42 km，节省 46.0%）；末端采用 MIP 规划扩容至 1560 格口，解除爆柜；但末端投柜与上门仍由全人工执行，人工工时仍达 65.9 小时。
+                        </p>
+                        <div class="grid grid-cols-3 gap-2 text-xs">
+                            <div class="bg-slate-900/90 border border-amber-900/60 p-2.5 rounded-lg">
+                                <span class="text-slate-400 block text-[11px]">M1 巡回干线里程</span>
+                                <div class="text-base font-bold text-amber-400 mono mt-0.5">13.42 km (-46%)</div>
+                                <span class="text-[10px] text-amber-300/80">消除独立往返空驶</span>
+                            </div>
+                            <div class="bg-slate-900/90 border border-amber-900/60 p-2.5 rounded-lg">
+                                <span class="text-slate-400 block text-[11px]">MIP 扩容有效容量</span>
+                                <div class="text-base font-bold text-amber-400 mono mt-0.5">1560 格口</div>
+                                <span class="text-[10px] text-emerald-300/80">未完成件清零</span>
+                            </div>
+                            <div class="bg-slate-900/90 border border-amber-900/60 p-2.5 rounded-lg">
+                                <span class="text-slate-400 block text-[11px]">全人工投入工时</span>
+                                <div class="text-base font-bold text-amber-400 mono mt-0.5">65.9 小时</div>
+                                <span class="text-[10px] text-amber-300/80">工时仍重，缺乏人车协同</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else-if="isS2" class="glass-panel p-4 rounded-xl border-l-4 border-l-emerald-500 bg-emerald-950/30 border border-emerald-800/70 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                🟢 S2 人机协同推荐方案 (To-Be) 全景最优决策成果
+                            </h2>
+                            <span class="px-2.5 py-0.5 rounded bg-emerald-950 border border-emerald-600 text-emerald-300 text-xs font-semibold mono">
+                                全约束通过 · 最优推荐 (RECOMMENDED)
+                            </span>
+                        </div>
+                        <p class="text-xs text-emerald-200/90 leading-relaxed">
+                            干线 M1 巡回集约闭环（节省 46.0% 里程）；末端 MIP 自适应定容扩容至 1560 格口，150 米便民红线全达标；创新引入 X3 无人车承担微循环驳运与投柜，快递员专注适老精准上门，人工工时断崖式压降 56.1%，年化净节约 117.1 万元（回收期仅 0.38 年）！
+                        </p>
+                        <div class="grid grid-cols-3 gap-2 text-xs">
+                            <div class="bg-slate-900/90 border border-emerald-900/60 p-2.5 rounded-lg">
+                                <span class="text-slate-400 block text-[11px]">年运营总成本</span>
+                                <div class="text-base font-bold text-emerald-400 mono mt-0.5">¥128.6 万元</div>
+                                <span class="text-[10px] text-emerald-300">年净节约 ¥117.1 万元 (-47.7%)</span>
+                            </div>
+                            <div class="bg-slate-900/90 border border-emerald-900/60 p-2.5 rounded-lg">
+                                <span class="text-slate-400 block text-[11px]">全网人工总工时</span>
+                                <div class="text-base font-bold text-emerald-400 mono mt-0.5">54.2 小时</div>
+                                <span class="text-[10px] text-emerald-300">节约 69.3 小时 (-56.1%)</span>
+                            </div>
+                            <div class="bg-slate-900/90 border border-emerald-900/60 p-2.5 rounded-lg">
+                                <span class="text-slate-400 block text-[11px]">未完成件量 / 履约率</span>
+                                <div class="text-base font-bold text-emerald-400 mono mt-0.5">0 件 / 100%</div>
+                                <span class="text-[10px] text-emerald-300">全天清零，零违约风险</span>
+                            </div>
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <span class="text-emerald-300 text-[11px]">🤖 AI 宏观效益诊断：S2 方案实现全生命周期降本减碳，投资回收期仅 0.38 年，具备卓越落地可行性。</span>
+                            <button @click="sendAiMessage('请对亦庄全域现状 (S0) 与人机协同 (S2) 优化方案进行全景效益诊断：深度对比干线里程、总成本节约、减碳排效果与投资回收期'); showAiDrawer = true"
+                                    class="px-2.5 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-semibold transition shrink-0 text-xs shadow-sm">
+                                <span>AI 深度诊断报告 →</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-else class="glass-panel p-4 rounded-xl border-l-4 border-l-cyan-600 space-y-2">
                         <div class="flex justify-between items-center">
                             <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-2">
-                                 现状诊断 (As-Is) vs 优化协同方案 (To-Be) 全景对比
+                                🔵 现状 S0 vs 人机协同 S2 同屏叠图全景对比 (Diff View)
                             </h2>
                             <span class="px-2.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300 text-xs font-semibold mono">
                                 {{ improvementText('annual_cost') }} · {{ improvementText('annual_carbon') }}
                             </span>
                         </div>
                         <p class="text-xs text-slate-300 leading-relaxed">
-                            基于同一版五社区模型数据与显式标注的情景假设，严谨对比基准现状 S0 与人机协同 S2。干线采用 M1 巡回集约闭环，末端采用 MIP 自适应定容与人机时空协同。
+                            同屏叠图穿透比对基准现状 S0 与人机协同 S2。干线采用 M1 巡回集约闭环，末端采用 MIP 自适应定容与人机时空协同。
                         </p>
+                        <div class="p-3 rounded-lg bg-cyan-950/40 border border-cyan-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <span class="text-cyan-300 text-[11px]">🤖 AI 全景宏观决策研判：对比 S0/S1/S2 三阶段在降本、减碳、工时压降与投资回收期维度的系统级效益。</span>
+                            <button @click="sendAiMessage('请对亦庄全域现状 (S0) 与人机协同 (S2) 优化方案进行全景效益诊断'); showAiDrawer = true"
+                                    class="px-3 py-1.5 rounded-lg bg-cyan-700 hover:bg-cyan-600 text-white font-semibold transition shrink-0 flex items-center gap-1 shadow-sm">
+                                <span>AI 宏观效益深度诊断 →</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 《现状诊断 vs 优化方案 六大核心指标对照全景卡片》 -->
@@ -346,17 +550,17 @@
                                     <span class="diff-badge-down">S2 改善 {{ improvementText('trunk_distance') }}</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-800">
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s0')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-rose-400 font-semibold block"> S0 现状</span>
                                         <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('trunk_distance', 's0', 1, 2) }} <span class="text-[10px] text-slate-400">km</span></div>
                                         <span class="text-[10px] text-slate-400 block truncate">独立往返空驶</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s1')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-amber-400 font-semibold block"> S1 设施优化</span>
                                         <div class="text-base font-bold text-amber-400 mono mt-0.5">{{ metricValue('trunk_distance', 's1', 1, 2) }} <span class="text-[10px] text-slate-400">km</span></div>
                                         <span class="text-[10px] text-amber-300 block truncate">巡回闭环 -46%</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s2')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-emerald-400 font-semibold block"> S2 人机协同</span>
                                         <div class="text-base font-bold text-emerald-400 mono mt-0.5">{{ metricValue('trunk_distance', 's2', 1, 2) }} <span class="text-[10px] text-slate-400">km</span></div>
                                         <span class="text-[10px] text-emerald-300 block truncate">同巡回 -46%</span>
@@ -380,17 +584,17 @@
                                     <span class="diff-badge-down">S2 改善 {{ improvementText('courier_walk_distance') }}</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-800">
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s0')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-rose-400 font-semibold block"> S0 现状</span>
                                         <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('courier_walk_distance', 's0', 1, 2) }} <span class="text-[10px] text-slate-400">km</span></div>
                                         <span class="text-[10px] text-slate-400 block truncate">未覆盖大比例</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s1')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-amber-400 font-semibold block"> S1 设施优化</span>
                                         <div class="text-base font-bold text-amber-400 mono mt-0.5">{{ metricValue('courier_walk_distance', 's1', 1, 2) }} <span class="text-[10px] text-slate-400">km</span></div>
                                         <span class="text-[10px] text-rose-300 block truncate">全人工补货+68%</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s2')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-emerald-400 font-semibold block"> S2 人机协同</span>
                                         <div class="text-base font-bold text-emerald-400 mono mt-0.5">{{ metricValue('courier_walk_distance', 's2', 1, 2) }} <span class="text-[10px] text-slate-400">km</span></div>
                                         <span class="text-[10px] text-emerald-300 block truncate">仅精准上门 -1.9%</span>
@@ -414,17 +618,17 @@
                                     <span class="diff-badge-down">S2 改善 {{ improvementText('labor_hours') }}</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-800">
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s0')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-rose-400 font-semibold block"> S0 现状</span>
                                         <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('labor_hours', 's0', 1, 1) }} <span class="text-[10px] text-slate-400">h</span></div>
                                         <span class="text-[10px] text-rose-400 block truncate">严重过载超时</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s1')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-amber-400 font-semibold block"> S1 设施优化</span>
                                         <div class="text-base font-bold text-amber-400 mono mt-0.5">{{ metricValue('labor_hours', 's1', 1, 1) }} <span class="text-[10px] text-slate-400">h</span></div>
                                         <span class="text-[10px] text-amber-300 block truncate">设施优化 -46.7%</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s2')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-emerald-400 font-semibold block"> S2 人机协同</span>
                                         <div class="text-base font-bold text-emerald-400 mono mt-0.5">{{ metricValue('labor_hours', 's2', 1, 1) }} <span class="text-[10px] text-slate-400">h</span></div>
                                         <span class="text-[10px] text-emerald-300 block truncate">协同推荐 -56.1%</span>
@@ -448,17 +652,17 @@
                                     <span class="diff-badge-eliminated">S2 改善 100%</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-800">
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s0')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-rose-400 font-semibold block"> S0 现状</span>
                                         <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('unfinished_packages', 's0', 1, 1) }} <span class="text-[10px] text-slate-400">件</span></div>
                                         <span class="text-[10px] text-rose-400 block truncate">约束违反 INFEASIBLE</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s1')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-amber-400 font-semibold block"> S1 设施优化</span>
                                         <div class="text-base font-bold text-amber-400 mono mt-0.5">{{ metricValue('unfinished_packages', 's1', 1, 1) }} <span class="text-[10px] text-slate-400">件</span></div>
                                         <span class="text-[10px] text-emerald-300 block truncate">满足容量约束</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s2')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-emerald-400 font-semibold block"> S2 人机协同</span>
                                         <div class="text-base font-bold text-emerald-400 mono mt-0.5">{{ metricValue('unfinished_packages', 's2', 1, 1) }} <span class="text-[10px] text-slate-400">件</span></div>
                                         <span class="text-[10px] text-emerald-300 block truncate">全天履约清零</span>
@@ -482,17 +686,17 @@
                                     <span class="diff-badge-down">S2 改善 {{ improvementText('annual_cost') }}</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-800">
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s0')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-rose-400 font-semibold block"> S0 现状</span>
                                         <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('annual_cost', 's0', 10000, 1) }} <span class="text-[10px] text-slate-400">万</span></div>
                                         <span class="text-[10px] text-slate-400 block truncate">高额超时薪酬</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s1')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-amber-400 font-semibold block"> S1 设施优化</span>
                                         <div class="text-base font-bold text-amber-400 mono mt-0.5">{{ metricValue('annual_cost', 's1', 10000, 1) }} <span class="text-[10px] text-slate-400">万</span></div>
                                         <span class="text-[10px] text-amber-300 block truncate">年省 96.93 万</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s2')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-emerald-400 font-semibold block"> S2 人机协同</span>
                                         <div class="text-base font-bold text-emerald-400 mono mt-0.5">{{ metricValue('annual_cost', 's2', 10000, 1) }} <span class="text-[10px] text-slate-400">万</span></div>
                                         <span class="text-[10px] text-emerald-300 block truncate">年省 117.06 万</span>
@@ -516,17 +720,17 @@
                                     <span class="diff-badge-down">S2 vs S1 -13.1%</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-800">
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s0')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-rose-400 font-semibold block"> S0 现状</span>
                                         <div class="text-base font-bold text-rose-400 mono mt-0.5">{{ metricValue('annual_carbon', 's0', 1, 0) }} <span class="text-[10px] text-slate-400">kg</span></div>
                                         <span class="text-[10px] text-slate-400 block truncate">仅完成43%件量</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s1')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-amber-400 font-semibold block"> S1 设施优化</span>
                                         <div class="text-base font-bold text-amber-400 mono mt-0.5">{{ metricValue('annual_carbon', 's1', 1, 0) }} <span class="text-[10px] text-slate-400">kg</span></div>
                                         <span class="text-[10px] text-amber-300 block truncate">全履约燃油+柜体</span>
                                     </div>
-                                    <div class="bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                    <div :class="schemeCardClass('s2')" class="p-1.5 rounded border">
                                         <span class="text-[11px] text-emerald-400 font-semibold block"> S2 人机协同</span>
                                         <div class="text-base font-bold text-emerald-400 mono mt-0.5">{{ metricValue('annual_carbon', 's2', 1, 0) }} <span class="text-[10px] text-slate-400">kg</span></div>
                                         <span class="text-[10px] text-emerald-300 block truncate">电动无人车低碳</span>
@@ -550,7 +754,7 @@
                                 S2 新增设备投入（无人配送车与扩容智能柜）与年度现金 OPEX 节约由统一评价程序核算。
                             </p>
                         </div>
-                        <div class="text-right pl-4">
+                        <div class="text-right pl-4 pr-24 shrink-0 whitespace-nowrap">
                             <div class="text-2xl font-black text-amber-400 mono">{{ comparisonMetric('payback_years')?.value ?? '—' }} <span class="text-xs font-normal text-slate-300">年</span></div>
                             <div class="text-xs text-emerald-400 font-medium">静态投资回收期具有极高可行性</div>
                         </div>
@@ -781,18 +985,18 @@
                             </div>
                         </div>
 
-                        <!-- 《综合效益多维雷达图》 与 《年运营成本与碳减排对比柱状图》 -->
-                        <div :class="viewMode === 'wide' ? 'xl:col-span-6' : ''" class="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full">
-                            <div class="glass-panel p-3.5 rounded-xl space-y-2 flex flex-col justify-between">
-                                <span class="text-xs font-bold text-slate-200 flex items-center gap-1"> 综合效益多维雷达</span>
-                                <div id="chart-comp-radar" class="w-full h-56"></div>
-                                <div class="text-xs text-slate-400 text-center border-t border-slate-800 pt-1">现状灰色基准 vs 优化青色覆盖</div>
-                            </div>
-                            <div class="glass-panel p-3.5 rounded-xl space-y-2 flex flex-col justify-between">
-                                <span class="text-xs font-bold text-slate-200 flex items-center gap-1"> 运营成本与运营碳排</span>
-                                <div id="chart-comp-cost" class="w-full h-56"></div>
-                                <div class="text-xs text-slate-400 text-center border-t border-slate-800 pt-1">{{ improvementText('annual_cost') }} | {{ improvementText('annual_carbon') }}</div>
-                            </div>
+                        <!-- 《综合效益多维雷达图》 -->
+                        <div :class="viewMode === 'wide' ? 'xl:col-span-6' : ''" class="glass-panel p-3.5 rounded-xl space-y-2 flex flex-col justify-between">
+                            <span class="text-xs font-bold text-slate-200 flex items-center gap-1"> 综合效益多维雷达</span>
+                            <div id="chart-comp-radar" class="w-full h-64"></div>
+                            <div class="text-xs text-slate-400 text-center border-t border-slate-800 pt-1">现状灰色基准 vs 优化青色覆盖</div>
+                        </div>
+
+                        <!-- 《年运营成本与碳减排对比图》: occupies the full workbench width in split mode. -->
+                        <div :class="viewMode === 'wide' ? 'xl:col-span-12' : 'xl:col-span-2'" class="glass-panel p-4 rounded-xl space-y-2 flex flex-col justify-between">
+                            <span class="text-xs font-bold text-slate-200 flex items-center gap-1"> 运营成本与运营碳排</span>
+                            <div id="chart-comp-cost" class="w-full h-64"></div>
+                            <div class="text-xs text-slate-400 text-center border-t border-slate-800 pt-1">{{ improvementText('annual_cost') }} | {{ improvementText('annual_carbon') }}</div>
                         </div>
                     </div>
 
@@ -874,6 +1078,22 @@
                         <p class="text-xs text-slate-300 leading-relaxed">
                             依托亦庄 5 大典型社区的真实样本边界、设施与路网拓扑，构建“分拨中心 (HUB)—社区接驳点—智能柜/楼栋”三级协同网络。
                         </p>
+
+                        <!-- AI 空间数字孪生微观画像与路网拓扑分析卡片 -->
+                        <div class="p-3 rounded-lg bg-cyan-950/40 border border-cyan-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <div class="space-y-0.5">
+                                <span class="font-bold text-cyan-300 flex items-center gap-1.5">
+                                    <span>🤖</span> AI 空间数字孪生拓扑与路网健康度画像
+                                </span>
+                                <p class="text-slate-400 text-[11px]">
+                                    AI 深度解析亦庄 5 大样本社区的空间物理拓扑、干线巡回回路集约度与路口微循环拥堵阻抗。
+                                </p>
+                            </div>
+                            <button @click="sendAiMessage('请对亦庄示范区 5 大社区的空间数字孪生底座与 M1 干线巡回网络进行深度学术解读：分析三级网络拓扑结构、干线消除往返折返的机理以及空间特征矩阵的典型代表性'); showAiDrawer = true"
+                                    class="px-3 py-1.5 rounded-lg bg-cyan-700 hover:bg-cyan-600 text-white font-semibold transition shrink-0 flex items-center gap-1 shadow-sm">
+                                <span>AI 解读空间拓扑特征 →</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Tab 1 主体内容响应式双列布局 -->
@@ -1017,6 +1237,22 @@
                         <p class="text-xs text-slate-300">
                             结合空间特征先验参数与 Logit 服务方式效用函数，实现宏观户数强度向微观楼栋、时段与交付模式的精准映射。
                         </p>
+
+                        <!-- AI 预测洞察与多尺度客群偏好分析卡片 -->
+                        <div class="p-3 rounded-lg bg-cyan-950/40 border border-cyan-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <div class="space-y-0.5">
+                                <span class="font-bold text-cyan-300 flex items-center gap-1.5">
+                                    <span>🤖</span> AI 时序特征洞察与预测可信度评估
+                                </span>
+                                <p class="text-slate-400 text-[11px]">
+                                    结合贝叶斯分位数（P50/P80/P90）与六时段波动，AI 自动核验峰值溢出风险与适老化偏好。
+                                </p>
+                            </div>
+                            <button @click="sendAiMessage('请对当前社区（' + (planResult.community_name || selectedCommunityId) + '）的需求预测结果进行深度学术与业务洞察：分析户均需求强度、送货上门比例、分时段压力与大促抗冲击冗余设计'); showAiDrawer = true"
+                                    class="px-3 py-1.5 rounded-lg bg-cyan-700 hover:bg-cyan-600 text-white font-semibold transition shrink-0 flex items-center gap-1 shadow-sm">
+                                <span>AI 深度解析预测特征 →</span>
+                            </button>
+                        </div>
 
                         <div class="grid grid-cols-3 gap-3 text-xs pt-1">
                             <div class="bg-slate-800 p-3 rounded-lg">
@@ -1198,6 +1434,22 @@
                             针对仿真中暴露的“自提峰值超单柜容量”瓶颈，建立混合整数规划定容模型，自适应决策基础主柜与扩容副柜配比。
                         </p>
 
+                        <!-- AI 选址定容自适应合规与容量诊断卡片 -->
+                        <div class="p-3 rounded-lg bg-cyan-950/40 border border-cyan-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <div class="space-y-0.5">
+                                <span class="font-bold text-cyan-300 flex items-center gap-1.5">
+                                    <span>🤖</span> AI 设施选址与定容合规自诊断
+                                </span>
+                                <p class="text-slate-400 text-[11px]">
+                                    AI 自动检验 150 米便民生活圈红线、加权步行成本与主副柜动态改扩建投资回报。
+                                </p>
+                            </div>
+                            <button @click="sendAiMessage('请对当前社区（' + (planResult.community_name || selectedCommunityId) + '）的选址定容 MIP 求解结果进行合规自诊断：评估 150 米便民红线覆盖率、智能柜容量峰值溢出概率与改扩建投资经济性'); showAiDrawer = true"
+                                    class="px-3 py-1.5 rounded-lg bg-cyan-700 hover:bg-cyan-600 text-white font-semibold transition shrink-0 flex items-center gap-1 shadow-sm">
+                                <span>AI 校验设施容量与风险 →</span>
+                            </button>
+                        </div>
+
                         <div class="grid grid-cols-3 gap-3 text-xs pt-1">
                             <div class="bg-slate-800 p-3 rounded-lg">
                                 <span class="text-slate-400">自提总需求</span>
@@ -1375,6 +1627,22 @@
                             分工机制：无人车承担干线接驳与社区内巡航投柜；快递员专注服务精准上门子集，实现人机高效协同接驳。
                         </p>
 
+                        <!-- AI 人机协同两阶段时效与负荷自诊断卡片 -->
+                        <div class="p-3 rounded-lg bg-cyan-950/40 border border-cyan-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <div class="space-y-0.5">
+                                <span class="font-bold text-cyan-300 flex items-center gap-1.5">
+                                    <span>🤖</span> AI 人车协同作业时效与负荷均衡自诊断
+                                </span>
+                                <p class="text-slate-400 text-[11px]">
+                                    AI 自动核算两阶段交接等待时差、X3 无人车动态换电续航安全余量与骑手疲劳度指数。
+                                </p>
+                            </div>
+                            <button @click="sendAiMessage('请对当前社区（' + (planResult.community_name || selectedCommunityId) + '）的人机协同调度方案进行深度评估：分析无人车网格化接驳效能、换电续航冗余、骑手适老上门服务工时压降与劳动强度'); showAiDrawer = true"
+                                    class="px-3 py-1.5 rounded-lg bg-cyan-700 hover:bg-cyan-600 text-white font-semibold transition shrink-0 flex items-center gap-1 shadow-sm">
+                                <span>AI 评估人车协同效能 →</span>
+                            </button>
+                        </div>
+
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs pt-1">
                             <div class="bg-slate-800 p-3 rounded-lg">
                                 <span class="text-slate-400">无人车巡航里程</span>
@@ -1543,6 +1811,22 @@
                             </button>
                             <button @click="switchSimScenario('disruption')" :class="simScenario === 'disruption' ? 'bg-rose-700 text-white font-bold shadow-sm' : 'bg-slate-800 text-slate-300 hover:text-white'" class="px-2.5 py-1 rounded text-xs transition">
                                  取件滞后扰动 (D-L)
+                            </button>
+                        </div>
+
+                        <!-- AI 动态仿真对抗与系统鲁棒性压力研判卡片 -->
+                        <div class="p-3 rounded-lg bg-cyan-950/40 border border-cyan-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <div class="space-y-0.5">
+                                <span class="font-bold text-cyan-300 flex items-center gap-1.5">
+                                    <span>🤖</span> AI 动态仿真对抗与系统鲁棒性压力研判
+                                </span>
+                                <p class="text-slate-400 text-[11px]">
+                                    AI 智能研判当前情景（{{ simScenario === 'normal' ? '普通日基准 1.0x' : simScenario === 'peak' ? '双十一大促高峰 2.0x' : '取件滞后扰动 D-L' }}）下的全网工时减负率、智能柜容量峰值溢出红线与系统抗冲击鲁棒弹性。
+                                </p>
+                            </div>
+                            <button @click="sendAiMessage('请对当前动态仿真推演情景（' + (simScenario === 'normal' ? '普通日基准 1.0x' : simScenario === 'peak' ? '双十一高峰 2.0x' : '取件滞后扰动 D-L') + '）进行多智能体压力测试深度研判：分析三大方案（现状人工 vs 优化人工 vs 人机协同）的工时压降、柜体满柜风险与极限抗压弹性'); showAiDrawer = true"
+                                    class="px-3 py-1.5 rounded-lg bg-cyan-700 hover:bg-cyan-600 text-white font-semibold transition shrink-0 flex items-center gap-1 shadow-sm">
+                                <span>AI 深度研判仿真压力 →</span>
                             </button>
                         </div>
                     </div>
@@ -1722,44 +2006,183 @@
                     </div>
                 </div>
 
-                <!-- ==================== TAB 6: 应急调度与动态重排 ==================== -->
+                <!-- ==================== TAB 6: AI 多智能体应急调度与动态重排中枢 ==================== -->
                 <div v-if="activeTab === 'copilot' && planResult" class="space-y-4">
-                    <div class="glass-panel p-4 rounded-xl space-y-3 border-l-4 border-l-cyan-600">
-                        <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-2">
-                             应急预案与动态重排
-                        </h2>
-                        <p class="text-xs text-slate-300">
-                            系统具备应对大促暴单、恶劣天气与车辆故障的自适应推理重排机制，保障末端配送高韧性。
-                        </p>
 
-                        <div class="flex gap-2 pt-1">
-                            <button @click="triggerCrisis('SURGE')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-rose-950 border border-rose-700 text-rose-300 hover:bg-rose-900 transition">
-                                 模拟大促暴单满柜
-                            </button>
-                            <button @click="triggerCrisis('WEATHER')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-sky-950 border border-sky-700 text-sky-300 hover:bg-sky-900 transition">
-                                 模拟暴雪道路结冰
-                            </button>
-                            <button @click="triggerCrisis('BREAKDOWN')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-amber-950 border border-amber-700 text-amber-300 hover:bg-amber-900 transition">
-                                 模拟无人车突发故障
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 应急决策显示框 -->
-                    <div v-if="crisisResult" class="glass-panel p-4 rounded-xl border-l-4 border-l-rose-500 space-y-2 animate-fadeIn">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold text-rose-400 flex items-center gap-1.5">
-                                 事件: {{ crisisResult.event_name }}
+                    <!-- 顶部AI赋能横幅 -->
+                    <div class="glass-panel p-4 rounded-xl space-y-2 border-l-4 border-l-cyan-500">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-sm font-bold text-cyan-400 flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                                AI 多智能体动态应急调度中枢 (Autonomous Multi-Agent Crisis Rescheduling Engine)
+                            </h2>
+                            <span class="px-2.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-700/60 text-cyan-300 text-xs font-semibold mono flex items-center gap-1">
+                                模式: {{ aiConfig.mode_status }}
                             </span>
-                            <span class="text-slate-400 mono">{{ crisisResult.timestamp }}</span>
                         </div>
-                        <p class="text-xs text-slate-300 leading-relaxed">{{ crisisResult.description }}</p>
-                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs text-emerald-300 font-mono leading-relaxed mt-2">
-                            {{ crisisResult.decision }}
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            面向超大城市末端复杂扰动，深度融合大模型决策指挥层与多智能体（X3无人车、网格快递员、智能微枢纽）协同机制。当突发暴单、恶劣天气或硬件故障时，实现秒级态势感知、时空冲突推演、自适应分流与工单闭环下发。
+                        </p>
+                    </div>
+
+                    <!-- 4 大突发扰动事件快速推演触发卡片 -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                        <button @click="triggerAiCrisis('SURGE')"
+                            :class="activeCrisisType === 'SURGE' ? 'ring-2 ring-rose-500 bg-rose-950/90' : 'bg-slate-900 hover:bg-slate-800'"
+                            class="p-3 text-left rounded-xl border border-rose-900/60 transition flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-black text-rose-400">大促突发爆柜</span>
+                                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-rose-950 text-rose-300 border border-rose-800 font-mono">CRITICAL</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-1 leading-snug">
+                                    自提激增200%，智能柜动态饱和度超98%
+                                </p>
+                            </div>
+                            <span class="text-[10px] text-rose-300 font-semibold mt-2.5 flex items-center gap-1">
+                                触发 AI 推演 →
+                            </span>
+                        </button>
+
+                        <button @click="triggerAiCrisis('WEATHER')"
+                            :class="activeCrisisType === 'WEATHER' ? 'ring-2 ring-sky-500 bg-sky-950/90' : 'bg-slate-900 hover:bg-slate-800'"
+                            class="p-3 text-left rounded-xl border border-sky-900/60 transition flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-black text-sky-400">暴雪路面结冰</span>
+                                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-sky-950 text-sky-300 border border-sky-800 font-mono">HIGH</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-1 leading-snug">
+                                    路网阻抗折减，无人车限速并防滑避障
+                                </p>
+                            </div>
+                            <span class="text-[10px] text-sky-300 font-semibold mt-2.5 flex items-center gap-1">
+                                触发 AI 推演 →
+                            </span>
+                        </button>
+
+                        <button @click="triggerAiCrisis('BREAKDOWN')"
+                            :class="activeCrisisType === 'BREAKDOWN' ? 'ring-2 ring-amber-500 bg-amber-950/90' : 'bg-slate-900 hover:bg-slate-800'"
+                            class="p-3 text-left rounded-xl border border-amber-900/60 transition flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-black text-amber-400">无人车硬件故障</span>
+                                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-800 font-mono">HIGH</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-1 leading-snug">
+                                    ODD抛出E-502，HUB备用车12分钟接驳
+                                </p>
+                            </div>
+                            <span class="text-[10px] text-amber-300 font-semibold mt-2.5 flex items-center gap-1">
+                                触发 AI 推演 →
+                            </span>
+                        </button>
+
+                        <button @click="triggerAiCrisis('ELDERLY')"
+                            :class="activeCrisisType === 'ELDERLY' ? 'ring-2 ring-emerald-500 bg-emerald-950/90' : 'bg-slate-900 hover:bg-slate-800'"
+                            class="p-3 text-left rounded-xl border border-emerald-900/60 transition flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-black text-emerald-400">老龄化急件激增</span>
+                                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono">MEDIUM</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-1 leading-snug">
+                                    重件上门需求突增，无人车移动中转支援
+                                </p>
+                            </div>
+                            <span class="text-[10px] text-emerald-300 font-semibold mt-2.5 flex items-center gap-1">
+                                触发 AI 推演 →
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- AI 流式多智能体推演决策大屏 -->
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-l-cyan-600 space-y-3">
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-cyan-300">多智能体实时协同推演控制台</span>
+                                <span v-if="crisisStreaming" class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 text-[10px] animate-pulse border border-cyan-700">
+                                    AI 正在推理中...
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button @click="applyRescheduledPlan" class="px-2.5 py-1 rounded bg-emerald-900 hover:bg-emerald-800 text-emerald-200 text-xs font-semibold transition border border-emerald-700">
+                                    下发 AI 调度指令
+                                </button>
+                                <button @click="copyDispatchOrder" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition border border-slate-700">
+                                    复制工单 (JSON)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 推演四阶段流水线指示条 -->
+                        <div class="grid grid-cols-4 gap-1.5 text-center text-[11px] py-1">
+                            <div class="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
+                                1. 异构传感器感知
+                            </div>
+                            <div class="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
+                                2. 连锁瓶颈推演
+                            </div>
+                            <div class="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
+                                3. 多智能体自适应分流
+                            </div>
+                            <div class="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
+                                4. 约束重平衡与指令集
+                            </div>
+                        </div>
+
+                        <!-- 实时推演输出内容区 (Markdown + 打字光标) -->
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs text-slate-200 leading-relaxed max-h-96 overflow-y-auto min-h-[140px]">
+                            <div v-if="crisisStreamText" v-html="renderMarkdown(crisisStreamText)"></div>
+                            <div v-else-if="crisisResult" class="space-y-2">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-bold text-rose-400">事件: {{ crisisResult.event_name }}</span>
+                                    <span class="text-slate-400 mono">{{ crisisResult.timestamp }}</span>
+                                </div>
+                                <p class="text-xs text-slate-300">{{ crisisResult.description }}</p>
+                                <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs text-emerald-300 font-mono leading-relaxed">
+                                    {{ crisisResult.decision }}
+                                </div>
+                            </div>
+                            <div v-else class="text-slate-400 text-center py-6">
+                                请点击上方突发扰动卡片，或在下方输入框中输入指令，启动 AI 多智能体应急调度推演。
+                            </div>
+                            <span v-if="crisisStreaming" class="inline-block w-2 h-4 bg-cyan-400 animate-pulse align-middle ml-1"></span>
+                        </div>
+
+                        <!-- 执行状态通知 -->
+                        <div v-if="crisisExecutionStatus" class="p-2.5 rounded-lg bg-emerald-950/60 border border-emerald-700/60 text-emerald-300 text-xs flex items-center justify-between animate-fadeIn">
+                            <span>{{ crisisExecutionStatus }}</span>
+                            <button @click="crisisExecutionStatus = ''" class="text-emerald-400 hover:text-white">✕</button>
                         </div>
                     </div>
 
-                    <!-- 动态重规划模型原理卡片 -->
+                    <!-- 调度员交互式指令输入框 (视频录制与答辩即席展示) -->
+                    <div class="glass-panel p-4 rounded-xl space-y-2.5">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-200">调度中枢人机交互终端 (Interactive Dispatch Console)</span>
+                            <span class="text-[11px] text-slate-400">支持自由提问与一键快捷指令</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button @click="triggerAiCrisis('SURGE')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700">
+                                ⚡ 暴单自适应分流
+                            </button>
+                            <button @click="triggerAiCrisis('WEATHER')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700">
+                                ❄️ 暴雪全网降级调度
+                            </button>
+                            <button @click="triggerAiCrisis('BREAKDOWN')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700">
+                                🚗 无人车故障备用接驳
+                            </button>
+                            <button @click="sendAiMessage('请对当前社区（' + (planResult.community_name || selectedCommunityId) + '）进行空间微观画像与瓶颈深度诊断')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700">
+                                📊 社区瓶颈AI诊断
+                            </button>
+                            <button @click="sendAiMessage('评估当前人机协同方案相比现状纯人工在碳排放、车辆能耗与OPEX上的量化节约效益')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700">
+                                🌱 绿色减碳效益评估
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 动态重规划数学模型卡片 (保持与论文第七章一致) -->
                     <div class="glass-panel p-4 rounded-xl space-y-2 border-l-4 border-l-cyan-600">
                         <span class="text-xs font-bold text-cyan-300 flex items-center gap-1">
                              极端扰动下 MILP 热启动自适应重优化机制 (Warm-Start Re-optimization)
@@ -1775,7 +2198,12 @@
 
                     <!-- 社区运行诊断报告 -->
                     <div v-if="planResult && planResult.ai_report" class="glass-panel p-4 rounded-xl space-y-3">
-                        <span class="text-xs font-bold text-slate-200">社区运行诊断报告</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-200">社区运行诊断报告 (AI Academic Diagnostic Report)</span>
+                            <button @click="sendAiMessage('请对当前社区（' + (planResult.community_name || selectedCommunityId) + '）做进一步详细的数智化与绿色化优化策略分析')" class="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                                让 AI 深入解读 →
+                            </button>
+                        </div>
                         <div class="ai-report text-xs text-slate-300 leading-relaxed bg-slate-950 p-4 rounded-lg border border-slate-800 max-h-80 overflow-y-auto" v-html="renderMarkdown(planResult.ai_report)"></div>
                     </div>
                 </div>
@@ -2444,62 +2872,283 @@
         </div>
 
 
-        <!-- Built-in Recording Guide -->
-        <button class="guide-fab" @click="showGuide = true" aria-label="打开录屏演示向导">
-            <span>演示向导</span>
-        </button>
-
-        <div v-if="showGuide" class="guide-overlay" @click.self="showGuide = false" role="dialog" aria-modal="true" aria-label="录屏演示向导">
-            <div class="guide-dialog">
-                <header class="guide-header">
-                    <div>
-                        <span class="guide-kicker">RECORDING PLAYBOOK</span>
-                        <h2>前端录屏演示向导</h2>
-                        <p>按推荐顺序切换功能，右侧给出讲解重点和镜头建议。</p>
+        <!-- ========================================== -->
+        <!-- 全局 AI 智能调度中枢抽屉 (AI Copilot Drawer) -->
+        <!-- ========================================== -->
+        <div v-if="showAiDrawer" class="ai-drawer-overlay" @click.self="toggleAiDrawer">
+            <aside class="ai-drawer-panel" role="dialog" aria-modal="true" aria-label="AI 智能调度中枢">
+                <!-- Header -->
+                <header class="ai-drawer-header">
+                    <div class="ai-drawer-title-group">
+                        <div class="flex items-center gap-2">
+                            <span class="ai-pulse-indicator"></span>
+                            <h2 class="ai-drawer-title">AI 智能调度中枢</h2>
+                            <span class="ai-badge-engine" :title="aiConfig.mode_status">
+                                {{ aiConfig.provider === 'custom' ? '自定义 LLM' : (aiConfig.has_key ? '云端大模型在线' : '离线极速引擎') }}
+                            </span>
+                        </div>
+                        <p class="ai-drawer-subtitle">
+                            基于 2E-MDVRPTW-DC 运筹底座与大模型协同决策流水线
+                        </p>
                     </div>
-                    <button class="guide-close" @click="showGuide = false" aria-label="关闭演示向导">×</button>
-                </header>
-                <div class="guide-layout">
-                    <nav class="guide-step-list" aria-label="演示步骤">
-                        <button v-for="(step, index) in guideSteps" :key="step.code"
-                            @click="guideStepIndex = index"
-                            :class="guideStepIndex === index ? 'is-active' : ''">
-                            <span>{{ step.code }}</span>
-                            <div>
-                                <strong>{{ step.title }}</strong>
-                                <small>{{ step.duration }}</small>
-                            </div>
+                    <div class="flex items-center gap-2">
+                        <!-- Quick Capability Switcher -->
+                        <div class="hidden sm:flex items-center bg-slate-950/80 p-0.5 rounded-lg border border-slate-800 text-[11px]">
+                            <button v-for="mode in aiQuickModes" :key="mode.key"
+                                    @click="switchAiModel(mode.model)"
+                                    :class="aiConfig.model === mode.model ? 'bg-cyan-700 text-white font-bold shadow-sm' : 'text-slate-400 hover:text-white'"
+                                    class="px-2 py-0.5 rounded transition flex items-center gap-1"
+                                    :title="mode.description + ' · ' + mode.model">
+                                {{ mode.icon }} {{ mode.label }}
+                            </button>
+                        </div>
+                        <button @click="showAiConfigModal = true" class="ai-btn-icon" title="配置 API 与模型参数" aria-label="配置 API">
+                            ⚙️
                         </button>
-                    </nav>
-                    <section class="guide-detail">
-                        <div class="guide-detail-head">
-                            <span>STEP {{ guideSteps[guideStepIndex].code }}</span>
-                            <span>{{ guideSteps[guideStepIndex].duration }}</span>
-                        </div>
-                        <h3>{{ guideSteps[guideStepIndex].title }}</h3>
-                        <p class="guide-narration">{{ guideSteps[guideStepIndex].narration }}</p>
-                        <div class="guide-block">
-                            <strong>镜头与操作</strong>
-                            <ul>
-                                <li v-for="tip in guideSteps[guideStepIndex].tips" :key="tip">{{ tip }}</li>
-                            </ul>
-                        </div>
-                        <div class="guide-block guide-output">
-                            <strong>结果说明</strong>
-                            <p>{{ guideSteps[guideStepIndex].result }}</p>
-                        </div>
-                        <div class="guide-actions">
-                            <button @click="showGuide = false">留在当前页</button>
-                            <button class="primary" @click="applyGuideStep(guideStepIndex)">应用此步骤并跳转</button>
-                        </div>
-                    </section>
+                        <button @click="aiDrawerMessages = [{ role: 'assistant', content: '上下文已重置。我已重新接入实时态势数据，请问有什么可以协助您？', time: '刚刚' }]" class="ai-btn-icon" title="清空对话记录" aria-label="清空记录">
+                            🗑️
+                        </button>
+                        <button @click="toggleAiDrawer" class="ai-btn-close" aria-label="关闭 AI 调度中枢">
+                            ✕
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Context Status Ribbon -->
+                <div class="ai-context-ribbon">
+                    <div class="flex items-center justify-between text-[11px] mono text-slate-300">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                            <span>{{ planResult?.community_name || selectedCommunityId }}</span>
+                            <span class="text-slate-500">|</span>
+                            <span>情景: {{ currentScenario }}</span>
+                            <span class="text-slate-500">|</span>
+                            <span>方案: {{ schemeMode.toUpperCase() }}</span>
+                        </span>
+                        <span class="text-cyan-400 font-semibold">
+                            双引擎协同响应中
+                        </span>
+                    </div>
                 </div>
+
+                <!-- Messages Feed -->
+                <div class="ai-drawer-messages" id="aiDrawerMessages" ref="aiDrawerScroll">
+                    <template v-for="(msg, idx) in aiDrawerMessages" :key="idx">
+                        <div v-if="msg.content || msg.role === 'user' || (msg.role === 'assistant' && aiLoading && idx === aiDrawerMessages.length - 1)"
+                             :class="['ai-message-row', msg.role === 'user' ? 'is-user' : 'is-assistant']">
+                            <div class="ai-avatar">
+                                {{ msg.role === 'user' ? '调度员' : 'AI' }}
+                            </div>
+                            <div class="ai-bubble">
+                                <div class="ai-bubble-meta">
+                                    <span>{{ msg.role === 'user' ? '指挥中心操作员' : 'Logistics Copilot Agent' }}</span>
+                                    <time>{{ msg.time || '刚刚' }}</time>
+                                </div>
+                                <div v-if="msg.content" class="ai-bubble-body markdown-body">
+                                    <div v-html="renderMarkdown(msg.content)"></div>
+                                    <span v-if="aiLoading && idx === aiDrawerMessages.length - 1" class="inline-block w-1.5 h-3.5 bg-cyan-400 animate-pulse align-middle ml-1"></span>
+                                </div>
+                                <div v-else-if="msg.role === 'assistant' && aiLoading && idx === aiDrawerMessages.length - 1" class="ai-bubble-body ai-thinking-state">
+                                    <span class="ai-spinner-sm"></span>
+                                    <span>正在综合实时遥测与运筹约束，生成正式调度建议…</span>
+                                </div>
+                                <div v-if="msg.role === 'assistant' && msg.content" class="ai-bubble-actions">
+                                    <button @click="copyDispatchOrder(msg.content)" class="ai-action-btn">
+                                        📋 复制回答
+                                    </button>
+                                    <button v-if="msg.content.includes('工单') || msg.content.includes('调度指令')"
+                                            @click="applyRescheduledPlan" class="ai-action-btn is-primary">
+                                        🚀 采纳并执行调度
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                </div>
+
+                <!-- Quick Prompt Chips -->
+                <div class="ai-prompt-chips">
+                    <button @click="sendAiMessage('对当前社区进行网络瓶颈与人车协同负荷综合诊断')" class="ai-chip">
+                        🔍 诊断社区运行瓶颈
+                    </button>
+                    <button @click="sendAiMessage('分析暴雪冰冻极端场景下，智能柜定容与无人车路径热启动重排方案')" class="ai-chip">
+                        ❄️ 暴雪极端调度重排
+                    </button>
+                    <button @click="sendAiMessage('对比S0基准、S1设施优化与S2人机协同的碳减排量与全周期经济效益')" class="ai-chip">
+                        🌱 碳排与经济效益
+                    </button>
+                    <button @click="sendAiMessage('提炼本项目在“AI赋能超大城市末端配送转型升级”中的创新答辩亮点')" class="ai-chip">
+                        🏆 答辩创新亮点提炼
+                    </button>
+                </div>
+
+                <!-- Input Footer -->
+                <footer class="ai-drawer-footer">
+                    <div class="ai-input-box">
+                        <textarea v-model="aiInput"
+                                  @keydown.enter.exact.prevent="sendAiMessage()"
+                                  placeholder="输入调度指令或咨询AI策略 (Enter发送，Shift+Enter换行)..."
+                                  rows="2"
+                                  :disabled="aiLoading"
+                                  class="ai-textarea"></textarea>
+                        <div class="ai-input-toolbar">
+                            <span class="text-[11px] text-slate-500">
+                                支持 Enter 极速发送 · 端到端安全沙箱
+                            </span>
+                            <button @click="sendAiMessage()"
+                                    :disabled="aiLoading || !aiInput.trim()"
+                                    class="ai-send-btn">
+                                <span v-if="!aiLoading">发送指令</span>
+                                <span v-else class="flex items-center gap-1">
+                                    <span class="ai-spinner-sm"></span> 推理中
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </footer>
+            </aside>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- AI 推理引擎与模型接入配置弹窗 (AI Config Modal) -->
+        <!-- ========================================== -->
+        <div v-if="showAiConfigModal" class="ai-modal-overlay" @click.self="showAiConfigModal = false" role="dialog" aria-modal="true" aria-label="AI 大模型引擎设置">
+            <div class="ai-modal-dialog">
+                <header class="ai-modal-header">
+                    <div>
+                        <div class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">AI Copilot Settings</div>
+                        <h2 class="text-base font-bold text-slate-100 flex items-center gap-2 mt-0.5">
+                            AI 推理引擎与模型接入配置
+                        </h2>
+                    </div>
+                    <button @click="showAiConfigModal = false" class="ai-modal-close" aria-label="关闭配置弹窗">×</button>
+                </header>
+
+                <div class="ai-modal-body space-y-4">
+                    <!-- Dual-Engine Architecture Notice -->
+                    <div class="p-3 rounded-xl bg-cyan-950/40 border border-cyan-700/50 text-xs text-slate-300 space-y-1.5">
+                        <div class="font-bold text-cyan-300 flex items-center gap-1.5">
+                            <span>⚡</span> 双引擎高可用协同架构说明
+                        </div>
+                        <p class="leading-relaxed">
+                            系统可接入任意 OpenAI 兼容云端模型完成物流推演；未配置 Key、断网或请求超限时，<b>自动降级至内置运筹智能推演引擎</b>，确保录屏演示不中断。模型选择优先按“极速、推理、旗舰”能力档位展示。
+                        </p>
+                    </div>
+
+                    <!-- Preset Providers Quick Select -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-300">快速预设厂商</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button"
+                                    @click="aiConfigForm.provider = 'siliconflow'; aiConfigForm.base_url = 'https://api.siliconflow.cn/v1'"
+                                    :class="aiConfigForm.provider === 'siliconflow' ? 'border-cyan-500 bg-cyan-950/60 text-cyan-300 font-bold' : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700'"
+                                    class="p-2 rounded-lg border text-xs text-left transition">
+                                <div class="font-semibold">硅基流动</div>
+                                <div class="text-[10px] text-slate-500 truncate">兼容模型接口</div>
+                            </button>
+                            <button type="button"
+                                    @click="aiConfigForm.provider = 'deepseek'; aiConfigForm.base_url = 'https://api.deepseek.com/v1'; aiConfigForm.model = 'deepseek-chat'"
+                                    :class="aiConfigForm.provider === 'deepseek' ? 'border-cyan-500 bg-cyan-950/60 text-cyan-300 font-bold' : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700'"
+                                    class="p-2 rounded-lg border text-xs text-left transition">
+                                <div class="font-semibold">官方兼容接口</div>
+                                <div class="text-[10px] text-slate-500 truncate">OpenAI-compatible</div>
+                            </button>
+                            <button type="button"
+                                    @click="aiConfigForm.provider = 'custom'; aiConfigForm.base_url = 'https://dashscope.aliyuncs.com/compatible-mode/v1'; aiConfigForm.model = 'qwen-plus'"
+                                    :class="aiConfigForm.provider === 'custom' ? 'border-cyan-500 bg-cyan-950/60 text-cyan-300 font-bold' : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700'"
+                                    class="p-2 rounded-lg border text-xs text-left transition">
+                                <div class="font-semibold">自定义服务</div>
+                                <div class="text-[10px] text-slate-500 truncate">自定义 Base URL / Model ID</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Form Inputs -->
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">API Base URL (端点地址)</label>
+                            <input v-model="aiConfigForm.base_url" type="text"
+                                   placeholder="例如: https://api.siliconflow.cn/v1"
+                                   class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:border-cyan-500 focus:outline-none font-mono" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">
+                                API Key (密钥)
+                                <span class="text-[11px] text-slate-500 ml-1">当前状态: {{ aiConfig.masked_key }}</span>
+                            </label>
+                            <input v-model="aiConfigForm.api_key" type="password"
+                                   placeholder="留空则保留现有密钥；不配置将使用极速离线推演引擎"
+                                   class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:border-cyan-500 focus:outline-none font-mono" />
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-medium text-slate-300">Model Name (模型标识)</label>
+                                <button type="button" @click="fetchAvailableModels"
+                                        :disabled="aiModelsLoading"
+                                        class="px-2 py-0.5 rounded bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-600/50 text-cyan-300 text-[11px] font-medium transition flex items-center gap-1">
+                                    <span v-if="aiModelsLoading" class="ai-spinner-sm"></span>
+                                    <span>{{ aiModelsLoading ? '探测中...' : '🔄 自动识别 API 可用模型' }}</span>
+                                </button>
+                            </div>
+
+                            <!-- If models were detected, show model selector dropdown -->
+                            <div v-if="aiDetectedModels.length > 0" class="mb-2">
+                                <select v-model="aiConfigForm.model"
+                                        class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-cyan-500/70 text-xs text-cyan-200 focus:outline-none font-mono">
+                                    <option v-for="m in aiDetectedModels" :key="m.id" :value="m.id" :title="m.id">
+                                        {{ m.name || '可用模型' }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <input v-model="aiConfigForm.model" type="text"
+                                   placeholder="填写服务商提供的真实模型 ID，例如 deepseek-chat / qwen-plus / 自定义模型"
+                                   class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:border-cyan-500 focus:outline-none font-mono" />
+                            <div v-if="aiModelsMessage" class="text-[11px] text-cyan-400 mt-1 flex items-center gap-1">
+                                <span>ℹ️</span> <span>{{ aiModelsMessage }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test Connection Result Feedback -->
+                    <div v-if="aiTestResult"
+                         :class="aiTestResult.success ? 'bg-emerald-950/50 border-emerald-700/60 text-emerald-300' : 'bg-rose-950/50 border-rose-700/60 text-rose-300'"
+                         class="p-3 rounded-lg border text-xs flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <span>{{ aiTestResult.success ? '✅' : '⚠️' }}</span>
+                            <span>{{ aiTestResult.message }}</span>
+                        </span>
+                        <button @click="aiTestResult = null" class="text-xs opacity-75 hover:opacity-100">✕</button>
+                    </div>
+                </div>
+
+                <footer class="ai-modal-footer">
+                    <button type="button" @click="testAiConnection"
+                            :disabled="aiTestLoading"
+                            class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium transition flex items-center gap-1.5">
+                        <span v-if="aiTestLoading" class="ai-spinner-sm"></span>
+                        <span>{{ aiTestLoading ? '连通性测试中...' : '测试 API 连接' }}</span>
+                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="showAiConfigModal = false"
+                                class="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs transition">
+                            取消
+                        </button>
+                        <button type="button" @click="saveAiConfig"
+                                class="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition shadow-sm">
+                            保存配置
+                        </button>
+                    </div>
+                </footer>
             </div>
         </div>
 
     </div>
 
     <!-- Vue App Script (Local) -->
-    <script src="/static/app.js?v=20260923-19"></script>
+    <script src="/static/app.js?v=20260923-33"></script>
 </body>
 </html>

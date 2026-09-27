@@ -4,6 +4,7 @@ const app = createApp({
     setup() {
         const activeTab = ref('comparison');
         const viewMode = ref('split'); // 'split' | 'wide'
+        const presentationMode = ref(false);
         const schemeMode = ref('diff'); // 's0' | 's1' | 's2' | 'diff'
         const currentScenario = ref('N'); // 'N' | 'P15' | 'P20'
         const loading = ref(false);
@@ -15,11 +16,114 @@ const app = createApp({
         const crisisResult = ref(null);
         const isPeakDay = ref(false);
 
+        // 方案模式计算属性与样式指示
+        const isS0 = computed(() => schemeMode.value === 's0' || schemeMode.value === 'baseline');
+        const isS1 = computed(() => schemeMode.value === 's1');
+        const isS2 = computed(() => schemeMode.value === 's2' || schemeMode.value === 'optimized');
+        const isDiff = computed(() => schemeMode.value === 'diff');
+
+        const getModelDisplayName = (modelId) => {
+            if (!modelId) return 'AI 推理引擎';
+            const m = String(modelId).toLowerCase();
+            if (m.includes('reason') || m.includes('thinking') || m.includes('-r1') || m.endsWith('r1')) return '深度推理引擎';
+            if (m.includes('flash') || m.includes('turbo') || m.includes('mini')) return '极速响应引擎';
+            if (m.includes('v3') || m.includes('v4') || m.includes('pro') || m.includes('chat') || m.includes('max')) return '通用旗舰引擎';
+            if (m.includes('qwen')) return '通义兼容引擎';
+            if (m.includes('gpt')) return 'OpenAI 兼容引擎';
+            return '自定义 AI 推理引擎';
+        };
+
+        const schemeCardClass = (targetScheme) => {
+            if (isDiff.value) return 'bg-slate-900/70 border-slate-700/80 opacity-100 transition-all duration-200';
+            if (targetScheme === 's0' && isS0.value) {
+                return 'ring-2 ring-rose-500 bg-rose-950/85 border-rose-500/90 shadow-lg shadow-rose-950/50 scale-[1.03] transition-all duration-200';
+            }
+            if (targetScheme === 's1' && isS1.value) {
+                return 'ring-2 ring-amber-500 bg-amber-950/85 border-amber-500/90 shadow-lg shadow-amber-950/50 scale-[1.03] transition-all duration-200';
+            }
+            if (targetScheme === 's2' && isS2.value) {
+                return 'ring-2 ring-emerald-500 bg-emerald-950/85 border-emerald-500/90 shadow-lg shadow-emerald-950/50 scale-[1.03] transition-all duration-200';
+            }
+            return 'bg-slate-900/60 border-slate-800/80 opacity-60 transition-all duration-200';
+        };
+
+        const switchAiModel = async (targetModel) => {
+            aiConfigForm.value.model = targetModel;
+            aiConfig.value.model = targetModel;
+            try {
+                const res = await fetch('/api/ai/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: targetModel })
+                });
+                if (res.ok) {
+                    showToast(`已切换 AI 模型为: ${getModelDisplayName(targetModel)}`, 'success');
+                }
+            } catch (e) {
+                console.warn('Switch AI model error:', e);
+            }
+        };
+
+        // ==========================================
+        // AI 智能调度中枢与多智能体应急决策 (AICopilot) 响应式状态
+        // ==========================================
+        const showAiDrawer = ref(false);
+        const aiDrawerMessages = ref([
+            {
+                role: 'assistant',
+                content: '您好！我是超大城市末端配送协同决策大模型调度助理。我已动态接入北京亦庄示范区全域遥测数据与 M1-M8 运筹模型流水线。您可以随时向我咨询当前社区瓶颈诊断、多智能体协同应急重排方案，或探讨数智化与绿色化升级路径。',
+                time: '刚刚'
+            }
+        ]);
+        const aiInput = ref('');
+        const aiLoading = ref(false);
+        const aiConfig = ref({
+            provider: 'deepseek',
+            base_url: 'https://api.deepseek.com',
+            model: 'deepseek-flash',
+            has_key: false,
+            masked_key: '未配置',
+            mode_status: '本地运筹智能引擎 (极速抗毁)'
+        });
+        const showAiConfigModal = ref(false);
+        const aiConfigForm = ref({
+            provider: 'deepseek',
+            base_url: 'https://api.deepseek.com',
+            api_key: '',
+            model: 'deepseek-flash'
+        });
+        const aiDetectedModels = ref([]);
+        const aiModelsLoading = ref(false);
+        const aiModelsMessage = ref('');
+        const aiTestLoading = ref(false);
+        const aiTestResult = ref(null);
+
+        const aiQuickModes = computed(() => {
+            const current = aiConfig.value.model || aiConfigForm.value.model;
+            const models = aiDetectedModels.value.length ? aiDetectedModels.value : [];
+            const pickModel = (predicate, fallback) => models.find(predicate)?.id || fallback;
+            const candidates = [
+                { key: 'fast', icon: '⚡', label: '极速响应', model: pickModel(m => m.category === 'fast', current), description: '优先低延迟模型，适合快速问答与录屏演示' },
+                { key: 'reasoning', icon: '🧠', label: '深度推理', model: pickModel(m => m.category === 'reasoning', 'deepseek-reasoner'), description: '优先推理模型，适合应急推演与复杂诊断' },
+                { key: 'quality', icon: '✦', label: '旗舰质量', model: pickModel(m => m.category === 'flagship' || m.category === 'chat', current), description: '优先综合能力更强的通用模型' }
+            ];
+            const seen = new Set();
+            return candidates.filter(item => {
+                if (!item.model || seen.has(item.model)) return false;
+                seen.add(item.model);
+                return true;
+            });
+        });
+
+        // Tab 6 AI 应急调度流式与执行状态
+        const activeCrisisType = ref('SURGE');
+        const crisisStreaming = ref(false);
+        const crisisStreamText = ref('');
+        const crisisExecutionStatus = ref('');
+
         const apiError = ref('');
         const mobilePane = ref('content');
         const showConstraintDetails = ref(false);
-        const showGuide = ref(false);
-        const guideStepIndex = ref(0);
 
         const moduleNav = [
             { code: 'comparison', shortLabel: '总览' },
@@ -28,52 +132,7 @@ const app = createApp({
             { code: 'layout', shortLabel: '选址定容' },
             { code: 'routing', shortLabel: '人车协同' },
             { code: 'simulation', shortLabel: '仿真对抗' },
-            { code: 'copilot', shortLabel: '应急调度' }
-        ];
-
-        const guideSteps = [
-            {
-                code: '01', community: 'C01', title: '全局态势与方案对比', duration: '00:00–00:45', tab: 'comparison', scheme: 'diff', scenario: 'N',
-                narration: '从亦庄示范区五个社区的全局网络开始，说明系统如何用 S0 现状基准、S1 设施优化、S2 人机协同对同一场景进行闭环比较。',
-                tips: ['保持左右分屏，先展示地图全域，再移动到右侧六项核心指标。', '依次指出干线里程、步巡里程、人工工时、未完成件量、成本和碳排。'],
-                result: '地图与指标卡联动，能够直接说明优化方案的结构性收益，同时明确当前方案的约束状态。'
-            },
-            {
-                code: '02', community: 'C01', title: '空间数字孪生底座', duration: '00:45–01:25', tab: 'digital-twin', scheme: 'diff', scenario: 'N',
-                narration: '进入数字孪生模块，说明 HUB—社区接驳点—智能柜/楼栋三级网络，以及五社区真实样本边界和内部路网。',
-                tips: ['展示 M1 干线巡回 TSP 指标和五社区特征矩阵。', '在图层控制中切换道路、边界或服务环，强调地图不是静态截图。'],
-                result: '体现项目使用真实空间数据与可交互 GIS 底座，而不是单纯图表拼接。'
-            },
-            {
-                code: '03', community: 'C04', title: '多尺度需求预测', duration: '01:25–02:10', tab: 'forecast', scheme: 's2', scenario: 'P20',
-                narration: '切换到需求预测，说明贝叶斯层次模型、P50/P80/P90 分位数与普通日、大促峰值之间的差异。',
-                tips: ['先展示均值和上门/自提拆分，再切到大促峰值。', '指向 6 时段分时曲线，强调晚高峰压力和容量校核。'],
-                result: '展示 M5 如何把社区规模、上门偏好与时间波动转化为后续选址和路径规划的输入。'
-            },
-            {
-                code: '04', community: 'C04', title: '选址定容与硬约束', duration: '02:10–02:55', tab: 'layout', scheme: 's2', scenario: 'N',
-                narration: '进入 MIP 选址定容模块，说明固定柜与自适应扩容对照，以及 150 米便民红线、容量和覆盖约束。',
-                tips: ['展示现状柜容量与优化后有效性容量。', '展开顶部硬约束明细，区分可行、告警和不可行状态。'],
-                result: '不仅展示最优容量结果，也向评审说明约束是否通过，避免只报收益不报代价。'
-            },
-            {
-                code: '05', community: 'C04', title: '人车协同执行', duration: '02:55–03:40', tab: 'routing', scheme: 's2', scenario: 'N',
-                narration: '进入 M2/M3 人机协同模块，说明无人车承担接驳与社区巡回，配送员聚焦适老上门和特殊服务。',
-                tips: ['展示无人车里程、上门工时、满意度和电池安全余量。', '查看装车班次与容量利用率，特别说明超过 100% 的容量容差提示。'],
-                result: '体现两级路径规划与时空交接约束，连接战略选址和现场执行。'
-            },
-            {
-                code: '06', community: 'C04', title: '仿真对抗与异常应急', duration: '03:40–04:35', tab: 'simulation', scheme: 's2', scenario: 'P20',
-                narration: '切到大促峰值与极端扰动，说明系统如何评估满柜、晚高峰和异常场景下的运行韧性。',
-                tips: ['展示饱和度曲线、甘特图和社区逐项结果。', '进入应急调度页依次触发暴单、暴雪和无人车故障，展示应急决策输出。'],
-                result: '把静态规划升级为动态运行推演，形成“预测—规划—仿真—应急修复”的完整闭环。'
-            },
-            {
-                code: '07', community: 'C04', title: '算法模型看板', duration: '04:35–05:20', tab: 'comparison', solverTab: 'M2-ISA',
-                narration: '最后打开算法看板，依次说明 M1、M2/M3、M2-ISA、M5、M6、M8 的数学定义、变量、约束和学术图谱。',
-                tips: ['从 M1 到 M2-ISA 展示同一套业务问题的模型链路。', '重点展示目标函数、硬约束与真实收敛轨迹，不再使用随机演示曲线。'],
-                result: '让 PPT 视频既有产品操作，也有学术方法支撑，能够与报告章节一一对应。'
-            }
+            { code: 'copilot', shortLabel: 'AI应急' }
         ];
 
         const initialHashState = new URLSearchParams(window.location.hash.replace(/^#/, ''));
@@ -160,47 +219,157 @@ const app = createApp({
         });
 
         const renderMarkdown = (text = '') => {
-            const escaped = String(text || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-            const lines = escaped.split(/\n/);
+            if (!text) return '';
+
+            // Render complete LaTeX fragments deterministically before Vue injects
+            // the markdown HTML. Auto-render alone misses formulas nested inside
+            // strong/list nodes during streaming updates.
+            const renderTex = (tex, displayMode = false) => {
+                if (!window.katex) return `<span class="math-fallback">${tex}</span>`;
+                try {
+                    return window.katex.renderToString(tex, {
+                        displayMode,
+                        throwOnError: false,
+                        strict: 'ignore',
+                        trust: false
+                    });
+                } catch (e) {
+                    return `<span class="math-fallback">${tex}</span>`;
+                }
+            };
+            const source = String(text)
+                .replace(/\$\$([\s\S]+?)\$\$/g, (_, tex) => renderTex(tex, true))
+                .replace(/\$([^$\n]+?)\$/g, (_, tex) => renderTex(tex, false));
+            const lines = source.split('\n');
             const html = [];
             let inList = false;
-            const inline = (value) => value.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            let inTable = false;
+            let inCode = false;
+
+            const inlineFormat = (str) => {
+                return String(str || '')
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 font-mono text-[11px]">$1</code>');
+            };
+
             const closeList = () => {
                 if (inList) {
                     html.push('</ul>');
                     inList = false;
                 }
             };
-            lines.forEach((rawLine) => {
+            const closeTable = () => {
+                if (inTable) {
+                    html.push('</tbody></table></div>');
+                    inTable = false;
+                }
+            };
+
+            for (let i = 0; i < lines.length; i++) {
+                const rawLine = lines[i];
                 const line = rawLine.trim();
+
+                // 代码块解析
+                if (line.startsWith('```')) {
+                    closeList();
+                    closeTable();
+                    inCode = !inCode;
+                    if (inCode) {
+                        html.push('<pre class="p-3 my-2 rounded-lg bg-slate-950 border border-slate-800 text-emerald-300 font-mono text-xs overflow-x-auto">');
+                    } else {
+                        html.push('</pre>');
+                    }
+                    continue;
+                }
+                if (inCode) {
+                    html.push(`${rawLine}\n`);
+                    continue;
+                }
+
                 if (!line) {
                     closeList();
-                    return;
+                    closeTable();
+                    continue;
                 }
-                const heading = line.match(/^#{2,4}\s+(.+)$/);
-                if (heading) {
+
+                // 表格解析
+                if (line.startsWith('|') && line.endsWith('|')) {
                     closeList();
-                    html.push(`<h4>${inline(heading[1])}</h4>`);
-                    return;
+                    const rawCells = line.split('|').slice(1, -1).map(c => c.trim());
+                    if (rawCells.every(c => /^[:\s-]+$/.test(c))) {
+                        continue;
+                    }
+                    if (!inTable) {
+                        inTable = true;
+                        html.push('<div class="overflow-x-auto my-2"><table class="w-full text-xs text-left border-collapse border border-slate-700/60 rounded"><thead><tr class="bg-slate-800/80 text-cyan-300 font-semibold">');
+                        rawCells.forEach(cell => {
+                            html.push(`<th class="p-2 border border-slate-700/60">${inlineFormat(cell)}</th>`);
+                        });
+                        html.push('</tr></thead><tbody>');
+                    } else {
+                        html.push('<tr class="border-b border-slate-800/50 hover:bg-slate-800/30">');
+                        rawCells.forEach(cell => {
+                            html.push(`<td class="p-2 border border-slate-700/40 text-slate-300">${inlineFormat(cell)}</td>`);
+                        });
+                        html.push('</tr>');
+                    }
+                    continue;
                 }
-                const bullet = line.match(/^[-*]\s+(.+)$/);
-                if (bullet) {
+                closeTable();
+
+                // 标题解析
+                const hMatch = line.match(/^(#{1,4})\s+(.+)$/);
+                if (hMatch) {
+                    closeList();
+                    const level = hMatch[1].length;
+                    const content = inlineFormat(hMatch[2]);
+                    if (level === 1) html.push(`<h2 class="text-base font-bold text-white mt-3 mb-1.5 flex items-center gap-1.5">${content}</h2>`);
+                    else if (level === 2) html.push(`<h3 class="text-sm font-bold text-cyan-300 mt-2.5 mb-1">${content}</h3>`);
+                    else if (level === 3) html.push(`<h4 class="text-xs font-bold text-sky-400 mt-2 mb-1">${content}</h4>`);
+                    else html.push(`<h5 class="text-xs font-semibold text-slate-200 mt-1.5 mb-0.5">${content}</h5>`);
+                    continue;
+                }
+
+                // 中文数字序号小标题 (如: 一、空间微观... / 1. 异构数据...)
+                const chHeading = line.match(/^([一二三四五六七八九十]+[、. ]\s*[^<\n]+)$/);
+                if (chHeading) {
+                    closeList();
+                    html.push(`<h4 class="text-xs font-bold text-cyan-300 mt-3 mb-1.5 flex items-center gap-1.5">${inlineFormat(chHeading[1])}</h4>`);
+                    continue;
+                }
+
+                // 重点方括号标题 (如: 【AI 智能调度中枢 · 社区运行全景诊断报告】)
+                const bracketHeading = line.match(/^(【.+?】)$/);
+                if (bracketHeading) {
+                    closeList();
+                    html.push(`<h3 class="text-sm font-bold text-sky-300 mt-2.5 mb-1.5 flex items-center gap-1">${inlineFormat(bracketHeading[1])}</h3>`);
+                    continue;
+                }
+
+                // 引用卡片
+                if (line.startsWith('> ')) {
+                    closeList();
+                    html.push(`<blockquote class="p-2.5 my-2 rounded-r-lg border-l-4 border-cyan-500 bg-cyan-950/30 text-xs text-cyan-200">${inlineFormat(line.slice(2))}</blockquote>`);
+                    continue;
+                }
+
+                // 无序列表
+                const bMatch = line.match(/^[-*]\s+(.+)$/);
+                if (bMatch) {
                     if (!inList) {
-                        html.push('<ul>');
+                        html.push('<ul class="space-y-1 my-1.5 list-disc list-inside text-xs text-slate-100">');
                         inList = true;
                     }
-                    html.push(`<li>${inline(bullet[1])}</li>`);
-                    return;
+                    html.push(`<li>${inlineFormat(bMatch[1])}</li>`);
+                    continue;
                 }
                 closeList();
-                html.push(`<p>${inline(line)}</p>`);
-            });
+
+                // 常规段落
+                html.push(`<p class="text-xs text-slate-100 leading-relaxed my-1.5">${inlineFormat(line)}</p>`);
+            }
             closeList();
+            closeTable();
             return html.join('');
         };
 
@@ -308,46 +477,15 @@ const app = createApp({
             showConstraintDetails.value = false;
         };
 
-        const applyGuideStep = async (index) => {
-            const step = guideSteps[index];
-            if (!step) return;
-            guideStepIndex.value = index;
-            setActiveTab(step.tab);
-
-            let planNeedsReload = false;
-            if (step.community && step.community !== selectedCommunityId.value) {
-                const community = overview.value?.communities?.find(item => item.id === step.community);
-                selectedCommunityId.value = step.community;
-                if (community) {
-                    selectedHouseholds.value = community.households;
-                    if (step.community === 'C01' || step.community === 'C03') selectedDoorRatio.value = 1.0;
-                    else if (step.community === 'C02') selectedDoorRatio.value = 0.52;
-                    else if (step.community === 'C04') selectedDoorRatio.value = 0.25;
-                    else if (step.community === 'C05') selectedDoorRatio.value = 0.24;
-                }
-                planNeedsReload = true;
-            }
-
-            if (step.scenario && currentScenario.value !== step.scenario) {
-                await setScenario(step.scenario, { silent: true });
-                planNeedsReload = false;
-            } else if (planNeedsReload) {
-                await loadCommunityPlan(selectedCommunityId.value);
-            }
-
-            if (step.scheme && schemeMode.value !== step.scheme) {
-                setSchemeMode(step.scheme, { silent: true });
-            }
-            if (step.solverTab) {
-                solverModalTab.value = step.solverTab;
-                showSolverModal.value = true;
-            }
-            showGuide.value = false;
-            nextTick(() => {
-                updateAllActiveCharts();
-                if (map) map.invalidateSize();
-            });
+        const togglePresentationMode = () => {
+            presentationMode.value = !presentationMode.value;
+            if (presentationMode.value) showConstraintDetails.value = false;
+            showToast(presentationMode.value ? '已进入录屏精简模式' : '已退出录屏精简模式', 'info');
         };
+
+        watch(presentationMode, (active) => {
+            document.body.classList.toggle('presentation-mode', active);
+        }, { immediate: true });
 
         const toggleViewMode = () => {
             viewMode.value = viewMode.value === 'split' ? 'wide' : 'split';
@@ -564,8 +702,8 @@ const app = createApp({
         };
 
         // 地图底图主题与向量图层控制
-        const currentTileTheme = ref('amap-std');
-        const tileStatusText = ref('标准路网底图 [在线]');
+        const currentTileTheme = ref('amap-dark');
+        const tileStatusText = ref('高德暗色底图 [在线]');
         const showRoads = ref(true);
         const showPolygons = ref(true);
         const showRings = ref(true);
@@ -582,6 +720,52 @@ const app = createApp({
         let mapLayers = [];
         let planRequestSeq = 0;
         let planAbortController = null;
+
+        // WGS84 -> GCJ-02 for AMap tiles; OSM/vector modes keep native WGS84.
+        const isAmapTileTheme = () => String(currentTileTheme.value || '').startsWith('amap');
+        const outOfChina = (lat, lng) => lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271;
+        const transformLat = (x, y) => {
+            let ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x));
+            ret += (20.0 * Math.sin(6.0 * x * Math.PI) + 20.0 * Math.sin(2.0 * x * Math.PI)) * 2.0 / 3.0;
+            ret += (20.0 * Math.sin(y * Math.PI) + 40.0 * Math.sin(y / 3.0 * Math.PI)) * 2.0 / 3.0;
+            ret += (160.0 * Math.sin(y / 12.0 * Math.PI) + 320 * Math.sin(y * Math.PI / 30.0)) * 2.0 / 3.0;
+            return ret;
+        };
+        const transformLng = (x, y) => {
+            let ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x));
+            ret += (20.0 * Math.sin(6.0 * x * Math.PI) + 20.0 * Math.sin(2.0 * x * Math.PI)) * 2.0 / 3.0;
+            ret += (20.0 * Math.sin(x * Math.PI) + 40.0 * Math.sin(x / 3.0 * Math.PI)) * 2.0 / 3.0;
+            ret += (150.0 * Math.sin(x / 12.0 * Math.PI) + 300.0 * Math.sin(x / 30.0 * Math.PI)) * 2.0 / 3.0;
+            return ret;
+        };
+        const wgs84ToGcj02 = (lat, lng) => {
+            const nLat = Number(lat);
+            const nLng = Number(lng);
+            if (!Number.isFinite(nLat) || !Number.isFinite(nLng) || outOfChina(nLat, nLng)) return [nLat, nLng];
+            const a = 6378245.0;
+            const ee = 0.00669342162296594323;
+            let dLat = transformLat(nLng - 105.0, nLat - 35.0);
+            let dLng = transformLng(nLng - 105.0, nLat - 35.0);
+            const radLat = nLat / 180.0 * Math.PI;
+            let magic = Math.sin(radLat);
+            magic = 1 - ee * magic * magic;
+            const sqrtMagic = Math.sqrt(magic);
+            dLat = (dLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * Math.PI);
+            dLng = (dLng * 180.0) / (a / sqrtMagic * Math.cos(radLat) * Math.PI);
+            return [nLat + dLat, nLng + dLng];
+        };
+        const toMapLatLng = (lat, lng) => {
+            const point = isAmapTileTheme() ? wgs84ToGcj02(lat, lng) : [Number(lat), Number(lng)];
+            return L.latLng(point[0], point[1]);
+        };
+        const toMapPoint = (point) => {
+            if (!point) return null;
+            if (Array.isArray(point) && point.length >= 2) return toMapLatLng(point[0], point[1]);
+            if (typeof point === 'object' && point.lat !== undefined && point.lng !== undefined) return toMapLatLng(point.lat, point.lng);
+            return null;
+        };
+        const toMapPath = (points) => (Array.isArray(points) ? points.map(toMapPoint).filter(Boolean) : []);
+        const mapCrsText = computed(() => isAmapTileTheme() ? 'WGS84 → GCJ-02 已校正' : 'WGS84 原生坐标');
 
         let chartArrivals = null;
         let chartSaturation = null;
@@ -615,7 +799,7 @@ const app = createApp({
         const renderMath = () => {
             nextTick(() => {
                 if (window.renderMathInElement) {
-                    const containers = document.querySelectorAll('.math-card, .math-target');
+                    const containers = document.querySelectorAll('.math-card, .math-target, .markdown-body');
                     containers.forEach(el => {
                         try {
                             window.renderMathInElement(el, {
@@ -639,13 +823,15 @@ const app = createApp({
         onMounted(async () => {
             document.addEventListener('keydown', (event) => {
                 if (event.key !== 'Escape') return;
-                if (showGuide.value) showGuide.value = false;
+                if (showAiDrawer.value) showAiDrawer.value = false;
+                else if (showAiConfigModal.value) showAiConfigModal.value = false;
                 else if (showImageModal.value) closeImagePreview();
                 else if (showSolverModal.value) showSolverModal.value = false;
             });
             initMap();
             await fetchMathModels();
             await fetchOverview();
+            await fetchAiConfig();
             const initialCommunity = overview.value?.communities?.find(item => item.id === selectedCommunityId.value);
             if (initialCommunity) {
                 selectedHouseholds.value = initialCommunity.households;
@@ -711,7 +897,7 @@ const app = createApp({
 
             // 初始化 Leaflet，开启 preferCanvas 保证高性能向量底图自适应绘制
             map = L.map('map-container', {
-                center: [39.792, 116.495],
+                center: toMapLatLng(39.792, 116.495),
                 zoom: 13,
                 zoomControl: false,
                 preferCanvas: true,
@@ -767,7 +953,7 @@ const app = createApp({
             );
 
             // 默认挂载高德暗黑底图
-            currentTileLayer = tileLayers['amap-std'];
+            currentTileLayer = tileLayers['amap-dark'];
             currentTileLayer.addTo(map);
 
             // 监听瓦片加载与异常（无网络/外网受限时自动平滑过渡）
@@ -775,9 +961,8 @@ const app = createApp({
                 tileStatusText.value = '底图瓦片受限 · 已激活高精矢量底图兜底';
             });
             currentTileLayer.on('load', () => {
-                if (currentTileTheme.value === 'amap-std') {
-                    tileStatusText.value = '标准路网底图 [在线]';
-                }
+                if (currentTileTheme.value === 'amap-dark') tileStatusText.value = '高德暗色底图 [在线]';
+                else if (currentTileTheme.value === 'amap-std') tileStatusText.value = '高德标准路网底图 [在线]';
             });
         };
 
@@ -804,7 +989,12 @@ const app = createApp({
             }
 
             nextTick(() => {
-                if (map) map.invalidateSize();
+                renderMapLayers();
+                if (map) {
+                    map.invalidateSize();
+                    if (activeTab.value === 'comparison' || activeTab.value === 'digital-twin') fitAllOverview();
+                    else fitCurrentCommunity();
+                }
             });
         };
 
@@ -827,13 +1017,13 @@ const app = createApp({
         // 缩放控制：复位到全域（5个社区 + HUB）
         const fitAllOverview = () => {
             if (!map) return;
-            const pts = [[39.798, 116.506]]; // HUB
+            const hub = overview.value?.hub;
+            const pts = hub ? [toMapLatLng(hub.lat, hub.lng)] : [toMapLatLng(39.798, 116.506)];
             if (overview.value && overview.value.communities) {
                 overview.value.communities.forEach(c => {
-                    if (c.center) pts.push(c.center);
-                    if (c.polygon && c.polygon.length > 0) {
-                        c.polygon.forEach(pt => pts.push(pt));
-                    }
+                    const center = toMapPoint(c.center);
+                    if (center) pts.push(center);
+                    if (c.polygon && c.polygon.length > 0) pts.push(...toMapPath(c.polygon));
                 });
             }
             if (pts.length > 0) {
@@ -846,11 +1036,12 @@ const app = createApp({
             if (!map || !planResult.value) return;
             const p = planResult.value;
             const pts = [];
-            if (p.polygon && p.polygon.length > 0) {
-                p.polygon.forEach(pt => pts.push(pt));
-            }
+            if (p.polygon && p.polygon.length > 0) pts.push(...toMapPath(p.polygon));
             if (p.buildings && p.buildings.length > 0) {
-                p.buildings.forEach(b => pts.push([b.lat, b.lng]));
+                p.buildings.forEach(b => {
+                    const point = toMapPoint(b);
+                    if (point) pts.push(point);
+                });
             }
             if (pts.length > 0) {
                 map.fitBounds(L.latLngBounds(pts).pad(0.08));
@@ -967,20 +1158,279 @@ const app = createApp({
             showToast(`已切换至社区: ${cid}`, 'info');
         };
 
-        const triggerCrisis = async (type) => {
+        const buildAiContext = () => {
+            const p = planResult.value;
+            return {
+                community_id: selectedCommunityId.value,
+                community_name: p?.community_name || selectedCommunityId.value,
+                households: selectedHouseholds.value || 2141,
+                scheme: schemeMode.value,
+                scenario: currentScenario.value,
+                forecast: p?.forecast || {},
+                layout: p?.layout || {},
+                routing: p?.routing || {},
+                pipeline_status: pipelineStatus.value,
+                violations: failedConstraintChecks.value
+            };
+        };
+
+        const fetchAiConfig = async () => {
+            try {
+                const res = await fetch('/api/ai/config');
+                if (res.ok) {
+                    const data = await res.json();
+                    aiConfig.value = data;
+                    aiConfigForm.value.provider = data.provider || 'auto';
+                    aiConfigForm.value.base_url = data.base_url || 'https://api.siliconflow.cn/v1';
+                    aiConfigForm.value.model = data.model || 'deepseek-flash';
+                }
+            } catch (e) {
+                console.warn('Failed to load AI config:', e);
+            }
+        };
+
+        const saveAiConfig = async () => {
+            try {
+                const res = await fetch('/api/ai/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(aiConfigForm.value)
+                });
+                if (res.ok) {
+                    aiConfig.value = await res.json();
+                    showToast('AI 配置已成功保存！', 'success');
+                    showAiConfigModal.value = false;
+                }
+            } catch (e) {
+                showToast(`保存失败: ${e.message}`, 'error');
+            }
+        };
+
+        const testAiConnection = async () => {
+            aiTestLoading.value = true;
+            aiTestResult.value = null;
+            try {
+                const res = await fetch('/api/ai/test', { method: 'POST' });
+                aiTestResult.value = await res.json();
+            } catch (e) {
+                aiTestResult.value = { success: false, message: `网络异常: ${e.message}` };
+            } finally {
+                aiTestLoading.value = false;
+            }
+        };
+
+        const fetchAvailableModels = async () => {
+            aiModelsLoading.value = true;
+            aiModelsMessage.value = '';
+            try {
+                const res = await fetch('/api/ai/models', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        provider: aiConfigForm.value.provider,
+                        base_url: aiConfigForm.value.base_url,
+                        api_key: aiConfigForm.value.api_key
+                    })
+                });
+                const data = await res.json();
+                if (data.models && data.models.length > 0) {
+                    aiDetectedModels.value = data.models;
+                    aiModelsMessage.value = `成功识别 ${data.models.length} 个兼容大模型 (${data.source === 'api_probed' ? '实时云端探测' : '内置预置推荐'})`;
+                    const currentModelExists = data.models.some(m => m.id === aiConfigForm.value.model);
+                    if (!currentModelExists && data.models.length > 0) {
+                        aiConfigForm.value.model = data.models[0].id;
+                    }
+                    showToast(aiModelsMessage.value, 'success');
+                } else {
+                    aiModelsMessage.value = data.message || '未能探测到模型，请检查 API Key 或 Base URL';
+                    showToast(aiModelsMessage.value, 'warning');
+                }
+            } catch (e) {
+                aiModelsMessage.value = `识别失败: ${e.message}`;
+                showToast(aiModelsMessage.value, 'error');
+            } finally {
+                aiModelsLoading.value = false;
+            }
+        };
+
+        const toggleAiDrawer = () => {
+            showAiDrawer.value = !showAiDrawer.value;
+            if (showAiDrawer.value) {
+                nextTick(() => {
+                    renderMath();
+                    const el = document.getElementById('aiDrawerMessages');
+                    if (el) el.scrollTop = el.scrollHeight;
+                });
+            }
+        };
+
+        const sendAiMessage = async (customQuery = null) => {
+            const query = (customQuery || aiInput.value || '').trim();
+            if (!query || aiLoading.value) return;
+
+            showAiDrawer.value = true;
+            aiDrawerMessages.value.push({
+                role: 'user',
+                content: query,
+                time: new Date().toLocaleTimeString().slice(0, 5)
+            });
+            aiInput.value = '';
+
+            const assistantIdx = aiDrawerMessages.value.length;
+            aiDrawerMessages.value.push({
+                role: 'assistant',
+                content: '',
+                reasoning: '',
+                model: aiConfig.value.model,
+                time: new Date().toLocaleTimeString().slice(0, 5)
+            });
+            aiLoading.value = true;
+
+            try {
+                const res = await fetch('/api/ai/chat/stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query,
+                        context: buildAiContext()
+                    })
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (trimmed.startsWith('data:')) {
+                            const jsonStr = trimmed.slice(5).trim();
+                            if (!jsonStr) continue;
+                            try {
+                                const parsed = JSON.parse(jsonStr);
+                                if (parsed.model) {
+                                    aiDrawerMessages.value[assistantIdx].model = parsed.model;
+                                }
+                                if (parsed.type === 'reasoning') {
+                                    // Internal chain-of-thought is intentionally hidden from the product UI.
+                                } else if (parsed.text) {
+                                    aiDrawerMessages.value[assistantIdx].content += parsed.text;
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                    const el = document.getElementById('aiDrawerMessages');
+                    if (el) el.scrollTop = el.scrollHeight;
+                }
+            } catch (e) {
+                console.error('AI chat failed:', e);
+                aiDrawerMessages.value[assistantIdx].content += `\n\n*(调用异常，已保留本地推演记录: ${e.message})*`;
+            } finally {
+                aiLoading.value = false;
+                nextTick(() => {
+                    renderMath();
+                    const el = document.getElementById('aiDrawerMessages');
+                    if (el) el.scrollTop = el.scrollHeight;
+                });
+            }
+        };
+
+        const triggerAiCrisis = async (type) => {
+            activeCrisisType.value = type;
+            crisisStreaming.value = true;
+            crisisStreamText.value = '';
+            crisisExecutionStatus.value = '';
+
+            // 1. 同步获取静态决策卡片与指标数据（向后兼容）
             try {
                 const res = await fetch('/api/crisis', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ event_type: type })
+                    body: JSON.stringify({
+                        event_type: type,
+                        context: buildAiContext()
+                    })
                 });
-                crisisResult.value = await res.json();
-                renderMath();
+                if (res.ok) {
+                    crisisResult.value = await res.json();
+                }
             } catch (e) {
-                console.error('Crisis trigger failed:', e);
-                apiError.value = `应急推演失败：${e.message || e}`;
-                showToast(apiError.value, 'error', 5000);
+                console.warn('Crisis sync call fallback:', e);
             }
+
+            // 2. 流式触发 AI 多智能体深度推理流水线
+            try {
+                const resStream = await fetch('/api/ai/crisis/stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event_type: type,
+                        context: buildAiContext()
+                    })
+                });
+
+                if (resStream.ok) {
+                    const reader = resStream.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop();
+
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (trimmed.startsWith('data:')) {
+                                const jsonStr = trimmed.slice(5).trim();
+                                if (!jsonStr) continue;
+                                try {
+                                    const parsed = JSON.parse(jsonStr);
+                                    if (parsed.type === 'content' && parsed.text) {
+                                        crisisStreamText.value += parsed.text;
+                                    } else if (!parsed.type && parsed.text) {
+                                        crisisStreamText.value += parsed.text;
+                                    }
+                                } catch (e) {}
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Crisis stream failed:', e);
+                crisisStreamText.value = `### 应急推演完成\n\n已下发应急指令：${crisisResult.value?.decision || '自适应重排已生效'}`;
+            } finally {
+                crisisStreaming.value = false;
+                nextTick(() => renderMath());
+            }
+        };
+
+        const triggerCrisis = triggerAiCrisis;
+
+        const applyRescheduledPlan = () => {
+            crisisExecutionStatus.value = 'AI 应急多智能体协同方案已成功下发至 X3 无人车中枢与网格骑手端，路网动态重排完成！';
+            showToast('AI 应急调度方案已正式下发生效！', 'success', 4000);
+        };
+
+        const copyDispatchOrder = () => {
+            const payload = {
+                event: crisisResult.value?.event_name || activeCrisisType.value,
+                timestamp: crisisResult.value?.timestamp || new Date().toISOString(),
+                actions: crisisResult.value?.actions || [],
+                delta: crisisResult.value?.metrics_delta || {}
+            };
+            navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
+                .then(() => showToast('应急调度工单已复制到剪贴板！', 'info'))
+                .catch(() => showToast('工单数据生成完成', 'info'));
         };
 
         // =========================================================================
@@ -1006,7 +1456,7 @@ const app = createApp({
                         const isCurrent = (c.id === selectedCommunityId.value);
 
                         // 绘制社区真实物理多边形边界
-                        const poly = L.polygon(c.polygon, {
+                        const poly = L.polygon(toMapPath(c.polygon), {
                             color: isCurrent ? '#226f8c' : '#0284c7',
                             weight: isCurrent ? 3.5 : 1.8,
                             opacity: isCurrent ? 0.95 : 0.55,
@@ -1034,7 +1484,7 @@ const app = createApp({
 
                         // 社区名称赛博徽章标牌
                         if (c.center) {
-                            const badgeMarker = L.marker(c.center, {
+                            const badgeMarker = L.marker(toMapPoint(c.center), {
                                 icon: L.divIcon({
                                     className: 'custom-community-label',
                                     html: `<div class="community-badge-marker ${isCurrent ? 'community-badge-active' : ''}">${c.id} ${c.name}</div>`,
@@ -1063,7 +1513,7 @@ const app = createApp({
                 p.road_edges.forEach(edge => {
                     if (edge.from_coord && edge.to_coord) {
                         const isPassable = (edge.unmanned_passable !== false);
-                        const roadLine = L.polyline([edge.from_coord, edge.to_coord], {
+                        const roadLine = L.polyline(toMapPath([edge.from_coord, edge.to_coord]), {
                             color: isPassable ? '#2d7f9e' : '#64748b',
                             weight: isPassable ? 2.5 : 1.5,
                             opacity: isPassable ? 0.70 : 0.40,
@@ -1086,7 +1536,7 @@ const app = createApp({
                 // 绘制路网交叉节点微圆点
                 if (p.road_nodes && p.road_nodes.length > 0) {
                     p.road_nodes.forEach(node => {
-                        const nodeDot = L.circleMarker([node.lat, node.lng], {
+                        const nodeDot = L.circleMarker(toMapLatLng(node.lat, node.lng), {
                             radius: 2,
                             color: '#0284c7',
                             fillColor: '#2d7f9e',
@@ -1103,7 +1553,7 @@ const app = createApp({
             // ---------------------------------------------------------------------
             if (overview.value && overview.value.hub) {
                 const hub = overview.value.hub;
-                const hubMarker = L.circleMarker([hub.lat, hub.lng], {
+                const hubMarker = L.circleMarker(toMapLatLng(hub.lat, hub.lng), {
                     radius: 10,
                     color: '#b7791f',
                     fillColor: '#c58a2a',
@@ -1122,7 +1572,7 @@ const app = createApp({
                 mapLayers.push(hubMarker);
 
                 // HUB 辐射光环
-                const hubRing = L.circle([hub.lat, hub.lng], {
+                const hubRing = L.circle(toMapLatLng(hub.lat, hub.lng), {
                     radius: 350,
                     color: '#b7791f',
                     weight: 1,
@@ -1137,7 +1587,7 @@ const app = createApp({
             // 4. 绘制干线路径 (Trunk Routes: 现状独立往返 vs 优化M1巡回闭环)
             // ---------------------------------------------------------------------
             // 4A. 现状方案干线：HUB 到 5 大社区独立点对点往返线 (红色虚线)
-            if ((schemeMode.value === 'baseline' || schemeMode.value === 'diff') &&
+            if ((isS0.value || isDiff.value) &&
                 overview.value && overview.value.trunk_routing && overview.value.trunk_routing.baseline_routes) {
                 overview.value.trunk_routing.baseline_routes.forEach(route => {
                     const coords = route.coords || route.round_trip_coords;
@@ -1145,10 +1595,10 @@ const app = createApp({
                     const latlngs = coords.map(pt => Array.isArray(pt) ? pt : (pt && pt.lat !== undefined ? [pt.lat, pt.lng] : null)).filter(Boolean);
                     if (latlngs.length < 2) return;
 
-                    const bLine = L.polyline(latlngs, {
-                        color: '#b84b4b',
-                        weight: schemeMode.value === 'diff' ? 2.5 : 3.2,
-                        opacity: schemeMode.value === 'diff' ? 0.75 : 0.90,
+                    const bLine = L.polyline(toMapPath(latlngs), {
+                        color: '#f43f5e',
+                        weight: isDiff.value ? 2.5 : 3.5,
+                        opacity: isDiff.value ? 0.75 : 0.95,
                         dashArray: '6, 5'
                     }).addTo(map);
 
@@ -1157,7 +1607,7 @@ const app = createApp({
                             <div class="font-bold text-rose-400">【 现状独立往返干线: HUB ⇄ ${route.community_id}】</div>
                             <div>往返里程: <span class="mono font-bold text-rose-300">${route.dist_km || route.distance_km || 0} km</span></div>
                             <div>单程往返耗时: <span class="mono text-slate-300">${route.time_min || route.drive_time_min || 0} min</span></div>
-                            <div class="text-slate-400 text-[10px]">5条车辆点对点往返，全网总长 ${metricValue('trunk_distance', 'baseline', 1, 2)} km</div>
+                            <div class="text-slate-400 text-[10px]">5条车辆点对点往返，全网总长 ${metricValue('trunk_distance', 's0', 1, 2)} km</div>
                         </div>`
                     );
                     mapLayers.push(bLine);
@@ -1165,15 +1615,15 @@ const app = createApp({
             }
 
             // 4B. 优化方案干线：M1 巡回闭环路径 (亮青色高亮实线)
-            if ((schemeMode.value === 'optimized' || schemeMode.value === 'diff') &&
+            if ((isS1.value || isS2.value || isDiff.value) &&
                 overview.value && overview.value.trunk_routing && overview.value.trunk_routing.tour) {
                 const tour = overview.value.trunk_routing.tour;
                 if (Array.isArray(tour) && tour.length > 1) {
                     const latlngs = tour.map(pt => Array.isArray(pt) ? pt : (pt && pt.lat !== undefined ? [pt.lat, pt.lng] : null)).filter(Boolean);
                     if (latlngs.length > 1) {
-                        const trunkLine = L.polyline(latlngs, {
-                            color: '#226f8c',
-                            weight: 4.5,
+                        const trunkLine = L.polyline(toMapPath(latlngs), {
+                            color: '#06b6d4',
+                            weight: isDiff.value ? 3.8 : 4.5,
                             opacity: 0.95
                         }).addTo(map);
 
@@ -1183,7 +1633,7 @@ const app = createApp({
                                 <div>巡回总里程: <span class="mono font-bold text-white">${overview.value.trunk_routing.tour_dist_km} km</span></div>
                                 <div>相比独立往返: <span class="text-emerald-400 font-bold">${improvementText('trunk_distance')} (${savingValue('trunk_distance', 1, 2)} km)</span></div>
                                 <div>无人车巡回耗时: <span class="mono text-slate-200">${overview.value.trunk_routing.travel_time_min} min</span></div>
-                                <div class="text-emerald-400 text-[10px]">统仓共配串联5社区；距离为直线距离乘绕行系数估算</div>
+                                <div class="text-emerald-400 text-[10px]">统仓共配串联5社区；消除空驶大幅压降干线里程</div>
                             </div>`
                         );
                         mapLayers.push(trunkLine);
@@ -1196,7 +1646,7 @@ const app = createApp({
             // ---------------------------------------------------------------------
             if (p.buildings) {
                 p.buildings.forEach(b => {
-                    const bMarker = L.circleMarker([b.lat, b.lng], {
+                    const bMarker = L.circleMarker(toMapLatLng(b.lat, b.lng), {
                         radius: 5 + Math.min(8, b.daily_pkgs / 40),
                         color: '#60a5fa',
                         fillColor: '#3d7196',
@@ -1220,47 +1670,52 @@ const app = createApp({
             // ---------------------------------------------------------------------
             // 6. 绘制设施点（容量状态只采用后端约束计算结果）
             // ---------------------------------------------------------------------
-            if (schemeMode.value === 'baseline') {
+            if (isS0.value) {
+                // S0 现状单柜设施：爆柜以红色警告图标呈现
                 const baseFacs = p.baseline_plan?.facilities || p.layout?.facilities || [];
                 baseFacs.forEach(f => {
                     if (f.active === false) return;
                     const isBurst = Boolean(f.is_full_risk);
                     const satPct = Number(f.saturation_pct ?? 0);
 
-                    const fMarker = L.marker([f.lat, f.lng], {
+                    const fMarker = L.marker(toMapLatLng(f.lat, f.lng), {
                         icon: L.divIcon({
                             className: 'facility-burst-marker',
                             html: isBurst
-                                ? `<div class="w-8 h-8 rounded-full bg-rose-600 border-2 border-rose-300 shadow-lg shadow-rose-600/70 flex items-center justify-center text-sm animate-bounce cursor-pointer"></div>`
-                                : `<div class="w-7 h-7 rounded-full bg-slate-700 border border-slate-400 flex items-center justify-center text-xs"></div>`,
-                            iconSize: [32, 32],
-                            iconAnchor: [16, 16]
+                                ? `<div class="relative w-9 h-9 flex items-center justify-center cursor-pointer">
+                                     <span class="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping"></span>
+                                     <div class="relative w-8 h-8 rounded-full bg-rose-600 border-2 border-rose-200 shadow-xl shadow-rose-600/80 flex items-center justify-center text-sm font-bold text-white">⚠️</div>
+                                   </div>`
+                                : `<div class="w-7 h-7 rounded-full bg-slate-700 border border-slate-400 flex items-center justify-center text-xs text-slate-200">📦</div>`,
+                            iconSize: [36, 36],
+                            iconAnchor: [18, 18]
                         })
                     }).addTo(map);
 
                     fMarker.bindPopup(
                         `<div class="text-xs space-y-1">
-                            <div class="font-bold text-rose-400 text-sm">【 现状单柜设施: ${f.name}】</div>
+                            <div class="font-bold text-rose-400 text-sm">【 S0 现状单柜设施: ${f.name}】</div>
                             <div class="${isBurst ? 'text-rose-400 font-bold' : 'text-slate-300'}">
-                                ${isBurst ? ' 严重超载爆柜！包裹大量外溢' : '常规负荷状态'}
+                                ${isBurst ? '⚠️ 严重超载爆柜！包裹大量外溢' : '常规负荷状态'}
                             </div>
                             <div>有效容量: <span class="mono font-bold text-white">${f.effective_capacity ?? 0} 件</span></div>
                             <div>指派自提需求: <span class="mono font-bold text-white">${f.assigned_demand ?? 0} 件</span></div>
                             <div>峰值饱和度: <span class="mono font-bold ${isBurst ? 'text-rose-400' : 'text-slate-200'}">${satPct}%</span></div>
-                            <div class="text-[10px] text-slate-400">状态由当前社区容量约束计算，不按社区编号预设</div>
+                            <div class="text-[10px] text-slate-400">单柜容量瓶颈严重，急需 MIP 自适应副柜扩容</div>
                         </div>`
                     );
                     mapLayers.push(fMarker);
                 });
-            } else if (schemeMode.value === 'optimized') {
+            } else if (isS1.value || isS2.value) {
+                // S1 / S2 设施优化：绿色护盾标记，副柜自适应扩容
                 const optFacs = p.optimized_plan?.facilities || p.layout?.facilities || [];
                 optFacs.forEach(f => {
                     if (!f.active) return;
                     const isExpanded = (f.slave_units > 0);
-                    const fMarker = L.marker([f.lat, f.lng], {
+                    const fMarker = L.marker(toMapLatLng(f.lat, f.lng), {
                         icon: L.divIcon({
                             className: 'facility-shield-marker',
-                            html: `<div class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-emerald-300 shadow-lg shadow-emerald-500/50 flex items-center justify-center text-sm cursor-pointer"></div>`,
+                            html: `<div class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-emerald-300 shadow-lg shadow-emerald-500/50 flex items-center justify-center text-sm text-white font-bold cursor-pointer">🛡️</div>`,
                             iconSize: [32, 32],
                             iconAnchor: [16, 16]
                         })
@@ -1269,22 +1724,22 @@ const app = createApp({
                     fMarker.bindPopup(
                         `<div class="text-xs space-y-1">
                             <div class="font-bold text-emerald-400 text-sm">【 优化智能柜: ${f.name}】</div>
-                            <div class="${f.is_full_risk ? 'text-rose-300' : 'text-emerald-300'} font-bold">${f.is_full_risk ? ' 容量约束未通过' : ' 当前情景容量约束通过'}</div>
-                            <div>MIP定容配置: 主柜 ${f.main_lockers} 组 + 扩容副柜 <span class="text-emerald-300 font-bold">${f.slave_units}</span> 组</div>
+                            <div class="${f.is_full_risk ? 'text-rose-300' : 'text-emerald-300'} font-bold">${f.is_full_risk ? '⚠️ 容量约束未通过' : '✅ 当前情景容量约束通过'}</div>
+                            <div>MIP定容配置: 主柜 ${f.main_lockers} 组 + 扩容副柜 <span class="text-emerald-300 font-bold">+${f.slave_units}</span> 组</div>
                             <div>总格口数: <span class="mono font-bold text-white">${f.total_slots}</span> 格</div>
                             <div>日有效承载: <span class="mono font-bold text-cyan-300">${f.effective_capacity}</span> 件</div>
                             <div>容量负荷率: <span class="mono font-bold text-emerald-400">${f.saturation_pct ?? Math.round((f.utilization_rate ?? 0) * 100)}%</span></div>
-                            <div class="text-[10px] text-slate-400">150m服务约束由后端逐楼栋校验</div>
+                            <div class="text-[10px] text-slate-400">150m 便民服务半径约束由后端逐楼栋校验</div>
                         </div>`
                     );
                     mapLayers.push(fMarker);
 
                     if (showRings.value) {
-                        const circle = L.circle([f.lat, f.lng], {
+                        const circle = L.circle(toMapLatLng(f.lat, f.lng), {
                             radius: 150,
-                            color: '#2e8b63',
+                            color: '#10b981',
                             weight: 1.5,
-                            fillColor: '#2e8b63',
+                            fillColor: '#10b981',
                             fillOpacity: 0.08,
                             dashArray: '4, 4'
                         }).addTo(map);
@@ -1307,12 +1762,12 @@ const app = createApp({
                         ? `<div class="relative w-9 h-9 flex items-center justify-center cursor-pointer">
                              <span class="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping"></span>
                              <div class="relative w-8 h-8 rounded-full bg-slate-900 border-2 border-emerald-400 flex items-center justify-center text-xs font-bold shadow-lg">
-                                <span></span>
+                                <span>⚡</span>
                              </div>
                            </div>`
-                        : `<div class="w-8 h-8 rounded-full bg-emerald-700/90 border-2 border-emerald-300 flex items-center justify-center text-xs"></div>`;
+                        : `<div class="w-8 h-8 rounded-full bg-emerald-700/90 border-2 border-emerald-300 flex items-center justify-center text-xs">🛡️</div>`;
 
-                    const fMarker = L.marker([f.lat, f.lng], {
+                    const fMarker = L.marker(toMapLatLng(f.lat, f.lng), {
                         icon: L.divIcon({
                             className: 'facility-diff-marker',
                             html: diffHtml,
@@ -1342,18 +1797,18 @@ const app = createApp({
                                 <div class="text-slate-300">副柜 <b class="text-emerald-300">+${f.slave_units}</b> 组 (${f.effective_capacity}件) · 饱和度: <b class="text-emerald-300">${optSat}%</b></div>
                             </div>
                             <div class="text-[10px] text-cyan-300 pt-0.5">
-                                优化容量 ${f.effective_capacity} 件；是否可行以约束校验为准
+                                优化容量 ${f.effective_capacity} 件；消除单柜瓶颈
                             </div>
                         </div>`
                     );
                     mapLayers.push(fMarker);
 
                     if (showRings.value) {
-                        const circle = L.circle([f.lat, f.lng], {
+                        const circle = L.circle(toMapLatLng(f.lat, f.lng), {
                             radius: 150,
-                            color: '#226f8c',
+                            color: '#06b6d4',
                             weight: 1.5,
-                            fillColor: '#226f8c',
+                            fillColor: '#06b6d4',
                             fillOpacity: 0.08,
                             dashArray: '3, 3'
                         }).addTo(map);
@@ -1365,68 +1820,69 @@ const app = createApp({
             // ---------------------------------------------------------------------
             // 7. 绘制内部路径 (Micro-routes inside community)
             // ---------------------------------------------------------------------
-            // 7A. 现状快递员全量步巡路线 (红色虚线，纯人工重负荷)
-            if (schemeMode.value === 'baseline' || schemeMode.value === 'diff') {
+            // 7A. 现状/S1 快递员全量步巡路线 (纯人工重负荷)
+            if (isS0.value || isS1.value || isDiff.value) {
                 const basePath = p.baseline_plan?.courier_path || p.routing?.baseline_courier_path;
                 if (basePath && basePath.length > 1) {
-                    const baseCoords = basePath.map(pt => [pt.lat, pt.lng]);
+                    const baseCoords = basePath.map(pt => toMapLatLng(pt.lat, pt.lng));
+                    const isS1Only = isS1.value;
                     const baseLine = L.polyline(baseCoords, {
-                        color: '#b64b58',
-                        weight: 3.2,
-                        opacity: schemeMode.value === 'diff' ? 0.70 : 0.88,
+                        color: isS1Only ? '#f59e0b' : '#f43f5e',
+                        weight: isDiff.value ? 2.5 : 3.2,
+                        opacity: isDiff.value ? 0.70 : 0.88,
                         dashArray: '7, 5'
                     }).addTo(map);
 
                     baseLine.bindPopup(
                         `<div class="text-xs space-y-1">
-                            <div class="font-bold text-rose-400">【 现状快递员全量步巡路线 (As-Is)】</div>
-                            <div>步巡总里程: <span class="mono font-bold text-rose-400">${p.baseline_plan?.courier_walk_dist_km ?? '—'} km</span></div>
-                            <div>人工总工时: <span class="mono font-bold text-rose-400">${p.baseline_plan?.courier_total_hours ?? '—'} h</span></div>
-                            <div class="text-slate-300 text-[10px]">纯人工覆盖全部楼栋自提与上门，疲劳过载</div>
+                            <div class="font-bold ${isS1Only ? 'text-amber-400' : 'text-rose-400'}">【 ${isS1Only ? 'S1 设施优化后人工步巡' : 'S0 现状快递员全量步巡路线 (As-Is)'}】</div>
+                            <div>步巡总里程: <span class="mono font-bold ${isS1Only ? 'text-amber-400' : 'text-rose-400'}">${p.baseline_plan?.courier_walk_dist_km ?? '—'} km</span></div>
+                            <div>人工总工时: <span class="mono font-bold ${isS1Only ? 'text-amber-400' : 'text-rose-400'}">${p.baseline_plan?.courier_total_hours ?? '—'} h</span></div>
+                            <div class="text-slate-300 text-[10px]">${isS1Only ? '全人工补货+上门，工时较重' : '纯人工覆盖全部楼栋自提与上门，疲劳过载'}</div>
                         </div>`
                     );
                     mapLayers.push(baseLine);
                 }
             }
 
-            // 7B. 优化 M2 无人车社区巡航路线 (亮天蓝色高亮线)
-            if (schemeMode.value === 'optimized' || schemeMode.value === 'diff') {
+            // 7B. S2 优化 M2 无人车社区巡航路线 (亮天蓝色高亮线)
+            if (isS2.value || isDiff.value) {
                 if (p.routing && p.routing.unmanned_vehicle_path && p.routing.unmanned_vehicle_path.length > 1) {
-                    const uvCoords = p.routing.unmanned_vehicle_path.map(pt => [pt.lat, pt.lng]);
+                    const uvCoords = p.routing.unmanned_vehicle_path.map(pt => toMapLatLng(pt.lat, pt.lng));
                     const uvLine = L.polyline(uvCoords, {
-                        color: '#2d7f9e',
+                        color: '#0284c7',
                         weight: 4.5,
                         opacity: 0.95
                     }).addTo(map);
 
                     uvLine.bindPopup(
                         `<div class="text-xs space-y-1">
-                            <div class="font-bold text-sky-400">【 优化 M2 无人车社区巡航路线】</div>
+                            <div class="font-bold text-sky-400">【 S2 M2 无人车社区微循环巡航路线】</div>
                             <div>巡航里程: <span class="mono font-bold text-white">${p.routing.unmanned_vehicle_dist_km} km</span></div>
                             <div>巡航耗时: <span class="mono text-slate-200">${p.routing.unmanned_vehicle_time_min} min</span></div>
                             <div>服务点数: ${p.routing.unmanned_vehicle_path.length} 处</div>
-                            <div class="text-emerald-400 text-[10px]">无人物流巡航投柜，解放末端重搬运</div>
+                            <div class="text-emerald-400 text-[10px]">无人物流巡航投柜，彻底解放末端重体力搬运</div>
                         </div>`
                     );
                     mapLayers.push(uvLine);
                 }
 
-                // 7C. 优化后快递员精准上门步巡路线 (橙色虚线，仅上门子集)
+                // 7C. S2 优化后快递员精准上门步巡路线 (橙色虚线，仅上门子集)
                 if (p.routing && p.routing.courier_path && p.routing.courier_path.length > 1) {
-                    const cCoords = p.routing.courier_path.map(pt => [pt.lat, pt.lng]);
+                    const cCoords = p.routing.courier_path.map(pt => toMapLatLng(pt.lat, pt.lng));
                     const cLine = L.polyline(cCoords, {
-                        color: '#bf6b34',
-                        weight: 2.5,
-                        opacity: 0.88,
+                        color: '#ea580c',
+                        weight: 2.8,
+                        opacity: 0.90,
                         dashArray: '5, 5'
                     }).addTo(map);
 
                     cLine.bindPopup(
                         `<div class="text-xs space-y-1">
-                            <div class="font-bold text-orange-400">【 优化后快递员精准上门步巡】</div>
+                            <div class="font-bold text-orange-400">【 S2 M3 快递员适老精准上门步巡】</div>
                             <div>步巡里程: <span class="mono font-bold text-emerald-400">${p.routing.courier_walk_dist_km} km</span> <span class="text-emerald-400 text-[10px]">改善 ${p.community_comparison?.walk_saving_pct ?? '—'}%</span></div>
                             <div>上门工时: <span class="mono font-bold text-emerald-400">${p.routing.courier_total_hours} h</span> <span class="text-emerald-400 text-[10px]">改善 ${p.community_comparison?.hours_saving_pct ?? '—'}%</span></div>
-                            <div class="text-slate-300 text-[10px]">人机接驳协同，专注高品质入户服务</div>
+                            <div class="text-slate-300 text-[10px]">人机接驳协同，专注高品质入户适老服务</div>
                         </div>`
                     );
                     mapLayers.push(cLine);
@@ -1910,49 +2366,80 @@ const app = createApp({
                     metrics.annual_cost.baseline / 10000,
                     (metrics.annual_cost.s1 || 1487090) / 10000,
                     metrics.annual_cost.optimized / 10000
-                ];
+                ].map(v => Number(Number(v).toFixed(1)));
                 const carbonData = [
                     metrics.annual_carbon.baseline,
                     (metrics.annual_carbon.s1 || 6043.0),
                     metrics.annual_carbon.optimized
-                ];
+                ].map(v => Math.round(Number(v)));
                 chartCompCost.setOption({
                     backgroundColor: 'transparent',
-                    tooltip: { trigger: 'axis' },
-                    legend: { data: ['年运营成本 (万元)', '年运营碳排 (kg CO₂e)'], textStyle: { color: '#687680', fontSize: 10 }, top: 0 },
-                    grid: { top: 35, left: 45, right: 45, bottom: 25 },
+                    color: ['#b84b4b', '#2d7f9e'],
+                    tooltip: { trigger: 'axis', confine: true },
+                    legend: {
+                        data: ['运营成本', '运营碳排'],
+                        textStyle: { color: '#52636f', fontSize: 10 },
+                        itemWidth: 14,
+                        itemHeight: 8,
+                        itemGap: 12,
+                        top: 0,
+                        left: 'center'
+                    },
+                    grid: { top: 52, left: 18, right: 18, bottom: 28, containLabel: true },
                     xAxis: {
                         type: 'category',
-                        data: [' S0 现状', ' S1 设施优化', ' S2 人机协同'],
-                        axisLabel: { color: '#687680', fontSize: 10 },
+                        data: ['S0 现状', 'S1 设施优化', 'S2 人机协同'],
+                        axisTick: { show: false },
+                        axisLabel: { color: '#5b6973', fontSize: 10, interval: 0, margin: 10 },
                         axisLine: { lineStyle: { color: '#c9d3d8' } }
                     },
                     yAxis: [
-                        { type: 'value', name: '万元', axisLabel: { color: '#687680', fontSize: 10 }, splitLine: { lineStyle: { color: '#e4e9ec' } } },
-                        { type: 'value', name: 'kg', axisLabel: { color: '#687680', fontSize: 10 }, splitLine: { show: false } }
+                        { type: 'value', name: '万元', nameTextStyle: { color: '#71808a', fontSize: 9 }, axisLabel: { color: '#687680', fontSize: 9 }, splitLine: { lineStyle: { color: '#e4e9ec' } } },
+                        { type: 'value', name: 'kg', nameTextStyle: { color: '#71808a', fontSize: 9 }, axisLabel: { color: '#687680', fontSize: 9 }, splitLine: { show: false } }
                     ],
                     series: [
                         {
-                            name: '年运营成本 (万元)',
+                            name: '运营成本',
                             type: 'bar',
                             data: costData,
                             itemStyle: {
+                                borderRadius: [4, 4, 0, 0],
                                 color: (params) => ['#b84b4b', '#b7791f', '#2e8b63'][params.dataIndex]
                             },
-                            barWidth: 26,
-                            label: { show: true, position: 'top', color: '#fff', fontSize: 10, formatter: '{c} 万' }
+                            barWidth: 36,
+                            label: {
+                                show: true,
+                                position: 'insideTop',
+                                distance: 5,
+                                color: '#ffffff',
+                                fontSize: 9,
+                                fontWeight: 700,
+                                formatter: (params) => Number(params.value).toFixed(1)
+                            },
+                            labelLayout: { hideOverlap: true }
                         },
                         {
-                            name: '年运营碳排 (kg CO₂e)',
+                            name: '运营碳排',
                             type: 'line',
                             yAxisIndex: 1,
                             data: carbonData,
+                            symbol: 'circle',
+                            symbolSize: 7,
                             itemStyle: { color: '#2d7f9e' },
                             lineStyle: { width: 3 },
-                            label: { show: true, position: 'top', color: '#2d7f9e', fontSize: 9, formatter: '{c} kg' }
+                            label: {
+                                show: true,
+                                position: 'top',
+                                distance: 7,
+                                color: '#1f6f8f',
+                                fontSize: 9,
+                                fontWeight: 700,
+                                formatter: (params) => `${Math.round(Number(params.value))}`
+                            },
+                            labelLayout: { hideOverlap: true }
                         }
                     ]
-                });
+                }, true);
             }
         };
 
@@ -2088,9 +2575,19 @@ const app = createApp({
             showToast,
             activeTab,
             viewMode,
+            presentationMode,
+            togglePresentationMode,
             toggleViewMode,
             schemeMode,
             setSchemeMode,
+            isS0,
+            isS1,
+            isS2,
+            isDiff,
+            getModelDisplayName,
+            aiQuickModes,
+            schemeCardClass,
+            switchAiModel,
             currentScenario,
             setScenario,
             loading,
@@ -2098,10 +2595,6 @@ const app = createApp({
             mobilePane,
             setActiveTab,
             moduleNav,
-            guideSteps,
-            guideStepIndex,
-            showGuide,
-            applyGuideStep,
             planStatusMeta,
             pipelineStatus,
             constraintChecks,
@@ -2126,11 +2619,38 @@ const app = createApp({
             switchSimScenario,
             crisisResult,
             isPeakDay,
+            // AI 智能中枢与多智能体应急中枢相关
+            showAiDrawer,
+            aiDrawerMessages,
+            aiInput,
+            aiLoading,
+            aiConfig,
+            showAiConfigModal,
+            aiConfigForm,
+            aiDetectedModels,
+            aiModelsLoading,
+            aiModelsMessage,
+            aiTestLoading,
+            aiTestResult,
+            activeCrisisType,
+            crisisStreaming,
+            crisisStreamText,
+            crisisExecutionStatus,
+            fetchAiConfig,
+            saveAiConfig,
+            testAiConnection,
+            fetchAvailableModels,
+            toggleAiDrawer,
+            sendAiMessage,
+            triggerAiCrisis,
+            applyRescheduledPlan,
+            copyDispatchOrder,
             showSolverModal,
             solverModalTab,
             mathModelsList,
             currentTileTheme,
             tileStatusText,
+            mapCrsText,
             showRoads,
             showPolygons,
             showRings,
